@@ -115,6 +115,8 @@
 
   body {
     @apply bg-surface font-sans text-body text-ink antialiased;
+    /* Faint grain tile so the page feels like the stone in the photos */
+    background-image: url('/img/grain.webp');
   }
 
   :focus-visible {

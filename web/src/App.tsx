@@ -1,20 +1,19 @@
-// Step 1b test page: checks that the design tokens and fonts load.
+import { SiteFooter } from './components/layout/SiteFooter'
+import { SiteHeader } from './components/layout/SiteHeader'
+
+// Step 1c test page: shows the header and footer around an empty main area.
 function App() {
   return (
-    <main className="mx-auto flex min-h-screen max-w-page flex-col items-start justify-center gap-6 px-4 sm:px-6 lg:px-8">
-      <h1 className="text-heading-1 text-ink-strong">DRAKON</h1>
-      <p className="max-w-text text-body-lg text-ink-muted">
-        Design tokens test page. If this page is dark and the price shows the
-        Taka sign, Tailwind and the fonts are working.
-      </p>
-      <p className="text-price-lg text-ink-strong tabular-nums">৳1,250</p>
-      <button
-        type="button"
-        className="rounded-xl bg-accent px-5 py-3 text-label text-on-accent transition-colors duration-150 ease-out hover:bg-accent-hover"
-      >
-        Add to cart
-      </button>
-    </main>
+    <div className="flex min-h-screen flex-col">
+      <SiteHeader cartCount={2} current="/shop" />
+      <main className="mx-auto w-full max-w-page flex-1 px-4 py-20 sm:px-6 lg:px-8">
+        <h1 className="text-heading-2 text-ink-strong sm:text-heading-1">Header and footer test</h1>
+        <p className="mt-4 max-w-text text-body-lg text-ink-muted">
+          Make the window narrower than 768px to see the phone menu button.
+        </p>
+      </main>
+      <SiteFooter />
+    </div>
   )
 }
 
