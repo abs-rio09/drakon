@@ -3,7 +3,7 @@ import { ArrowUpRightIcon } from '../components/icons'
 import { ArchiveCard } from '../components/product/ArchiveCard'
 import { ProductGrid } from '../components/product/ProductCard'
 import { SectionHeader } from '../components/ui/SectionHeader'
-import { container, primaryButtonLarge, secondaryButton, textLink } from '../components/ui/styles'
+import { button, container, secondaryButton, textLink } from '../components/ui/styles'
 import {
   getArchive,
   getCategories,
@@ -39,7 +39,12 @@ function Hero() {
   const product = getProduct(heroProductSlug)
 
   return (
-    <section aria-labelledby="hero-title" className="relative flex flex-col xl:min-h-200 xl:flex-row xl:items-center">
+    // The hero slides up under the sticky header (72px bar + 1px line), so the
+    // photo starts at the very top and the header sits over it.
+    <section
+      aria-labelledby="hero-title"
+      className="relative -mt-[73px] flex flex-col xl:min-h-200 xl:flex-row xl:items-center"
+    >
       {/* Photo: full-bleed behind the text on wide screens, on top on smaller ones */}
       <div className="relative aspect-[4/5] overflow-hidden md:aspect-video xl:absolute xl:inset-0 xl:aspect-auto">
         <picture>
@@ -90,7 +95,7 @@ function Hero() {
             run. When it sells out, it goes to the archive for good.
           </p>
           <div className="flex flex-wrap items-center gap-x-8 gap-y-3 pt-1">
-            <Link to="/shop" className={primaryButtonLarge}>
+            <Link to="/shop" className={button('primary', 'hero')}>
               Shop the drop
             </Link>
             <Link to="/sold-out" className={textLink + ' text-body font-medium text-ink'}>
@@ -114,7 +119,7 @@ function Facts() {
     { title: 'No account needed', text: 'Order and track as a guest' },
   ]
   return (
-    <section aria-label="How ordering works" className={container + ' mt-10 xl:mt-0'}>
+    <section aria-label="How ordering works" className={container}>
       <ul className="grid grid-cols-2 gap-x-4 gap-y-6 border-y border-line py-8 sm:gap-x-8 lg:grid-cols-4">
         {facts.map((f) => (
           <li key={f.title} className="flex flex-col gap-1">

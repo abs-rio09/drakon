@@ -6,7 +6,7 @@ import { ProductGrid } from '../components/product/ProductCard'
 import { ProductPhoto } from '../components/product/ProductPhoto'
 import { VariantPicker } from '../components/product/VariantPicker'
 import { QuantityStepper } from '../components/ui/QuantityStepper'
-import { container, primaryButtonLarge, textLink } from '../components/ui/styles'
+import { button, container, textLink } from '../components/ui/styles'
 import {
   getCategory,
   getProduct,
@@ -71,10 +71,13 @@ function ProductView({ product }: { product: ProductType }) {
       <title>{`${product.name}: Drakon`}</title>
 
       {/* Breadcrumb */}
-      <nav aria-label="Breadcrumb" className={container + ' pt-8 pb-6 sm:pt-10'}>
+      <nav aria-label="Breadcrumb" className={container + ' pt-8 pb-6'}>
         <ol className="flex flex-wrap items-center gap-2 text-caption text-ink-subtle">
           <li>
-            <Link to="/shop" className={textLink + ' text-ink-muted'}>
+            <Link
+              to="/shop"
+              className="text-ink-muted transition-colors duration-150 ease-out hover:text-ink-strong hover:underline"
+            >
               Shop
             </Link>
           </li>
@@ -82,7 +85,7 @@ function ProductView({ product }: { product: ProductType }) {
             <>
               <li aria-hidden="true">/</li>
               <li>
-                <Link to={`/shop/${category.slug}`} className={textLink + ' text-ink-muted'}>
+                <Link to={`/shop/${category.slug}`} className="text-ink-muted transition-colors duration-150 ease-out hover:text-ink-strong hover:underline">
                   {category.name}
                 </Link>
               </li>
@@ -95,16 +98,16 @@ function ProductView({ product }: { product: ProductType }) {
         </ol>
       </nav>
 
-      <section className={container + ' grid items-start gap-10 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:gap-20'}>
+      <section className={container + ' grid items-start gap-10 pb-20 sm:pb-24 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:gap-20'}>
         {/* Gallery */}
         <div className="flex flex-col gap-3">
           <div className="relative">
             <ProductPhoto key={image.src} src={image.src} alt={image.alt} soldOut={archived} zoomOnHover={false} eager />
             {archived ? (
-              <SoldOutBadge />
+              <SoldOutBadge position="top-4 left-4" />
             ) : (
               product.isLimited && (
-                <LimitedBadge>{product.editionSize ? `Edition of ${product.editionSize}` : 'Limited run'}</LimitedBadge>
+                <LimitedBadge position="top-4 left-4">{product.editionSize ? `Edition of ${product.editionSize}` : 'Limited run'}</LimitedBadge>
               )
             )}
           </div>
@@ -165,12 +168,18 @@ function ProductView({ product }: { product: ProductType }) {
             <>
               {product.variants.length > 1 && (
                 <div className="flex flex-col gap-3">
-                  <VariantPicker product={product} selectedId={variant.id} onSelect={selectVariant} />
-                  {product.variantKind === 'Size' && (
-                    <a href="#details" className={textLink + ' self-start text-label text-ink-muted'}>
-                      Size guide
-                    </a>
-                  )}
+                  <VariantPicker
+                    product={product}
+                    selectedId={variant.id}
+                    onSelect={selectVariant}
+                    aside={
+                      product.variantKind === 'Size' && (
+                        <a href="#details" className={textLink + ' text-label font-normal text-ink-muted'}>
+                          Size guide
+                        </a>
+                      )
+                    }
+                  />
                   {!product.variants.some((v) => v.note) && (
                     <span className="text-caption text-ink-muted tabular-nums">{variantNote(product, variant)}</span>
                   )}
@@ -202,7 +211,7 @@ function ProductView({ product }: { product: ProductType }) {
                     setAdded({ qty: n, name: variantName(product, variant) })
                     setQty(1)
                   }}
-                  className={primaryButtonLarge + ' w-full justify-between'}
+                  className={button('primary', 'xl', { spread: true }) + ' w-full'}
                 >
                   <span>{!canBuy ? 'Out of stock' : canAdd ? 'Add to cart' : 'Limit reached in your cart'}</span>
                   {canAdd && (
@@ -237,24 +246,24 @@ function ProductView({ product }: { product: ProductType }) {
       </section>
 
       {(product.story.length > 0 || product.details.length > 0) && (
-        <section id="details" aria-labelledby="details-title" className="scroll-mt-18">
-          <div className={container + ' grid gap-10 py-20 lg:grid-cols-2 lg:gap-20 lg:py-32'}>
-            <div className="flex flex-col gap-4">
-              <h2 id="details-title" className="text-heading-3 text-ink-strong sm:text-heading-2">
+        <section id="details" aria-labelledby="details-title" className="scroll-mt-18 border-t border-line">
+          <div className={container + ' grid gap-10 py-20 sm:py-24 lg:grid-cols-2 lg:gap-20'}>
+            <div className="flex max-w-130 flex-col gap-4">
+              <h2 id="details-title" className="mb-2 text-heading-3 text-ink-strong sm:text-heading-2">
                 About this piece
               </h2>
               {product.story.map((para) => (
-                <p key={para} className="text-body-lg text-ink-muted">
+                <p key={para} className="text-body text-ink-muted">
                   {para}
                 </p>
               ))}
             </div>
             {product.details.length > 0 && (
-              <dl className="grid grid-cols-[minmax(0,1fr)_minmax(0,2fr)] border-t border-line">
+              <dl className="grid content-start grid-cols-[minmax(96px,auto)_minmax(0,1fr)] gap-x-6 border-t border-line">
                 {product.details.map((d) => (
                   <div key={d.term} className="col-span-2 grid grid-cols-subgrid border-b border-line py-4">
-                    <dt className="text-label text-ink-muted">{d.term}</dt>
-                    <dd className="text-body text-ink">{d.text}</dd>
+                    <dt className="text-label font-normal text-ink-subtle">{d.term}</dt>
+                    <dd className="text-label font-normal text-ink">{d.text}</dd>
                   </div>
                 ))}
               </dl>
@@ -264,7 +273,7 @@ function ProductView({ product }: { product: ProductType }) {
       )}
 
       <section aria-labelledby="related-title" className="border-t border-line">
-        <div className={container + ' flex flex-col gap-14 py-20 lg:py-32'}>
+        <div className={container + ' flex flex-col gap-14 pt-20 pb-24 sm:pt-24 sm:pb-32'}>
           <h2 id="related-title" className="text-heading-3 text-ink-strong sm:text-heading-2">
             Pairs well with
           </h2>

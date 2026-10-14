@@ -3,7 +3,7 @@ import { Link } from 'react-router'
 import { describedBy } from '../components/ui/describedBy'
 import { Field, inputClass } from '../components/ui/Field'
 import { PageIntro } from '../components/ui/PageIntro'
-import { container, inlineLink, panel, secondaryButton } from '../components/ui/styles'
+import { button, inlineLink, panel } from '../components/ui/styles'
 import { isBdMobile } from '../features/checkout/validation'
 
 // /track — look up an order with its number and the phone it was placed with.
@@ -52,7 +52,7 @@ export default function Track() {
   }
 
   return (
-    <div className={container + ' flex flex-col gap-10 py-16 sm:py-20'}>
+    <div className="mx-auto flex w-full max-w-form flex-col gap-10 px-4 pt-16 pb-32 sm:px-8 sm:pt-20">
       <title>Track your order: Drakon</title>
       <PageIntro title="Track your order">
         <p>Enter the order number from your confirmation and the phone number you ordered with.</p>
@@ -62,7 +62,7 @@ export default function Track() {
         noValidate
         onSubmit={onSubmit}
         aria-label="Order lookup"
-        className="grid max-w-form items-start gap-6 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]"
+        className="grid grid-cols-[minmax(0,1fr)] items-start gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]"
       >
         <Field id="t-order" label="Order number" error={orderError}>
           <input
@@ -103,10 +103,10 @@ export default function Track() {
         </Field>
         {/* The label row keeps the button level with the inputs on wide screens */}
         <div className="flex flex-col gap-2">
-          <span aria-hidden="true" className="hidden text-label sm:block">
+          <span aria-hidden="true" className="hidden text-label md:block">
             &nbsp;
           </span>
-          <button type="submit" className={secondaryButton + ' min-h-12'}>
+          <button type="submit" className={button('secondary', 'md')}>
             Track
           </button>
         </div>
@@ -114,7 +114,7 @@ export default function Track() {
 
       <div role="status" aria-live="polite">
         {lookedUp && (
-          <section aria-label="Tracking" className={panel + ' flex max-w-form flex-col gap-3 p-6 sm:p-8'}>
+          <section aria-label="Tracking" className={panel + ' flex flex-col gap-3 p-6 sm:p-10'}>
             <h2 className="text-heading-3 text-ink-strong">Tracking opens with ordering</h2>
             <p className="text-body text-ink-muted">
               Online ordering has not opened yet, so there are no orders to look up. When it opens, this page shows
@@ -127,7 +127,7 @@ export default function Track() {
         )}
       </div>
 
-      <div className="flex max-w-form flex-col gap-2 border-t border-line pt-8 text-caption text-ink-subtle">
+      <div className="flex flex-col gap-2 border-t border-line pt-8 text-caption text-ink-subtle">
         <p>Your order number is on the confirmation page after you order.</p>
         <p>You will be able to cancel an order here until it ships.</p>
       </div>

@@ -1,7 +1,7 @@
 import { Link } from 'react-router'
 import { CashIcon, TruckIcon } from '../components/icons'
 import { QuantityStepper } from '../components/ui/QuantityStepper'
-import { container, ghostButton, panel, primaryButton, textLink } from '../components/ui/styles'
+import { button, container, ghostButton, panel, textLink } from '../components/ui/styles'
 import { resolveCart, subtotalPaisa, type CartItem } from '../features/cart/cartItems'
 import { useCart } from '../features/cart/useCart'
 import { findVariant, variantName } from '../lib/catalog'
@@ -18,11 +18,11 @@ export default function Cart() {
   const subtotal = subtotalPaisa(items)
 
   return (
-    <div className={container + ' flex flex-col gap-10 py-16 sm:py-20'}>
+    <div className={container + ' flex flex-col gap-10 pt-14 pb-32'}>
       <title>Your cart: Drakon</title>
-      <div className="flex flex-wrap items-baseline justify-between gap-4">
+      <div className="flex flex-wrap items-baseline gap-4">
         <h1 className="text-heading-2 text-ink-strong sm:text-heading-1">Your cart</h1>
-        {items.length > 0 && <span className="text-body text-ink-muted tabular-nums">{countLabel}</span>}
+        {items.length > 0 && <span className="text-body text-ink-subtle tabular-nums">{countLabel}</span>}
       </div>
 
       {unavailable.length > 0 && (
@@ -50,24 +50,24 @@ export default function Cart() {
       {items.length === 0 ? (
         <EmptyCart />
       ) : (
-        <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-10 lg:grid-cols-[minmax(0,1fr)_400px] lg:gap-16">
+        <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-10 lg:grid-cols-[minmax(0,1fr)_400px] lg:gap-20">
           <section aria-label="Items in your cart" className="flex flex-col">
             <ul className="flex flex-col border-t border-line">
               {items.map((item) => (
                 <CartRow key={item.variant.id} item={item} />
               ))}
             </ul>
-            <Link to="/shop" className={textLink + ' mt-6 self-start text-label text-ink-muted'}>
+            <Link to="/shop" className={textLink + ' mt-8 self-start text-label font-normal text-ink-muted'}>
               Continue shopping
             </Link>
           </section>
 
-          <aside aria-label="Order summary" className={panel + ' flex flex-col gap-6 p-6 sm:p-8 lg:sticky lg:top-24'}>
+          <aside aria-label="Order summary" className={panel + ' flex flex-col gap-5 p-6 sm:p-8 lg:sticky lg:top-24'}>
             <h2 className="text-heading-3 text-ink-strong">Summary</h2>
             <dl className="flex flex-col gap-3">
               <div className="flex justify-between gap-4">
                 <dt className="text-body text-ink-muted tabular-nums">Subtotal ({countLabel})</dt>
-                <dd className="text-body text-ink-strong tabular-nums">{formatTaka(subtotal)}</dd>
+                <dd className="text-body font-medium text-ink-strong tabular-nums">{formatTaka(subtotal)}</dd>
               </div>
               <div className="flex justify-between gap-4">
                 <dt className="flex flex-col">
@@ -80,14 +80,14 @@ export default function Cart() {
                 <dd className="text-body whitespace-nowrap text-ink-muted">Set at checkout</dd>
               </div>
             </dl>
-            <div className="flex items-baseline justify-between gap-4 border-t border-line pt-6">
-              <span className="text-body font-medium text-ink-strong">Total before delivery</span>
+            <div className="flex items-baseline justify-between gap-4 border-t border-line pt-5">
+              <span className="text-body text-ink">Total before delivery</span>
               <span className="text-price-lg text-ink-strong tabular-nums">{formatTaka(subtotal)}</span>
             </div>
-            <Link to="/checkout" className={primaryButton + ' min-h-13 w-full text-body'}>
+            <Link to="/checkout" className={button('primary', 'lg') + ' w-full'}>
               Go to checkout
             </Link>
-            <ul className="flex flex-col gap-3 text-caption text-ink-subtle">
+            <ul className="flex flex-col gap-2 pt-1 text-label font-normal text-ink-muted">
               <li className="flex items-start gap-3">
                 <CashIcon size={16} className="mt-0.5 shrink-0" />
                 Cash on Delivery. Pay the courier when it arrives.
@@ -111,28 +111,29 @@ function CartRow({ item }: { item: CartItem }) {
   const thumb = product.images[variant.imageIndex ?? 0]?.thumb ?? product.images[0].thumb
 
   return (
-    <li className="flex gap-4 border-b border-line py-6 sm:gap-6">
+    <li className="flex gap-5 border-b border-line py-6">
       <Link to={href} tabIndex={-1} aria-hidden="true" className="shrink-0">
-        <img src={thumb} alt="" className="size-20 rounded-lg bg-field object-cover sm:size-24" />
+        <img src={thumb} alt="" className="size-21 rounded-lg bg-field object-cover sm:size-28" />
       </Link>
-      <div className="flex min-w-0 flex-1 flex-col gap-4">
-        <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-1">
+      <div className="flex min-w-0 flex-1 flex-col justify-between gap-4">
+        <div className="flex items-start justify-between gap-4">
           <div className="flex min-w-0 flex-col gap-1">
             <Link
               to={href}
-              className="text-body font-medium text-ink-strong transition-colors duration-150 ease-out hover:text-ink sm:text-title"
+              className="text-title text-ink-strong transition-colors duration-150 ease-out hover:text-ink"
             >
               {product.name}
             </Link>
-            <span className="text-caption text-ink-muted tabular-nums">
+            <span className="text-caption text-ink-subtle tabular-nums">
               {variantName(product, variant)}, {formatTaka(variant.pricePaisa)} each
             </span>
           </div>
-          <span className="text-price text-ink-strong tabular-nums">{formatTaka(item.linePaisa)}</span>
+          <span className="shrink-0 text-price text-ink-strong tabular-nums">{formatTaka(item.linePaisa)}</span>
         </div>
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center gap-4">
             <QuantityStepper
+              size="sm"
               label={`Quantity for ${product.name}`}
               value={qty}
               max={max}
@@ -146,7 +147,7 @@ function CartRow({ item }: { item: CartItem }) {
           </div>
           <button
             type="button"
-            className={ghostButton}
+            className={ghostButton + ' min-h-11 px-1'}
             aria-label={`Remove ${product.name}`}
             onClick={() => cart.remove(variant.id)}
           >
@@ -160,12 +161,12 @@ function CartRow({ item }: { item: CartItem }) {
 
 function EmptyCart() {
   return (
-    <section className="flex flex-col items-center gap-6 py-16 text-center">
+    <section className="flex flex-col items-center gap-4 border-y border-line px-6 py-24 text-center">
       <h2 className="text-heading-3 text-ink-strong">Your cart is empty</h2>
-      <p className="max-w-text text-body text-ink-muted">
+      <p className="max-w-105 text-body text-ink-muted">
         Limited drops sell out. Have a look before they move to the archive.
       </p>
-      <Link to="/shop" className={primaryButton}>
+      <Link to="/shop" className={button('primary', 'md') + ' mt-3'}>
         Browse products
       </Link>
     </section>

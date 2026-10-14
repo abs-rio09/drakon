@@ -1,9 +1,9 @@
 import { useState, type FormEvent, type ReactNode } from 'react'
 import { Link } from 'react-router'
-import { CheckIcon, ChevronDownIcon, LockIcon } from '../components/icons'
+import { CashIcon, CheckIcon, ChevronDownIcon, LockIcon } from '../components/icons'
 import { describedBy } from '../components/ui/describedBy'
-import { Field, FieldError, inputClass } from '../components/ui/Field'
-import { container, inlineLink, panel, primaryButton, secondaryButton } from '../components/ui/styles'
+import { Field, FieldError, inputClass, textareaClass } from '../components/ui/Field'
+import { button, container, inlineLink, panel, primaryButton, secondaryButton } from '../components/ui/styles'
 import { resolveCart, subtotalPaisa, type CartItem } from '../features/cart/cartItems'
 import { useCart } from '../features/cart/useCart'
 import { zoneFor } from '../features/checkout/deliveryQuote'
@@ -120,9 +120,9 @@ function CheckoutView({ items }: { items: CartItem[] }) {
   const isDhaka = form.district === dhakaDistrict
 
   return (
-    <div className={container + ' flex flex-col gap-10 pt-12 pb-0 sm:pt-16 lg:pb-24'}>
+    <div className={container + ' flex flex-col gap-10 pt-14 pb-0 lg:pb-32'}>
       <title>Checkout: Drakon</title>
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-2">
         <h1 className="text-heading-2 text-ink-strong sm:text-heading-1">Checkout</h1>
         <p className="text-body-lg text-ink-muted">No account needed. Pay in cash when your order arrives.</p>
       </div>
@@ -130,19 +130,33 @@ function CheckoutView({ items }: { items: CartItem[] }) {
       {/* Phones and tablets: the total first, details at the end */}
       <a
         href="#summary"
-        className="flex items-center justify-between gap-4 rounded-2xl border border-line bg-surface-raised px-4 py-3 lg:hidden"
+        className="flex items-center justify-between gap-4 rounded-2xl border border-line bg-surface-raised px-5 py-4 lg:hidden"
       >
-        <span className="flex flex-col">
-          <span className="text-label text-ink-strong">Your order</span>
+        <span className="flex items-center gap-3">
+          <span className="flex" aria-hidden="true">
+            {items.slice(0, 2).map(({ product, variant }, i) => (
+              <img
+                key={variant.id}
+                src={product.images[variant.imageIndex ?? 0]?.thumb ?? product.images[0].thumb}
+                alt=""
+                className={
+                  'size-10 rounded-lg border-2 border-surface-raised bg-field object-cover' + (i > 0 ? ' -ml-3' : '')
+                }
+              />
+            ))}
+          </span>
+          <span className="flex flex-col">
+          <span className="text-body font-medium text-ink-strong">Your order</span>
           <span className="text-caption text-ink-muted tabular-nums">
             {count === 1 ? '1 item' : `${count} items`}, see details
+          </span>
           </span>
         </span>
         <span className="text-price text-ink-strong tabular-nums">{formatTaka(total)}</span>
       </a>
 
       <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-10 lg:grid-cols-[minmax(0,1fr)_420px] lg:gap-20">
-        <form noValidate onSubmit={onSubmit} aria-label="Checkout details" className={panel + ' px-6 sm:px-8'}>
+        <form noValidate onSubmit={onSubmit} aria-label="Checkout details" className={panel + ' px-6 py-2 sm:px-10'}>
           {/* 1 Contact */}
           <FormSection number={1} title="Contact" id="s-contact">
             <div className="grid gap-6 sm:grid-cols-2">
@@ -254,11 +268,11 @@ function CheckoutView({ items }: { items: CartItem[] }) {
                             update('dhakaArea', a.id)
                             touch('dhakaArea')
                           }}
-                          className="mt-1 size-4 shrink-0 accent-ink-strong"
+                          className="mt-0.5 size-4.5 shrink-0 accent-ink-strong"
                         />
                         <span className="flex flex-col">
                           <span className="text-body font-medium text-ink-strong">{a.label}</span>
-                          <span className="text-caption text-ink-muted tabular-nums">
+                          <span className="text-caption text-ink-subtle tabular-nums">
                             {a.hint}, {z ? formatTaka(z.chargePaisa) : ''}
                           </span>
                         </span>
@@ -279,7 +293,7 @@ function CheckoutView({ items }: { items: CartItem[] }) {
                 rows={3}
                 autoComplete="street-address"
                 placeholder="House, road, block, landmark"
-                className={inputClass + ' min-h-30 resize-y'}
+                className={textareaClass + ' min-h-26'}
               />
             </Field>
 
@@ -307,7 +321,7 @@ function CheckoutView({ items }: { items: CartItem[] }) {
                   onChange={(e) => update('isGift', e.target.checked)}
                   aria-controls="gift-box"
                   aria-expanded={form.isGift}
-                  className="mt-1 size-4 shrink-0 accent-ink-strong"
+                  className="mt-0.5 size-5 shrink-0 accent-ink-strong"
                 />
                 <span className="flex flex-col">
                   <span className="text-body font-medium text-ink-strong">This is a gift</span>
@@ -316,7 +330,7 @@ function CheckoutView({ items }: { items: CartItem[] }) {
               </label>
 
               {form.isGift && (
-                <div id="gift-box" className="flex flex-col gap-6 border-l border-line-strong pl-4 sm:pl-6">
+                <div id="gift-box" className="flex flex-col gap-6 rounded-2xl border border-line bg-surface p-4 sm:p-6">
                   <div className="grid gap-6 sm:grid-cols-2">
                     <Field id={fieldId('giftName')} label="Receiver's name" required error={errorFor('giftName')}>
                       <input
@@ -360,7 +374,7 @@ function CheckoutView({ items }: { items: CartItem[] }) {
                       rows={3}
                       maxLength={GIFT_NOTE_MAX}
                       placeholder="Happy birthday. Stay up late, build great things."
-                      className={inputClass + ' min-h-30 resize-y'}
+                      className={textareaClass + ' min-h-24'}
                     />
                   </Field>
                   <label className="flex cursor-pointer items-center gap-3">
@@ -370,12 +384,15 @@ function CheckoutView({ items }: { items: CartItem[] }) {
                       onChange={(e) => update('hidePrices', e.target.checked)}
                       className="size-4 shrink-0 accent-ink-strong"
                     />
-                    <span className="text-body text-ink">Leave prices off the packing slip</span>
+                    <span className="text-label font-normal text-ink">Leave prices off the packing slip</span>
                   </label>
-                  <p role="note" className="rounded-xl border border-line bg-field px-4 py-3 text-caption text-ink-muted">
+                  <p role="note" className="flex items-start gap-3 border-t border-line pt-4 text-label font-normal text-ink">
+                    <CashIcon size={16} className="mt-0.5 shrink-0 text-ink-muted" />
+                    <span>
                     Cash on Delivery: the person who receives the parcel pays the courier{' '}
                     <span className="text-ink-strong tabular-nums">{formatTaka(total)}</span>. Let them know before it
                     arrives.
+                    </span>
                   </p>
                 </div>
               )}
@@ -391,11 +408,11 @@ function CheckoutView({ items }: { items: CartItem[] }) {
                 value="cod"
                 checked
                 readOnly
-                className="mt-1 size-4 shrink-0 accent-ink-strong"
+                className="mt-0.5 size-4.5 shrink-0 accent-ink-strong"
               />
               <span className="flex flex-col">
                 <span className="text-body font-medium text-ink-strong">Cash on Delivery</span>
-                <span className="text-caption text-ink-muted">Pay the courier in cash when your order arrives.</span>
+                <span className="text-caption text-ink-subtle">Pay the courier in cash when your order arrives.</span>
               </span>
             </ChoiceCard>
           </FormSection>
@@ -467,7 +484,7 @@ function ChoiceCard({ checked, children }: { checked: boolean; children: ReactNo
   return (
     <label
       className={
-        'flex cursor-pointer items-start gap-3 rounded-xl border px-4 py-3 transition-colors duration-150 ease-out has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-focus ' +
+        'flex cursor-pointer items-start gap-3 rounded-xl border p-4 transition-colors duration-150 ease-out has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-focus ' +
         (checked ? 'border-ink-strong bg-field' : 'border-line-strong hover:border-ink-muted')
       }
     >
@@ -483,7 +500,7 @@ function PlaceOrderButton({ block = false }: { block?: boolean }) {
       type="button"
       disabled
       aria-describedby="ordering-soon"
-      className={primaryButton + ' min-h-13 text-body' + (block ? ' w-full' : '')}
+      className={button('primary', 'lg') + (block ? ' w-full' : '')}
     >
       <LockIcon size={16} />
       Ordering opens soon
@@ -505,7 +522,7 @@ function OrderSummary({ items, subtotal, total, zoneLabel, deliveryPaisa, isGift
     <aside
       id="summary"
       aria-label="Order summary"
-      className={panel + ' flex scroll-mt-24 flex-col gap-6 p-6 sm:p-8 lg:sticky lg:top-8'}
+      className={panel + ' flex scroll-mt-24 flex-col gap-5 p-6 sm:p-8 lg:sticky lg:top-8'}
     >
       <h2 className="text-heading-3 text-ink-strong">Your order</h2>
       <ul className="flex flex-col gap-4">
@@ -514,7 +531,7 @@ function OrderSummary({ items, subtotal, total, zoneLabel, deliveryPaisa, isGift
             <img
               src={product.images[variant.imageIndex ?? 0]?.thumb ?? product.images[0].thumb}
               alt=""
-              className="size-14 shrink-0 rounded-lg bg-field object-cover"
+              className="size-16 shrink-0 rounded-lg bg-field object-cover"
             />
             <span className="flex min-w-0 flex-1 flex-col">
               <span className="truncate text-body text-ink-strong">{product.name}</span>
@@ -522,15 +539,15 @@ function OrderSummary({ items, subtotal, total, zoneLabel, deliveryPaisa, isGift
                 {variantName(product, variant)}, qty {qty}
               </span>
             </span>
-            <span className="text-body text-ink-strong tabular-nums">{formatTaka(linePaisa)}</span>
+            <span className="text-body font-medium text-ink-strong tabular-nums">{formatTaka(linePaisa)}</span>
           </li>
         ))}
       </ul>
 
-      <dl className="flex flex-col gap-3 border-t border-line pt-6">
+      <dl className="flex flex-col gap-3 border-t border-line pt-5">
         <div className="flex justify-between gap-4">
           <dt className="text-body text-ink-muted">Subtotal</dt>
-          <dd className="text-body text-ink-strong tabular-nums">{formatTaka(subtotal)}</dd>
+          <dd className="text-body font-medium text-ink-strong tabular-nums">{formatTaka(subtotal)}</dd>
         </div>
         <div className="flex justify-between gap-4">
           <dt className="flex flex-col">

@@ -28,7 +28,8 @@ export default function Shop() {
         </p>
       </PageIntro>
 
-      <nav aria-label="Collections" className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+      {/* py-1 leaves room for the focus outline inside the scrolling row */}
+      <nav aria-label="Collections" className="-mx-4 -my-1 overflow-x-auto px-4 py-1 sm:mx-0 sm:px-1">
         <ul className="flex gap-2">
           <li>
             <ChipLink to="/shop" current={!category}>
@@ -49,6 +50,7 @@ export default function Shop() {
         {products.length === 1 ? '1 piece' : `${products.length} pieces`}
       </p>
 
+      <h2 className="sr-only">Products</h2>
       {products.length > 0 ? (
         <ProductGrid products={products} />
       ) : (

@@ -1,21 +1,44 @@
 // Shared Tailwind class strings, so every button and link looks the same.
 // Button rules: docs/design/components/Button/README.md
 
+// Buttons are built from three parts: base + variant + size. Each element
+// gets exactly ONE size class set. (Adding a second min-h-* or px-* on top
+// does not work reliably: when two Tailwind classes set the same property,
+// the order in the generated CSS wins, not the order in the string.)
 const buttonBase =
-  'inline-flex items-center justify-center gap-2 rounded-xl text-label transition-colors duration-150 ease-out disabled:cursor-not-allowed disabled:opacity-40'
+  'inline-flex items-center gap-2 rounded-xl transition-colors duration-150 ease-out disabled:cursor-not-allowed disabled:opacity-40'
 
-// One primary button per screen: the thing the page is for.
-export const primaryButton =
-  buttonBase + ' min-h-11 bg-accent px-5 font-semibold text-on-accent hover:bg-accent-hover disabled:hover:bg-accent'
+const buttonVariants = {
+  // One primary button per screen: the thing the page is for.
+  primary: 'bg-accent font-semibold text-on-accent hover:bg-accent-hover disabled:hover:bg-accent',
+  // The second choice on a screen.
+  secondary:
+    'border border-line-strong font-medium text-ink-strong hover:border-ink-subtle hover:bg-field disabled:hover:border-line-strong disabled:hover:bg-transparent',
+}
 
-// Large version for the hero and the product page (52px tall, 16px label).
-export const primaryButtonLarge =
-  buttonBase + ' min-h-13 bg-accent px-8 text-body font-semibold text-on-accent hover:bg-accent-hover disabled:hover:bg-accent'
+const buttonSizes = {
+  sm: 'min-h-11 px-5 text-label', // 44px, the default
+  md: 'min-h-12 px-6 text-body', // 48px, empty states and forms
+  lg: 'min-h-13 px-6 text-body', // 52px, panels (Go to checkout)
+  hero: 'min-h-13 px-8 text-body', // 52px, the home hero
+  xl: 'min-h-14 px-6 text-body', // 56px, Add to cart on the product page
+}
 
-// The second choice on a screen.
-export const secondaryButton =
-  buttonBase +
-  ' min-h-11 border border-line-strong px-5 text-ink-strong hover:border-ink-subtle hover:bg-field disabled:hover:border-line-strong disabled:hover:bg-transparent'
+type ButtonOptions = {
+  // Label on the left, price on the right (Add to cart, ৳2,450).
+  spread?: boolean
+}
+
+export function button(
+  variant: keyof typeof buttonVariants,
+  size: keyof typeof buttonSizes = 'sm',
+  { spread = false }: ButtonOptions = {},
+) {
+  return [buttonBase, buttonVariants[variant], buttonSizes[size], spread ? 'justify-between' : 'justify-center'].join(' ')
+}
+
+export const primaryButton = button('primary')
+export const secondaryButton = button('secondary')
 
 // Text-only action (Cancel, Back, Remove).
 export const ghostButton =

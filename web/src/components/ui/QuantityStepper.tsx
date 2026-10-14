@@ -6,12 +6,15 @@ type QuantityStepperProps = {
   max: number
   onChange: (next: number) => void
   label: string // accessible name of the group, for example "Quantity"
+  // 'md' on the product page (48px wide buttons), 'sm' in the cart (44px).
+  size?: 'md' | 'sm'
 }
 
 // The − 1 + control. The buttons switch off at the limits.
-export function QuantityStepper({ value, min = 1, max, onChange, label }: QuantityStepperProps) {
+export function QuantityStepper({ value, min = 1, max, onChange, label, size = 'md' }: QuantityStepperProps) {
   const stepButton =
-    'grid h-11.5 w-12 place-items-center text-ink transition-colors duration-150 ease-out enabled:hover:bg-field disabled:cursor-not-allowed disabled:opacity-40'
+    (size === 'md' ? 'h-11.5 w-12' : 'h-10.5 w-11') +
+    ' grid place-items-center text-ink transition-colors duration-150 ease-out enabled:hover:bg-field disabled:cursor-not-allowed disabled:opacity-40'
   return (
     <div role="group" aria-label={label} className="inline-flex items-center rounded-xl border border-line-strong">
       <button
@@ -23,7 +26,7 @@ export function QuantityStepper({ value, min = 1, max, onChange, label }: Quanti
       >
         <MinusIcon size={16} />
       </button>
-      <span aria-live="polite" className="min-w-8 text-center text-body font-medium text-ink-strong tabular-nums">
+      <span aria-live="polite" className={(size === 'md' ? 'min-w-8' : 'min-w-7') + ' text-center text-body font-medium text-ink-strong tabular-nums'}>
         {value}
       </span>
       <button

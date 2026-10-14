@@ -1,4 +1,4 @@
-import { Outlet } from 'react-router'
+import { Outlet, useLocation } from 'react-router'
 import { resolveCart } from '../../features/cart/cartItems'
 import { useCart } from '../../features/cart/useCart'
 import { ScrollManager } from './ScrollManager'
@@ -9,6 +9,7 @@ import { SiteHeader } from './SiteHeader'
 // <Outlet /> is where react-router puts the page that matches the URL.
 export function RootLayout() {
   const { lines } = useCart()
+  const { pathname } = useLocation()
   // Count only what can still be ordered (sold-out lines are left out).
   const count = resolveCart(lines).items.reduce((sum, item) => sum + item.qty, 0)
   return (
@@ -16,12 +17,13 @@ export function RootLayout() {
       <ScrollManager />
       <a
         href="#main"
-        className="sr-only z-50 rounded-xl bg-surface-raised px-4 py-3 text-label text-ink-strong focus:not-sr-only focus:fixed focus:top-4 focus:left-4"
+        className="fixed top-4 left-4 z-50 -translate-y-24 rounded-xl border border-line-strong bg-surface-raised px-4 py-3 text-label text-ink-strong focus:translate-y-0"
       >
         Skip to content
       </a>
-      <SiteHeader cartCount={count} />
-      <main id="main" className="flex-1">
+      <SiteHeader cartCount={count} overPhoto={pathname === '/'} />
+      {/* tabIndex -1 lets the skip link move keyboard focus here */}
+      <main id="main" tabIndex={-1} className="flex-1 focus:outline-none">
         <Outlet />
       </main>
       <SiteFooter />

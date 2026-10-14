@@ -14,6 +14,9 @@ const NAV_LINKS = [
 type SiteHeaderProps = {
   // Total quantity in the cart. The bubble only shows when it is above 0.
   cartCount?: number
+  // On the home hero the bar starts transparent over the photo and turns
+  // glass once the page scrolls (NavBar README).
+  overPhoto?: boolean
 }
 
 // Which nav link belongs to the page we are on, so it gets the underline.
@@ -29,11 +32,23 @@ function currentLink(pathname: string, hash: string): string | undefined {
 const iconButton =
   'relative grid size-11 place-items-center rounded-full text-ink-muted transition-colors duration-150 ease-out hover:bg-field hover:text-ink-strong'
 
-export function SiteHeader({ cartCount = 0 }: SiteHeaderProps) {
+export function SiteHeader({ cartCount = 0, overPhoto = false }: SiteHeaderProps) {
   const [menuOpen, setMenuOpen] = useState(false)
+  const [scrolled, setScrolled] = useState(false)
   const { pathname, hash } = useLocation()
   const current = currentLink(pathname, hash)
   const menuId = useId()
+
+  // Remember whether the page has scrolled, so the bar can turn glass.
+  useEffect(() => {
+    if (!overPhoto) return
+    function onScroll() {
+      setScrolled(window.scrollY > 8)
+    }
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [overPhoto])
 
   // Close the phone menu with the Escape key.
   useEffect(() => {
@@ -48,7 +63,14 @@ export function SiteHeader({ cartCount = 0 }: SiteHeaderProps) {
   const cartLabel = cartCount > 0 ? `Cart, ${cartCount} ${cartCount === 1 ? 'item' : 'items'}` : 'Cart, empty'
 
   return (
-    <header className="sticky top-0 z-30 border-b border-line bg-surface-glass backdrop-blur-xl">
+    <header
+      className={
+        'sticky top-0 z-30 border-b transition-[background-color,border-color] duration-150 ease-out ' +
+        (overPhoto && !scrolled && !menuOpen
+          ? 'border-transparent bg-transparent'
+          : 'border-line bg-surface-glass backdrop-blur-xl')
+      }
+    >
       <div className="relative mx-auto max-w-page px-4 sm:px-6 lg:px-8">
         <nav aria-label="Main" className="flex min-h-18 items-center justify-between gap-4">
           <Link to="/" className="inline-flex items-center gap-2">

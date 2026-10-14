@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import type { Product, Variant } from '../../mocks/catalog'
 import { formatTaka } from '../../lib/money'
 import { variantStockFact } from '../../lib/catalog'
@@ -6,24 +7,28 @@ type VariantPickerProps = {
   product: Product
   selectedId: string
   onSelect: (variant: Variant) => void
+  // Shown on the right of the legend row, for example a "Size guide" link.
+  aside?: ReactNode
 }
 
 // Choose a size, material or other variant. Built from real radio buttons
 // (hidden, but still there), so arrow keys and screen readers work for free.
 // Sold out variants stay visible but cannot be picked.
-export function VariantPicker({ product, selectedId, onSelect }: VariantPickerProps) {
+export function VariantPicker({ product, selectedId, onSelect, aside }: VariantPickerProps) {
   const selected = product.variants.find((v) => v.id === selectedId)
   // Rich rows (photo, note, price) when variants differ; small chips for sizes.
   const rich = product.variants.some((v) => v.note)
   const groupName = `variant-${product.id}`
 
+  // The legend floats left and the aside floats right, so both share one row.
   return (
-    <fieldset className="flex flex-col gap-4">
-      <legend className="mb-4 text-label text-ink-muted">
+    <fieldset className="min-w-0">
+      <legend className="float-left mb-4 text-label text-ink-muted">
         {product.variantKind} <span className="text-ink-strong">{selected?.label}</span>
       </legend>
+      {aside && <div className="float-right">{aside}</div>}
 
-      <div className={rich ? 'flex flex-col gap-2' : 'flex flex-wrap gap-3'}>
+      <div className={'clear-both ' + (rich ? 'flex flex-col gap-2' : 'flex flex-wrap gap-3')}>
         {product.variants.map((v) => {
           const soldOut = v.stock === 0
           const checked = v.id === selectedId

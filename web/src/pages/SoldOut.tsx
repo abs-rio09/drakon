@@ -4,8 +4,7 @@ import { ArchiveCard } from '../components/product/ArchiveCard'
 import { SoldOutBadge } from '../components/product/Badge'
 import { ProductPhoto } from '../components/product/ProductPhoto'
 import { ChipButton } from '../components/ui/Chip'
-import { PageIntro } from '../components/ui/PageIntro'
-import { container, primaryButton, textLink } from '../components/ui/styles'
+import { button, container, textLink } from '../components/ui/styles'
 import { getArchive, getCategories, getProduct, metaLine, priceLabel } from '../lib/catalog'
 
 // /sold-out — the archive of every limited run that sold out (SoldOut.dc.html).
@@ -19,23 +18,26 @@ export default function SoldOut() {
   return (
     <div className="flex flex-col">
       <title>The archive: Drakon</title>
-      <section className={container + ' pt-16 pb-12 sm:pt-20'}>
-        <PageIntro title="The archive">
-          <p>
-            Every DRAKON run that sold out. Limited pieces are never made again, so this is the only place you will see
-            them.
-          </p>
-        </PageIntro>
+      <section className={container + ' flex flex-col gap-5 pt-16 pb-16 sm:pt-24'}>
+        <h1 className="text-heading-1 text-ink-strong sm:text-display-md">The archive</h1>
+        <p className="max-w-text text-body-lg text-ink-muted">
+          Every DRAKON run that sold out. Limited pieces are never made again, so this is the only place you will see
+          them.
+        </p>
       </section>
 
       {latest && <LatestSoldOut slug={latest.slug} />}
 
-      <section aria-labelledby="all-title" className={container + ' flex flex-col gap-10 py-20 lg:py-32'}>
-        <div className="flex flex-wrap items-end justify-between gap-6">
-          <h2 id="all-title" className="text-heading-3 text-ink-strong sm:text-heading-2">
+      <section aria-labelledby="all-title" className={container + ' flex flex-col gap-8 pb-20 sm:pb-32'}>
+        <div className="flex flex-wrap items-center justify-between gap-4 border-t border-line pt-10">
+          <h2 id="all-title" className="text-heading-3 text-ink-strong">
             Every sold-out run
           </h2>
-          <div role="group" aria-label="Filter by collection" className="flex flex-wrap gap-2">
+          <div
+            role="group"
+            aria-label="Filter by collection"
+            className="-mx-4 -my-1 flex gap-2 overflow-x-auto px-4 py-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0"
+          >
             <ChipButton pressed={filter === 'all'} onClick={() => setFilter('all')}>
               All
             </ChipButton>
@@ -47,23 +49,26 @@ export default function SoldOut() {
           </div>
         </div>
 
+        <p role="status" className="sr-only">
+          {shown.length === 1 ? '1 sold-out run shown' : `${shown.length} sold-out runs shown`}
+        </p>
         {shown.length > 0 ? (
-          <ul className="grid border-t border-line md:grid-cols-3 md:gap-6 md:border-0 lg:gap-10" aria-live="polite">
+          <ul className="grid gap-y-10 sm:grid-cols-2 sm:gap-x-6 sm:gap-y-14 lg:grid-cols-3 lg:gap-x-10">
             {shown.map((p) => (
               <li key={p.id}>
-                <ArchiveCard product={p} />
+                <ArchiveCard product={p} layout="grid" />
               </li>
             ))}
           </ul>
         ) : (
-          <p className="py-12 text-center text-body text-ink-muted" aria-live="polite">
+          <p className="py-12 text-center text-body text-ink-muted">
             Nothing in this collection has sold out yet.
           </p>
         )}
 
-        <div className="flex flex-col items-start gap-4 border-t border-line pt-10 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-body-lg text-ink-muted">Some pieces are still in their run.</p>
-          <Link to="/shop" className={primaryButton}>
+        <div className="flex flex-wrap items-center justify-between gap-4 border-t border-line pt-10">
+          <p className="text-body text-ink-muted">Some pieces are still in their run.</p>
+          <Link to="/shop" className={button('primary', 'md')}>
             Shop the current drop
           </Link>
         </div>
@@ -80,19 +85,19 @@ function LatestSoldOut({ slug }: { slug: string }) {
   const successor = product.successorSlug ? getProduct(product.successorSlug) : undefined
 
   return (
-    <section aria-labelledby="latest-title" className={container}>
-      <div className="grid items-center gap-8 border-t border-line pt-12 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:gap-20">
+    <section aria-labelledby="latest-title" className={container + ' pb-24'}>
+      <div className="grid grid-cols-[minmax(0,1fr)] items-center gap-8 border-t border-line pt-10 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:gap-16">
         <div className="relative">
           <ProductPhoto src={cover.src} alt={cover.alt} aspect="aspect-[4/3]" soldOut zoomOnHover={false} eager />
           <SoldOutBadge />
         </div>
-        <div className="flex flex-col gap-6">
+        <div className="flex max-w-110 flex-col gap-6">
           <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-2">
-              <h2 id="latest-title" className="text-heading-3 text-ink-muted sm:text-heading-2">
+              <h2 id="latest-title" className="text-heading-3 text-ink-strong sm:text-heading-2">
                 {product.name}
               </h2>
-              <span className="text-body text-ink-subtle">{metaLine(product)}. The latest to sell out.</span>
+              <span className="text-body text-ink-muted">{metaLine(product)}. The latest to sell out.</span>
             </div>
             <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-t border-line pt-4">
               <span className="text-price-lg text-ink-subtle tabular-nums line-through">
@@ -102,9 +107,9 @@ function LatestSoldOut({ slug }: { slug: string }) {
               <span className="text-figure text-ink-muted">Sold out, never restocked</span>
             </div>
           </div>
-          <p className="text-body-lg text-ink-muted">{product.summary}</p>
+          <p className="text-body text-ink-muted">{product.summary}</p>
           {successor && (
-            <Link to={`/product/${successor.slug}`} className={textLink + ' self-start text-label text-ink-strong'}>
+            <Link to={`/product/${successor.slug}`} className={textLink + ' self-start text-body font-medium text-ink-strong'}>
               See {successor.name}, on sale now
             </Link>
           )}

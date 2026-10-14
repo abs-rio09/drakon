@@ -54,7 +54,14 @@ export default function Search() {
             : `${results.length} ${results.length === 1 ? 'result' : 'results'} for "${query}"`}
         </p>
       )}
-      {results.length > 0 && <ProductGrid products={results} />}
+      {results.length > 0 && (
+        <section aria-labelledby="results-title">
+          <h2 id="results-title" className="sr-only">
+            Results
+          </h2>
+          <ProductGrid products={results} />
+        </section>
+      )}
     </div>
   )
 }
