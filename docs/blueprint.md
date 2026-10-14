@@ -1,6 +1,6 @@
 # Drakon Blueprint (Task 1)
 
-Status: ভাগ ১–৩ সম্পন্ন (2026-10-06)। ভাগ ৪–১১ খসড়া লেখা হয়েছে (2026-10-14), Rio-র অনুমোদন বাকি — 🟡 চিহ্নিত ৪টা সিদ্ধান্ত।
+Status: ভাগ ১–৩ সম্পন্ন (2026-10-06)। ভাগ ৪–১১ খসড়া লেখা হয়েছে (2026-10-14), Rio-র অনুমোদন বাকি — 🟡 চিহ্নিত সিদ্ধান্তগুলো (১ নম্বর ✅ হয়ে গেছে)।
 
 ## Blueprint ভাগ
 1. MVP বাছাই ✅
@@ -32,7 +32,7 @@ Status: ভাগ ১–৩ সম্পন্ন (2026-10-06)। ভাগ ৪�
 - Dev tools: Node.js (শুধু Vite চালাতে), Go, PostgreSQL, VS Code, Git
 
 ## Services — সিদ্ধান্ত: এখন শুধু ফ্রি, কোনো paid নয়
-- Frontend hosting: Cloudflare Workers Static Assets (ফ্রি) — 2026-10-15-এ Pages থেকে বদলানোর সুপারিশ, Rio-র হ্যাঁ বাকি
+- Frontend hosting: Cloudflare Workers Static Assets (ফ্রি) — ✅ 2026-10-15 চূড়ান্ত (Pages-এর বদলে)
 - ছবি: Cloudflare R2 (10 GB ফ্রি, egress ফ্রি)
 - Email: Resend (ফ্রি: 3,000/মাস, 100/দিন)
 - Database: Neon (ফ্রি: 1 GB/project; 5 মিনিট অব্যবহারে ঘুমায়)
@@ -110,7 +110,7 @@ Neon (ফ্রি) ── PostgreSQL
 - Frontend কখনো সরাসরি database ছোঁয় না (Technical_Direction_v2.drawio-এর মতোই)।
 - Business-এর সংখ্যা (60/100 টাকা, 48 ঘণ্টা, limit 5, 3 দিন, 7 দিন) code-এ লেখা থাকবে না; database-এর `settings` আর `delivery_zones` table থেকে আসবে।
 
-**🟡 সিদ্ধান্ত দরকার ১ — `/api` proxy (সুপারিশ: হ্যাঁ)**
+**✅ সিদ্ধান্ত ১ — `/api` proxy + Cloudflare Workers hosting (Rio হ্যাঁ বলেছে, 2026-10-15)**
 - সমস্যা: website Cloudflare-এ (`workers.dev`) আর API `onrender.com`-এ থাকলে login cookie "third-party cookie" হয়ে যায়। Safari আর অনেক phone browser সেটা আটকে দেয়, তখন admin login কাজ করবে না।
 - সমাধান: Cloudflare-এর একটা ছোট code `/api/*` request-গুলো Render-এ পাঠিয়ে দেবে। Browser ভাববে সব একই site (`drakon.<account>.workers.dev/api/...`)। Cookie ঠিক থাকবে, CORS ঝামেলাও থাকবে না।
 - এটা Node/Express server নয়। মাত্র ~15 লাইনের JS, Cloudflare-এর ফ্রি plan-এ চলে।

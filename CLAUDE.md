@@ -59,7 +59,7 @@ Open decisions: `docs/open-questions.md` — **do not build anything marked 🟡
 - React Router v7: `npm i react-router`; import `BrowserRouter, Routes, Route, Link` from `"react-router"` (not `react-router-dom`).
 - Vite: `npm create vite@latest web -- --template react-ts`; dev proxy `server.proxy: { '/api': { target: 'http://localhost:8080', changeOrigin: true } }` (keep the `/api` prefix — the Go router expects it).
 - sqlc: `version: "2"`, `engine: postgresql`, `schema: db/migrations` (goose files; sqlc ignores `-- +goose Down`), `sql_package: "pgx/v5"`. Zero-pad migration names (`00001_catalog.sql`).
-- Hosting (pending Rio's answer, open question 1): Cloudflare **Workers Static Assets** (recommended over Pages for new projects) with `not_found_handling: "single-page-application"` and `run_worker_first: ["/api/*"]` proxying to Render.
+- Hosting (decided 2026-10-15): Cloudflare **Workers Static Assets** (not Pages) with `not_found_handling: "single-page-application"` and `run_worker_first: ["/api/*"]` proxying to Render.
 
 ## Commands (fill in as the project grows)
 - web: `cd web && npm run dev` (http://localhost:5173)
