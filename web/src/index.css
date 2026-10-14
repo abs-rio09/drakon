@@ -132,6 +132,16 @@
   }
 }
 
+/* A thin diagonal line, used through a sold-out size button */
+@utility bg-strike {
+  background: linear-gradient(
+    to top right,
+    transparent calc(50% - 0.75px),
+    var(--color-line-strong) 50%,
+    transparent calc(50% + 0.75px)
+  );
+}
+
 @layer base {
   html {
     color-scheme: dark;

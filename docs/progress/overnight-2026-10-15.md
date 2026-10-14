@@ -135,3 +135,39 @@ Commit-গুলো দেখতে: `git log --oneline`
 - Header-এর "Collections" link Home-এর `#collections` section-এ যায় (আলাদা page নেই, design-এও নেই)।
 - Mock product-এর অনেক বর্ণনায় `[ ]` বন্ধনী আছে (design থেকে নেওয়া) — আসল লেখা তুমি পরে admin থেকে দেবে।
 
+---
+
+## ধাপ 4 — Product details page (variant বাছাই সহ)
+
+### কী বানালাম
+- `pages/Product.tsx` (`/product/:slug`) — Product.dc.html আর ProductCard.dc.html মিলিয়ে:
+  - Breadcrumb (Shop / Collection / নাম)।
+  - বড় ছবি + thumbnail সারি; thumbnail চাপলে বড় ছবি বদলায়। Limited হলে ছবিতে "Limited run" / "Edition of 100" badge।
+  - Buy box: নাম, বর্ণনা লাইন, দাম (বাছাই করা variant-এর), মোট stock fact।
+  - **Variant picker** (`components/product/VariantPicker.tsx`): দুই রকম — hoodie/tee-র জন্য ছোট size বাটন (S M L XL), Dragon Flame card-এর জন্য বড় সারি (ছোট ছবি, নাম, note, দাম, stock)। Material বদলালে দাম আর বড় ছবিও বদলায়। Sold out variant (যেমন hoodie-র L) দাগ-কাটা, চাপা যায় না।
+  - **Quantity stepper** (`components/ui/QuantityStepper.tsx`): সর্বোচ্চ = purchase limit আর stock-এর মধ্যে যেটা কম। পাশে "Limit 2 per customer"।
+  - Add to cart বাটন মোট দামসহ — **এই ধাপে বন্ধ (disabled)**, ধাপ 5-এ চালু হবে।
+  - নিচে promises (COD, delivery ৳60/৳100, return 3 দিন, "One run only") — সব সংখ্যা mocks থেকে।
+  - About this piece + details table, আর "Pairs well with" (একই collection আগে)।
+  - Sold out / archived product (যেমন `/product/founders-playcard-deck`): ধূসর ছবি, দাম কাটা, কেনার কোনো বাটন নেই, archive-এ যাওয়ার link।
+  - ভুল slug → 404।
+
+### মূল ধারণা
+- **একাধিক `useState`:** `variantId`, `qty`, `imageIndex` — তিনটা আলাদা মান মনে রাখা হয়। একটা বদলালে React page আবার আঁকে।
+- **Derived value (হিসাব করে পাওয়া মান) state-এ রাখি না:** `variant`, `maxQty`, `canBuy` প্রতিবার render-এ state থেকে হিসাব হয়। এতে দুই জায়গায় একই তথ্য রেখে গরমিল হওয়ার ভয় নেই।
+- **`key` দিয়ে state reset:** `<ProductView key={product.id} />` — অন্য product-এ গেলে key বদলায়, React পুরনো component ফেলে নতুন বানায়, তাই qty আবার 1 থেকে শুরু।
+- **Props-এ function পাঠানো:** `<VariantPicker onSelect={selectVariant} />` — child component বাছাই হলে parent-এর function ডাকে ("lifting state up")।
+- **লুকানো radio button:** আসল `<input type="radio">` আছে কিন্তু `sr-only` দিয়ে চোখে লুকানো; তার `<label>`-টাকেই সুন্দর বাটনের মতো সাজানো। এতে keyboard-এর arrow key আর screen reader নিজে থেকেই কাজ করে। Tailwind-এর `has-[:focus-visible]:outline-2` দিয়ে label-এ focus দাগ।
+- **Tailwind `@utility`:** `index.css`-এ নিজের utility `bg-strike` (sold-out size-এর কোনাকুনি দাগ) বানালাম।
+- **CSS subgrid:** details table-এ `grid-cols-subgrid` দিয়ে সব সারির কলাম এক লাইনে।
+
+### ব্রাউজারে test
+1. Home → "Dragon Flame Card · Edition 01" → Metal চাপো: দাম ৳1,490, বড় ছবি metal card। "Plastic key-ring" চাপা যায় না (Sold out)।
+2. Quantity + চাপো: 2-এর পরে + বন্ধ (limit 2)। Metal-এ stock 3, limit 2 → সর্বোচ্চ 2।
+3. Hoodie: L দাগ-কাটা; M বাছলে "Only 4 left in size M"।
+4. `/product/founders-playcard-deck` → sold out রূপ। `/product/ember-logo-tee-black` → সব size শেষ, বাটনে "Out of stock"।
+5. Keyboard: Tab দিয়ে variant-এ গিয়ে ←/→ arrow চাপো, বাছাই বদলায়।
+
+### প্রশ্ন
+- "Size guide" link এখন details table-এ নিয়ে যায়; আসল মাপের chart (cm) তোমাকে দিতে হবে।
+
