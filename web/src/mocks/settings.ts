@@ -9,5 +9,7 @@ export const settings = {
   defaultPurchaseLimit: 5,
   // Returns are accepted within this many days after delivery.
   returnDays: 3,
+  // "Only 3 left" wording starts at this stock count or below.
+  lowStockThreshold: 5,
   currency: 'BDT',
 } as const

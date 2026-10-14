@@ -95,3 +95,43 @@ Commit-গুলো দেখতে: `git log --oneline`
 - **react-router v8 এসে গেছে।** এখন v7 রেখেছি (তোমার নির্দেশ)। পরে v8-এ যাবে কি? আমার সুপারিশ: MVP শেষ হওয়া পর্যন্ত v7, কারণ CLAUDE.md আর blueprint সেটাই বলে।
 - Policy page-এর লেখা খসড়া; `[ ]` বন্ধনীর জায়গাগুলো তোমাকে লিখতে হবে।
 
+---
+
+## ধাপ 3 — Home page, ProductCard, mock data (সাথে Shop/Category আর Search)
+
+### কী বানালাম
+- **`web/src/mocks/`** — সব নকল data এক জায়গায়, প্রতিটা ফাইলের উপরে লেখা "will be replaced by the Go API":
+  - `catalog.ts` — 4টা collection, 10টা product (7টা বিক্রিতে, 3টা sold out/archived)। প্রতিটা product-এর একাধিক **variant** (size / material), প্রতিটা variant-এর নিজের `pricePaisa` আর `stock` — ঠিক blueprint-এর database plan-এর মতো।
+  - `delivery.ts` — দুইটা zone (৳60 / ৳100, paisa-তে 6000 / 10000), ঢাকার "city / outside city" পছন্দ, আর বাংলাদেশের 64টা জেলা।
+  - `settings.ts` — 48 ঘণ্টা, limit 5, return 3 দিন, "Only N left" কখন দেখাবে (5)।
+- **`web/src/lib/`** — mock data পড়ার function: `getShopProducts()`, `getProduct(slug)`, `getArchive()`, `searchProducts()`, `stockFact()` ("38 of 100 left", "Only 3 left", "Sold out") ইত্যাদি। পরে শুধু এই ফাইলগুলো Go API-তে `fetch` করবে; page-গুলো বদলাতে হবে না।
+- **Component** (`components/product/`): `GalleryLabel` (নাম → এক লাইনের বর্ণনা → দাগ → দাম + stock), `ProductPhoto` (ছবি fade-in, hover-এ ধীরে zoom, sold out হলে grayscale), `ProductCard` + `ProductGrid` (phone-এ 2, 640px থেকে 3, 1024px থেকে 4 কলাম), `ArchiveCard`, `Badge`।
+- **Home page** (`pages/Home.tsx`, Main.dc.html থেকে): hero ("Made once. Never again." + ছবির উপর glass gallery label), facts সারি (৳60/৳100 আসে `mocks/delivery.ts` থেকে), The current drop, বাংলা brand story, Shop by collection, Sold out archive-এর ঝলক।
+- **Shop / Category** (`/shop`, `/shop/clothes`…) — collection chip দিয়ে filter; ভুল collection নাম হলে 404।
+- **Search** (`/search?q=card`) — নাম দিয়ে খোঁজা; শব্দটা URL-এ থাকে।
+- `web/public/img/` — design folder থেকে 37টা ছবি কপি (Founders Deck II-এর ছবি বাদ, ওটা DRAFT product)।
+
+### মূল ধারণা
+- **TypeScript `type`:** `type Product = { name: string; variants: Variant[] … }` — C-এর `struct`-এর মতো। ভুল field লিখলে `npm run build` তখনই error দেয়।
+- **Union type:** `status: 'DRAFT' | 'ACTIVE' | 'SOLD_OUT' | 'ARCHIVED'` — এই চারটার বাইরে কিছু লেখা যায় না (C-এর `enum`-এর মতো)।
+- **টাকা paisa-তে:** `pricePaisa: 245000` = ৳2,450। শুধু `formatTaka()` (`lib/money.ts`) "৳" বানায়। Float কখনো না, কারণ 0.1 + 0.2 ≠ 0.3।
+- **Array method:** `.filter()` (বাছাই), `.map()` (প্রতিটা থেকে নতুন কিছু), `.reduce()` (যোগফল, যেমন মোট stock), `.find()` (প্রথম মিল)।
+- **Component composition:** `ProductCard` নিজে `ProductPhoto` আর `GalleryLabel` ব্যবহার করে — ছোট টুকরা জুড়ে বড় জিনিস।
+- **`useParams()`** দিয়ে `/shop/:category` থেকে collection নাম; **`useSearchParams()`** দিয়ে `?q=` পড়া/লেখা।
+- **React 19-এ `<title>`:** page component-এর ভেতরে `<title>` লিখলে React নিজেই সেটা browser tab-এ বসায়।
+- **Tailwind:** `aspect-square`, `grid-cols-2 sm:grid-cols-3 lg:grid-cols-4`, `bg-linear-to-r from-surface/90` (token রং 90% opacity-তে), `group` + `group-hover:scale-[1.03]` (card-এর উপর mouse গেলে ভেতরের ছবি zoom), `motion-safe:animate-…` (যারা কম animation চায় তাদের জন্য বন্ধ)।
+- **Accessibility:** ছবির link `tabIndex={-1}` + `aria-hidden` (নামের link-টাই যথেষ্ট, Tab দুবার থামে না), sold out দামের আগে screen reader-এর জন্য লুকানো "Was"।
+
+### ব্রাউজারে test
+1. `/` — hero, 4টা product card, বাংলা লেখা, 4টা collection tile, 3টা sold out (ধূসর, দাম কাটা)।
+2. Collection tile চাপো → `/shop/clothes` ইত্যাদি। Chip চেপে collection বদলাও।
+3. Header-এর 🔍 → `card` লিখে Search।
+4. `web/src/mocks/catalog.ts`-এ drone-এর `stock: 3` বদলে `0` করো → card-এ "Sold out" দেখাবে। `settings.ts`-এ `lowStockThreshold` বদলে দেখো "Only N left" কখন আসে।
+5. 375px-এ: hero-র নিচে label, product 2 কলামে, archive সারি আকারে।
+
+### সিদ্ধান্ত / প্রশ্ন
+- এই browser-এ (আমার test machine) "reduce motion" চালু ছিল, তাই animation বন্ধ দেখেছি — এটাই ঠিক আচরণ। তোমার PC-তে hero ধীরে ভেসে উঠবে।
+- Product card-এর "+" (quick add) বাটন ধাপ 5-এ cart তৈরির পরে যোগ হবে।
+- Header-এর "Collections" link Home-এর `#collections` section-এ যায় (আলাদা page নেই, design-এও নেই)।
+- Mock product-এর অনেক বর্ণনায় `[ ]` বন্ধনী আছে (design থেকে নেওয়া) — আসল লেখা তুমি পরে admin থেকে দেবে।
+
