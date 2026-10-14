@@ -11,5 +11,8 @@ export const settings = {
   returnDays: 3,
   // "Only 3 left" wording starts at this stock count or below.
   lowStockThreshold: 5,
+  // Longest gift note we print on the card, and longest courier note.
+  giftNoteMaxChars: 150,
+  courierNoteMaxChars: 200,
   currency: 'BDT',
 } as const

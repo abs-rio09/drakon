@@ -46,6 +46,7 @@ export type Product = {
   images: ProductImage[]
   variants: Variant[]
   soldOutAt?: string // ISO date, for the archive order
+  successorSlug?: string // a newer edition that is on sale now
 }
 
 export const categories: Category[] = [
@@ -254,6 +255,7 @@ export const products: Product[] = [
     images: [{ src: '/img/so-hoodie01.webp', thumb: '/img/t-so-hoodie01.webp', name: 'Back', alt: 'Folded black hoodie, Edition 01, back print' }],
     variants: [{ id: 'v-h1-m', sku: 'HD01-M', label: 'M', pricePaisa: 210000, stock: 0 }],
     soldOutAt: '2026-10-08',
+    successorSlug: 'ember-night-hoodie-edition-02',
   },
   {
     id: 'p9',

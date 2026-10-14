@@ -255,3 +255,69 @@ Commit-গুলো দেখতে: `git log --oneline`
 - **Dhaka-র "city / outside city" আগে থেকে বাছাই করা থাকে না** (design-এ "Dhaka city" আগে থেকে টিক দেওয়া ছিল)। ভুল করে কম charge দেখানো এড়াতে buyer-কে নিজে বাছতে হয়। ঠিক আছে কিনা বলো।
 - Delivery আর total এখন browser-এ mock থেকে হিসাব (শুধু দেখানোর জন্য)। Go API এলে `quote` endpoint থেকে আসবে।
 
+---
+
+## ধাপ 7 — Sold Out archive, Track order, About, Contact (সাথে Order page)
+
+### কী বানালাম
+- **Sold Out archive** (`/sold-out`, SoldOut.dc.html থেকে): "The archive" শিরোনাম; সবচেয়ে সাম্প্রতিক sold out run বড় করে (ধূসর ছবি, দাম কাটা, "Sold out, never restocked", আর নতুন edition থাকলে link — Hoodie Edition 01 → Edition 02); তারপর "Every sold-out run" — collection chip দিয়ে filter (All / Playcards / Sports toys / Tech toys / Clothes); কিছু না থাকলে "Nothing in this collection has sold out yet."; শেষে "Shop the current drop"। Mock-এ `successorSlug` field যোগ করেছি।
+- **Track order** (`/track`): Order number (DRK-7K3Q9P ধাঁচ, ছোট হাতে লিখলেও চলে) + Phone, যাচাই সহ। ঠিক থাকলে **কোনো নকল ফলাফল নয়** — শুধু বলে "Tracking opens with ordering", কারণ এখনো কোনো order নেই।
+- **About** (`/about`): brand-vision.md থেকে — বাংলা উক্তি, নামের মানে, কাদের জন্য (night workers, dream chasers…), "How we make things"।
+- **Contact** (`/contact`): Phone / Email / Facebook / Hours — **এখন "Coming soon"**, কারণ আসল তথ্য জানি না (`src/mocks/contact.ts`-এ `null`)। নিচে সাধারণ প্রশ্ন (order কোথায়, return, কখন call)।
+- **Order confirmation** (`/order/:number`): সৎভাবে বলে "No order to show — online ordering opens soon"। নকল order number দেখায় না।
+- পুরনো `ComingSoon` placeholder মুছে ফেলেছি — এখন সব route-এ আসল page।
+- Gift note (150) আর courier note (200)-এর সীমাও `mocks/settings.ts`-এ সরিয়েছি, যাতে সব business সংখ্যা এক জায়গায়।
+
+### মূল ধারণা
+- **Client-side filter:** `useState('all')` + `archive.filter(...)` — chip চাপলে state বদলায়, তালিকা নতুন করে ফিল্টার হয়, server লাগে না।
+- **`aria-pressed`** — toggle বাটন (chip) চাপা আছে কিনা screen reader-কে জানায়।
+- **Optional field (`successorSlug?:`)** আর `&&` দিয়ে শর্তসাপেক্ষে link দেখানো।
+- **`null` মানে "এখনো ঠিক হয়নি"** — `contact.phone ?? <NotSetYet />`: `??` বাঁ পাশ `null`/`undefined` হলে ডান পাশ নেয়।
+- **নিয়ম মানা:** backend ছাড়া কোনো page নকল ডেটা (order, tracking ফল) দেখায় না।
+
+### ব্রাউজারে test
+1. `/sold-out` → chip "Clothes" চাপো → শুধু Hoodie; "Tech toys" → "Nothing … yet"।
+2. `/track` → খালি রেখে Track → বার্তা; `abc` → format বার্তা; `drk-7k3q9p` + `01712345678` → "Tracking opens with ordering"।
+3. `/about`, `/contact` দেখো। `src/mocks/contact.ts`-এ `phone: '01XXXXXXXXX'` বসিয়ে দেখো phone link হয়ে যায়।
+4. `/order/DRK-12345` → "No order to show"।
+
+### প্রশ্ন
+- **Contact-এর আসল phone, email, Facebook page link আর সময় কী হবে?** `web/src/mocks/contact.ts`-এ বসালেই page-এ দেখাবে।
+- Track page-এ design-এর "Recent on this device" chip আর timeline বাদ — order চালু হলে (Go API সহ) যোগ হবে।
+
+---
+
+## শেষ সারসংক্ষেপ
+
+**সাতটা ধাপই শেষ, প্রতিটা আলাদা commit।** প্রতিটা commit-এর আগে `npm run build` আর `npm run lint` চালিয়ে 0 error, 0 warning। সব page 375px-এ মেপে দেখেছি — কোথাও পাশে scroll নেই। 1280px+-এও screenshot দিয়ে দেখেছি।
+
+| ধাপ | Commit |
+|---|---|
+| 1 Header/Footer | `web: add SiteHeader and SiteFooter (step 1c)` |
+| 2 Routing | `web: add react-router v7 routes and page shells (step 2)` |
+| 3 Home, ProductCard, mocks | `web: add mock catalog, ProductCard, Home, Shop and Search pages (step 3)` |
+| 4 Product page | `web: add product details page with variant picker (step 4)` |
+| 5 Cart | `web: add localStorage cart, quick add and cart page (step 5)` |
+| 6 Checkout UI | `web: add checkout form with validation; ordering stays disabled (step 6)` |
+| 7 Sold Out, Track, About, Contact | `web: add sold-out archive, track, about, contact pages (step 7)` |
+
+**কী করিনি (নির্দেশ অনুযায়ী):** `api/`-এ কিছু না, admin না, account/sign-in না, কোনো payment বা নকল order না, GitHub-এ push না, repo-র বাইরে কিছু না। নতুন library শুধু `react-router@7`।
+
+**Mock data কোথায়:** `web/src/mocks/` (catalog, delivery, settings, contact)। Page-গুলো mock সরাসরি না পড়ে `web/src/lib/` আর `web/src/features/`-এর function দিয়ে পড়ে, তাই Go API এলে শুধু ওই function বদলাবে।
+
+### তোমার জন্য সব প্রশ্ন এক জায়গায়
+1. **react-router v8** এসেছে; v7 রেখেছি। ঠিক আছে?
+2. **Dhaka city / outside** — checkout-এ আগে থেকে বাছাই না রেখে buyer-কে বাছতে বাধ্য করেছি। ঠিক আছে?
+3. **bKash/Nagad "Coming soon"** লাইন বাদ দিয়েছি (COD-only নিয়ম)। রাখতে চাও?
+4. **Contact তথ্য** (phone, email, Facebook, সময়) দাও।
+5. **Policy page-এর** `[ ]` জায়গাগুলোর লেখা (return-এ delivery charge কে দেবে ইত্যাদি)।
+6. Home-এর header **design-এ hero ছবির উপর transparent**; আমি সব page-এ একই glass header রেখেছি (সহজ ও স্থির)। Transparent চাইলে বলো।
+7. Product-এর `[ ]` বর্ণনা (material, size chart) — পরে admin থেকে আসবে।
+
+### সকালে প্রথমে কী দেখবে
+```zsh
+cd ~/Desktop/projects/Drakon/drakon
+git log --oneline | head -8
+cd web && npm run dev
+```
+তারপর পুরো পথটা হেঁটে দেখো: Home → collection → product → variant বাছাই → Add to cart → Cart → Checkout (form ভরে "Check my details") → Track → Sold out।

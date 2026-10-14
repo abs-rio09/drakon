@@ -2,6 +2,7 @@
 // messages. The Go server will check everything again: the browser can be
 // changed by anyone, so it is never trusted on its own.
 import { dhakaDistrict, districts } from '../../mocks/delivery'
+import { settings } from '../../mocks/settings'
 
 export type CheckoutForm = {
   name: string
@@ -38,8 +39,8 @@ export const emptyCheckoutForm: CheckoutForm = {
   hidePrices: true,
 }
 
-export const GIFT_NOTE_MAX = 150
-export const COURIER_NOTE_MAX = 200
+export const GIFT_NOTE_MAX = settings.giftNoteMaxChars
+export const COURIER_NOTE_MAX = settings.courierNoteMaxChars
 
 // Bangladesh mobile numbers: 11 digits, 01 then 3–9, e.g. 01712345678.
 // People also type spaces, dashes or the +880 country code, so we clean
