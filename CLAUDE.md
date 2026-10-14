@@ -1,18 +1,18 @@
 # DRAKON — rules for Claude Code
 
 ## Who you are working with
-- Rio (Abu Bakkar), CSE student. Knows C, C++, Go basics, HTML, CSS. **New to** JavaScript, TypeScript, React, Tailwind, SQL, PostgreSQL.
+- Abu Bakkar Siddik, CSE student. Knows C, C++, Go basics, HTML, CSS. **New to** JavaScript, TypeScript, React, Tailwind, SQL, PostgreSQL.
 - **Explain in Bengali (বাংলা)**, beginner-friendly. Code, commands and comments stay in English.
 - Work in **small steps, one at a time**. After each step: say what to run, what he should see, then stop and wait.
 - Every implementation step covers: what we build → why → files → code → how to run → how to test → common errors.
 - Teach only the minimum concept needed for the current step, then apply it to DRAKON immediately.
-- Never call him just "Abu" — use "Rio" or "Abu Bakkar".
+- Address him as "Abu Bakkar Siddik" (or "Abu Bakkar"). Never just "Abu", and never a nickname. This is professional work.
 - He uses Ubuntu + zsh. Give exact commands ready to paste.
 
 ## What DRAKON is
 Premium dark collectible / lifestyle brand (cards, sports toys, tech toys, clothes). Bangladesh only, prices in ৳ (BDT).
 Full plan: `docs/blueprint.md` (business rules = source of truth). Brand story: `docs/brand-vision.md`.
-Open decisions: `docs/open-questions.md` — **do not build anything marked 🟡 until Rio answers it.**
+Open decisions: `docs/open-questions.md` — **do not build anything marked 🟡 until Abu Bakkar Siddik answers it.**
 
 ## Stack (decided — do not change without asking)
 - `web/` — Vite + React + TypeScript + Tailwind CSS. **Not Next.js.** Routing with react-router.
@@ -41,13 +41,13 @@ Open decisions: `docs/open-questions.md` — **do not build anything marked 🟡
 - Colors: midnight `#0a0f1b` page, bone `#f6f3ee` text, steel `#b3b8c4` secondary, ember `#ed751a` **only** for the logo and the one main action per screen.
 - Fonts: Outfit + Noto Sans Bengali (needed for the ৳ sign). 4/8 px spacing grid. Subtle animation only.
 
-## Folder layout on Rio's PC
+## Folder layout on Abu Bakkar Siddik's PC
 - Repo: `~/Desktop/projects/Drakon/drakon` (this folder).
-- Parent `~/Desktop/projects/Drakon/` also holds Rio's planning files (`Acheving_Goal.txt`, `Technical_Direction_v2.drawio`, ER diagram HTML, `Extra File/`). Read them only if asked; they are not part of the repo.
+- Parent `~/Desktop/projects/Drakon/` also holds Abu Bakkar Siddik's planning files (`Acheving_Goal.txt`, `Technical_Direction_v2.drawio`, ER diagram HTML, `Extra File/`). Read them only if asked; they are not part of the repo.
 - Note: `~/.git` exists (an accidental repo in the home folder). Never run git commands outside this repo.
 
 ## Old code
-`../drakon-old-nextjs` (= `~/Desktop/projects/Drakon/drakon-old-nextjs`) is the old Next.js + Supabase version. **Reference only.** Copy pieces only when Rio asks, converting `next/link` → react-router `Link`, `next/image` → `<img>`, and dropping Supabase. Never copy its `.env`, `node_modules`, `.next`.
+`../drakon-old-nextjs` (= `~/Desktop/projects/Drakon/drakon-old-nextjs`) is the old Next.js + Supabase version. **Reference only.** Copy pieces only when Abu Bakkar Siddik asks, converting `next/link` → react-router `Link`, `next/image` → `<img>`, and dropping Supabase. Never copy its `.env`, `node_modules`, `.next`.
 
 ## Git
 - Branch `main`, remote `origin` = https://github.com/abs-rio09/drakon (public, created 2026-10-15 with `gh`). Small commits with clear messages. Ask before pushing.
