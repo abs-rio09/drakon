@@ -1,4 +1,5 @@
 import { useEffect, useId, useState } from 'react'
+import { Link, useLocation } from 'react-router'
 import { LogoContent } from '../Logo'
 import { BagIcon, CloseIcon, MenuIcon, SearchIcon } from '../icons'
 
@@ -13,15 +14,25 @@ const NAV_LINKS = [
 type SiteHeaderProps = {
   // Total quantity in the cart. The bubble only shows when it is above 0.
   cartCount?: number
-  // Which link is the current page, so it gets the underline.
-  current?: string
+}
+
+// Which nav link belongs to the page we are on, so it gets the underline.
+function currentLink(pathname: string, hash: string): string | undefined {
+  if (pathname === '/' && hash === '#collections') return '/#collections'
+  if (pathname.startsWith('/shop') || pathname.startsWith('/product')) return '/shop'
+  if (pathname.startsWith('/sold-out')) return '/sold-out'
+  if (pathname.startsWith('/track')) return '/track'
+  if (pathname.startsWith('/search')) return '/search'
+  return undefined
 }
 
 const iconButton =
   'relative grid size-11 place-items-center rounded-full text-ink-muted transition-colors duration-150 ease-out hover:bg-field hover:text-ink-strong'
 
-export function SiteHeader({ cartCount = 0, current }: SiteHeaderProps) {
+export function SiteHeader({ cartCount = 0 }: SiteHeaderProps) {
   const [menuOpen, setMenuOpen] = useState(false)
+  const { pathname, hash } = useLocation()
+  const current = currentLink(pathname, hash)
   const menuId = useId()
 
   // Close the phone menu with the Escape key.
@@ -40,18 +51,18 @@ export function SiteHeader({ cartCount = 0, current }: SiteHeaderProps) {
     <header className="sticky top-0 z-30 border-b border-line bg-surface-glass backdrop-blur-xl">
       <div className="relative mx-auto max-w-page px-4 sm:px-6 lg:px-8">
         <nav aria-label="Main" className="flex min-h-18 items-center justify-between gap-4">
-          <a href="/" className="inline-flex items-center gap-2">
+          <Link to="/" className="inline-flex items-center gap-2">
             <LogoContent />
-          </a>
+          </Link>
 
           {/* Desktop links: hidden below 768px */}
           <div className="hidden items-center gap-8 md:flex">
             {NAV_LINKS.map((link) => {
               const isCurrent = current === link.href
               return (
-                <a
+                <Link
                   key={link.href}
-                  href={link.href}
+                  to={link.href}
                   aria-current={isCurrent ? 'page' : undefined}
                   className={
                     'py-2 text-label transition-colors duration-150 ease-out hover:text-ink-strong ' +
@@ -59,16 +70,26 @@ export function SiteHeader({ cartCount = 0, current }: SiteHeaderProps) {
                   }
                 >
                   {link.label}
-                </a>
+                </Link>
               )
             })}
           </div>
 
           <div className="flex items-center gap-1">
-            <a href="/search" aria-label="Search" className={iconButton + ' hidden md:grid'}>
+            <Link
+              to="/search"
+              aria-label="Search"
+              aria-current={current === '/search' ? 'page' : undefined}
+              className={iconButton + ' hidden md:grid'}
+            >
               <SearchIcon />
-            </a>
-            <a href="/cart" aria-label={cartLabel} className={iconButton}>
+            </Link>
+            <Link
+              to="/cart"
+              aria-label={cartLabel}
+              aria-current={pathname === '/cart' ? 'page' : undefined}
+              className={iconButton}
+            >
               <BagIcon />
               {cartCount > 0 && (
                 <span
@@ -78,7 +99,7 @@ export function SiteHeader({ cartCount = 0, current }: SiteHeaderProps) {
                   {cartCount}
                 </span>
               )}
-            </a>
+            </Link>
             <button
               type="button"
               aria-label={menuOpen ? 'Close menu' : 'Menu'}
@@ -103,8 +124,8 @@ export function SiteHeader({ cartCount = 0, current }: SiteHeaderProps) {
                 const isCurrent = current === link.href
                 return (
                   <li key={link.href}>
-                    <a
-                      href={link.href}
+                    <Link
+                      to={link.href}
                       aria-current={isCurrent ? 'page' : undefined}
                       onClick={() => setMenuOpen(false)}
                       className={
@@ -113,7 +134,7 @@ export function SiteHeader({ cartCount = 0, current }: SiteHeaderProps) {
                       }
                     >
                       {link.label}
-                    </a>
+                    </Link>
                   </li>
                 )
               })}

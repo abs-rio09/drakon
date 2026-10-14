@@ -1,3 +1,4 @@
+import { Link } from 'react-router'
 import { LogoContent } from '../Logo'
 
 const FOOTER_GROUPS = [
@@ -33,9 +34,9 @@ export function SiteFooter() {
       <div className="mx-auto flex max-w-page flex-col gap-14 px-4 pt-20 pb-8 sm:px-6 lg:px-8">
         <div className="grid grid-cols-2 gap-x-8 gap-y-10 lg:grid-cols-[minmax(0,2fr)_repeat(3,minmax(0,1fr))]">
           <div className="col-span-2 flex flex-col gap-4 lg:col-span-1">
-            <a href="/" className="inline-flex items-center gap-2 self-start">
+            <Link to="/" className="inline-flex items-center gap-2 self-start">
               <LogoContent />
-            </a>
+            </Link>
             <p className="max-w-75 text-label font-normal text-ink-subtle">
               Limited playcards, toys, tech and clothes. Made once, never restocked. Cash on Delivery across Bangladesh.
             </p>
@@ -47,12 +48,12 @@ export function SiteFooter() {
               <ul className="flex flex-col gap-3">
                 {group.links.map((link) => (
                   <li key={link.href}>
-                    <a
-                      href={link.href}
+                    <Link
+                      to={link.href}
                       className="text-label font-normal text-ink-muted transition-colors duration-150 ease-out hover:text-ink-strong"
                     >
                       {link.label}
-                    </a>
+                    </Link>
                   </li>
                 ))}
               </ul>

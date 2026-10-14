@@ -45,3 +45,53 @@ Commit-গুলো দেখতে: `git log --oneline`
 - এই ধাপে link-গুলো সাধারণ `<a href>`; ধাপ 2-এ react-router-এর `Link`/`NavLink` দিয়ে বদলানো হবে।
 - Header `sticky` (scroll করলেও উপরে থাকে, glass blur সহ)। Design-এ home hero-র ওপর transparent header আছে; সেটা সরল রাখতে আপাতত সব page-এ একই glass header।
 
+---
+
+## ধাপ 2 — Routing (react-router v7)
+
+### কী বানালাম
+- `npm i react-router@7` — **একমাত্র নতুন library।** (খেয়াল করো: সাধারণ `npm i react-router` এখন **v8.4** install করে। CLAUDE.md আর তোমার নির্দেশে v7 লেখা, তাই `@7` দিয়ে v7.18.4 pin করেছি। v8-এ যাবে কিনা পরে ঠিক করো — নিচে প্রশ্ন দেখো।)
+- `src/main.tsx` — পুরো app `<BrowserRouter>`-এর ভেতরে।
+- `src/App.tsx` — সব URL-এর তালিকা (blueprint ভাগ ৬ অনুযায়ী):
+
+| URL | Page |
+|---|---|
+| `/` | Home |
+| `/shop`, `/shop/:category` | Shop / Category (একই component) |
+| `/product/:slug` | Product details |
+| `/search` | Search |
+| `/sold-out` | Sold Out archive |
+| `/cart` | Cart |
+| `/checkout` | Checkout (আলাদা শান্ত header) |
+| `/order/:number` | Order confirmation |
+| `/track` | Track order |
+| `/about`, `/contact` | About, Contact |
+| `/policies/returns`, `/policies/terms`, `/policies/privacy` | Policy page (খসড়া লেখা) |
+| বাকি সব | 404 "Page not found" |
+
+- `components/layout/RootLayout.tsx` — header + `<Outlet />` + footer। `CheckoutLayout.tsx` — শুধু logo আর "Back to cart"।
+- `components/layout/ScrollManager.tsx` — নতুন page-এ গেলে উপরে scroll; `/#collections`-এর মতো link হলে সেই section-এ যায়।
+- `components/ui/styles.ts` — বাটন/link/panel-এর Tailwind class এক জায়গায় (`primaryButton`, `secondaryButton`, `textLink` …), যাতে সব page একরকম দেখায়।
+- `lib/money.ts` — `formatTaka(paisa)`: পয়সা → "৳1,250"। **দাম format করার একমাত্র জায়গা।**
+- `mocks/settings.ts` — return 3 দিন, 48 ঘণ্টা, limit 5। Policy page এখান থেকে সংখ্যা নেয়।
+
+### মূল ধারণা
+- **SPA (Single Page App):** ব্রাউজার একটাই HTML নেয়। URL বদলালে react-router JavaScript দিয়ে শুধু ভেতরের অংশ বদলায়, পুরো page reload হয় না।
+- **`<Routes>` / `<Route path="shop" element={<Shop />} />`:** "URL যদি `/shop` হয় তাহলে `<Shop />` দেখাও"। C-এর `switch`-এর মতো ভাবতে পারো।
+- **Layout route + `<Outlet />`:** `<Route element={<RootLayout />}>`-এর ভেতরের সব route RootLayout-এর `<Outlet />`-এর জায়গায় বসে। তাই header/footer একবারই লিখতে হয়।
+- **`:category`, `:slug` = URL parameter।** `/product/dragon-flame-card`-এ `useParams()` দিলে `{ slug: 'dragon-flame-card' }` পাওয়া যায়।
+- **`<Link to="/shop">` বনাম `<a href>`:** `<a>` পুরো page reload করে; `<Link>` করে না, তাই দ্রুত আর state (যেমন cart) হারায় না।
+- **`useLocation()`** দিয়ে এখনকার URL জেনে header ঠিক করে কোন link-এর নিচে দাগ থাকবে।
+- **`path="*"`** — কোনো route না মিললে 404 page।
+
+### ব্রাউজারে test
+1. Header-এর প্রতিটা link চাপো — page reload ছাড়াই বদলাবে, বর্তমান link-এর নিচে সাদা দাগ।
+2. http://localhost:5173/abc খোলো → "Page not found"।
+3. http://localhost:5173/checkout → উপরে শুধু logo আর "Back to cart"।
+4. Footer → Returns and refunds → "within 3 days" লেখা (সংখ্যাটা `mocks/settings.ts` থেকে; ওখানে 3 বদলে 7 করে দেখো)।
+5. Page থেকে page-এ গেলে সবসময় উপর থেকে শুরু হয়।
+
+### প্রশ্ন
+- **react-router v8 এসে গেছে।** এখন v7 রেখেছি (তোমার নির্দেশ)। পরে v8-এ যাবে কি? আমার সুপারিশ: MVP শেষ হওয়া পর্যন্ত v7, কারণ CLAUDE.md আর blueprint সেটাই বলে।
+- Policy page-এর লেখা খসড়া; `[ ]` বন্ধনীর জায়গাগুলো তোমাকে লিখতে হবে।
+
