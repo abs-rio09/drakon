@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useParams } from 'react-router'
-import { CashIcon, LockIcon, ReturnIcon, TruckIcon } from '../components/icons'
+import { CashIcon, CheckIcon, LockIcon, ReturnIcon, TruckIcon } from '../components/icons'
 import { LimitedBadge, SoldOutBadge } from '../components/product/Badge'
 import { ProductGrid } from '../components/product/ProductCard'
 import { ProductPhoto } from '../components/product/ProductPhoto'
@@ -12,14 +12,17 @@ import {
   getProduct,
   getRelated,
   isArchived,
+  maxQuantity,
   metaLine,
   priceLabel,
   purchaseLimit,
   stockFact,
   totalStock,
+  variantName,
 } from '../lib/catalog'
 import { getZone } from '../lib/delivery'
 import { formatTaka } from '../lib/money'
+import { useCart } from '../features/cart/useCart'
 import type { Product as ProductType, Variant } from '../mocks/catalog'
 import { settings } from '../mocks/settings'
 import NotFound from './NotFound'
@@ -42,17 +45,24 @@ function ProductView({ product }: { product: ProductType }) {
   const [variantId, setVariantId] = useState(firstInStock.id)
   const [qty, setQty] = useState(1)
   const [imageIndex, setImageIndex] = useState(0)
+  // What was just added, for the "Added to your cart" message.
+  const [added, setAdded] = useState<{ qty: number; name: string } | null>(null)
+  const cart = useCart()
 
   const variant = product.variants.find((v) => v.id === variantId) ?? firstInStock
   const limit = purchaseLimit(product)
-  const maxQty = Math.max(1, Math.min(limit, variant.stock))
+  const inCart = cart.qtyOf(variant.id)
+  // How many more of this variant may still go in the cart.
+  const remaining = Math.max(0, maxQuantity(product, variant) - inCart)
   const canBuy = !archived && variant.stock > 0
+  const canAdd = canBuy && remaining > 0
   const category = getCategory(product.categorySlug)
   const image = product.images[imageIndex] ?? product.images[0]
 
   function selectVariant(v: Variant) {
     setVariantId(v.id)
     setQty(1)
+    setAdded(null)
     if (v.imageIndex !== undefined) setImageIndex(v.imageIndex)
   }
 
@@ -167,9 +177,17 @@ function ProductView({ product }: { product: ProductType }) {
                 </div>
               )}
 
-              {canBuy && (
+              {canAdd && (
                 <div className="flex flex-wrap items-center gap-4">
-                  <QuantityStepper label="Quantity" value={qty} max={maxQty} onChange={setQty} />
+                  <QuantityStepper
+                    label="Quantity"
+                    value={Math.min(qty, Math.max(1, remaining))}
+                    max={Math.max(1, remaining)}
+                    onChange={(n) => {
+                      setQty(n)
+                      setAdded(null)
+                    }}
+                  />
                   <span className="text-caption text-ink-subtle tabular-nums">Limit {limit} per customer</span>
                 </div>
               )}
@@ -177,16 +195,39 @@ function ProductView({ product }: { product: ProductType }) {
               <div className="flex flex-col gap-3">
                 <button
                   type="button"
-                  disabled
-                  aria-describedby="cart-soon"
+                  disabled={!canAdd}
+                  onClick={() => {
+                    const n = Math.min(qty, remaining)
+                    cart.add(variant.id, n)
+                    setAdded({ qty: n, name: variantName(product, variant) })
+                    setQty(1)
+                  }}
                   className={primaryButtonLarge + ' w-full justify-between'}
                 >
-                  <span>{canBuy ? 'Add to cart' : 'Out of stock'}</span>
-                  {canBuy && <span className="tabular-nums">{formatTaka(variant.pricePaisa * qty)}</span>}
+                  <span>{!canBuy ? 'Out of stock' : canAdd ? 'Add to cart' : 'Limit reached in your cart'}</span>
+                  {canAdd && (
+                    <span className="tabular-nums">{formatTaka(variant.pricePaisa * Math.min(qty, remaining))}</span>
+                  )}
                 </button>
-                <span id="cart-soon" className="text-caption text-ink-subtle">
-                  The cart opens in the next build step.
-                </span>
+                <div role="status">
+                  {added ? (
+                    <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line bg-surface-raised px-4 py-3">
+                      <span className="inline-flex items-center gap-2 text-label font-normal text-ink">
+                        <CheckIcon size={16} className="text-ink-strong" />
+                        Added {added.qty} × {added.name} to your cart
+                      </span>
+                      <Link to="/cart" className={textLink + ' text-label text-ink-strong'}>
+                        View cart
+                      </Link>
+                    </div>
+                  ) : (
+                    inCart > 0 && (
+                      <span className="text-caption text-ink-subtle tabular-nums">
+                        You have {inCart} in your cart.
+                      </span>
+                    )
+                  )}
+                </div>
               </div>
             </>
           )}

@@ -4,6 +4,7 @@ import type { Product } from '../../mocks/catalog'
 import { SoldOutBadge } from './Badge'
 import { GalleryLabel } from './GalleryLabel'
 import { ProductPhoto } from './ProductPhoto'
+import { QuickAdd } from './QuickAdd'
 
 // The product tile in every grid. No box: the photo, then a flat gallery label.
 // See docs/design/components/ProductCard/README.md
@@ -19,7 +20,7 @@ export function ProductCard({ product }: { product: Product }) {
         <Link to={href} tabIndex={-1} aria-hidden="true">
           <ProductPhoto src={cover.src} alt="" soldOut={soldOut} />
         </Link>
-        {soldOut && <SoldOutBadge />}
+        {soldOut ? <SoldOutBadge /> : <QuickAdd product={product} />}
       </div>
       <GalleryLabel
         name={

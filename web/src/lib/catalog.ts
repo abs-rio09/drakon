@@ -108,3 +108,15 @@ export function variantStockFact(product: Product, variant: Variant): string {
   if (!product.isLimited) return 'In stock'
   return `${variant.stock} left`
 }
+
+// How many of one variant a buyer may have in the cart: the purchase limit
+// or the stock, whichever is lower. The server checks this again at checkout.
+export function maxQuantity(product: Product, variant: Variant): number {
+  return Math.min(purchaseLimit(product), variant.stock)
+}
+
+// How a variant is named in the cart and summaries: "Size M", "Metal", "Standard".
+export function variantName(product: Product, variant: Variant): string {
+  if (product.variantKind === 'Size') return `Size ${variant.label}`
+  return variant.label
+}

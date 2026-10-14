@@ -171,3 +171,40 @@ Commit-গুলো দেখতে: `git log --oneline`
 ### প্রশ্ন
 - "Size guide" link এখন details table-এ নিয়ে যায়; আসল মাপের chart (cm) তোমাকে দিতে হবে।
 
+---
+
+## ধাপ 5 — Cart (localStorage-এ, শুধু variant id + qty)
+
+### কী বানালাম
+- `features/cart/cartStorage.ts` — localStorage-এ `drakon.cart.v1` নামে শুধু `[{ variantId, qty }]` রাখে। নষ্ট/অচেনা data পেলে ফেলে দেয়, page crash করে না।
+- `features/cart/CartContext.ts`, `CartProvider.tsx`, `useCart.ts` — পুরো app-এ cart ভাগ করে নেওয়া। `main.tsx`-এ `<CartProvider>` দিয়ে app মোড়ানো।
+- `features/cart/cartItems.ts` — `resolveCart()`: সংরক্ষিত id + qty-কে catalogue-এর নাম, দাম, stock-এর সাথে জোড়া দেয়। Sold out হয়ে যাওয়া item আলাদা করে দেয়।
+- Product page-এর **Add to cart চালু** — যোগ করলে "Added 1 × Metal to your cart · View cart" বার্তা; আগেই cart-এ থাকলে "You have N in your cart"; limit পূর্ণ হলে বাটন "Limit reached in your cart"।
+- Product card-এর গোল **"+" বাটন** (`components/product/QuickAdd.tsx`): একটাই variant হলে সরাসরি cart-এ, size/material থাকলে product page খোলে।
+- **Cart page** (`/cart`, Cart.dc.html থেকে): প্রতিটা item-এর ছবি, নাম, variant, একক দাম, মোট, quantity stepper, Remove; ডানে Summary (Subtotal, Delivery "Set at checkout", Total before delivery, **Go to checkout**)। খালি হলে "Your cart is empty"। Sold out item থাকলে উপরে নোটিশ + Remove।
+- Header-এর cart bubble এখন আসল সংখ্যা দেখায় (শুধু যা অর্ডার করা যায়)।
+
+### মূল ধারণা
+- **localStorage:** browser-এর ছোট key–value ভাণ্ডার, শুধু text রাখে। তাই `JSON.stringify` (array → text) আর `JSON.parse` (text → array)। Page reload বা browser বন্ধ করলেও থাকে।
+- **কেন শুধু id + qty?** দাম বা stock browser-এ রাখলে পুরনো বা বদলানো (hack করা) দাম থেকে যেতে পারে। নিয়ম: **দাম সবসময় server ঠিক করে।** এখন mock থেকে দেখাই; পরে Go API থেকে আসবে, আর order-এর সময় Go আবার সব যাচাই করবে।
+- **Context:** `createContext` + `<CartContext value={...}>` + `useContext` — props হাত-বদল না করে দূরের component-এ data পৌঁছানো (header আর product page দুজনেই একই cart দেখে)।
+- **Custom hook (`useCart`)**: নিজের বানানো `use…` function, যেটা ভেতরে অন্য hook ব্যবহার করে। Provider-এর বাইরে ডাকলে পরিষ্কার error দেয়।
+- **`useState(() => loadCart())`**: arrow function দিলে localStorage শুধু প্রথম render-এ একবার পড়া হয়।
+- **`useEffect(() => saveCart(lines), [lines])`**: `lines` বদলালেই save — dependency array `[lines]` বলে দেয় কখন effect চলবে।
+- **Immutable update:** `setLines(prev => prev.map(...))` — পুরনো array বদলাই না, নতুন array বানাই; React তখনই বোঝে কিছু বদলেছে।
+- **`storage` event:** অন্য tab-এ cart বদলালে এই tab-ও আপডেট হয়।
+- **`useMemo`:** cart না বদলালে context-এর object নতুন করে বানায় না (অকারণ re-render কমে)।
+- **TypeScript type guard:** `function isCartLine(value: unknown): value is CartLine` — অজানা data যাচাই করে TypeScript-কে নিশ্চিত করা।
+
+### ব্রাউজারে test
+1. Shop-এ drone-এর "+" চাপো → header-এ 1। আবার চাপো → 2। Stock 3, তাই 3-এর পর "+" বন্ধ।
+2. Dragon Flame Card → Metal → Add to cart → সবুজ নয়, সাদা ✓ বার্তা (রং নিয়ম মেনে)। "View cart"।
+3. `/cart`-এ quantity বদলাও, Remove করো; সব সরালে খালি অবস্থা।
+4. Page reload করো — cart থেকে যায়। Chrome DevTools → Application → Local Storage → `drakon.cart.v1` দেখো: শুধু id আর qty।
+5. দুইটা tab খোলো; একটায় যোগ করলে অন্যটার header-ও বদলায়।
+6. Console-এ `localStorage.setItem('drakon.cart.v1', '[{"variantId":"v-founders","qty":1}]')` দিয়ে reload করো → sold out নোটিশ।
+
+### সিদ্ধান্ত / প্রশ্ন
+- Cart-এর qty যদি limit/stock-এর বেশি জমা থাকে (যেমন stock পরে কমে গেছে), cart page সেটা সর্বোচ্চ সংখ্যায় নামিয়ে দেখায়। আসল যাচাই checkout-এ server করবে।
+- Purchase limit এখন শুধু এই browser-এর cart-এ দেখা হয়। Blueprint অনুযায়ী আসল limit server একই ফোন নম্বরের আগের order মিলিয়ে দেখবে।
+
