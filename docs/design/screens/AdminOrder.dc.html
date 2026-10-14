@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>DRAKON admin order detail</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&amp;family=Noto+Sans+Bengali:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0;background:#0a0f1b}
+a{color:#f19340}a:hover{color:#f6f3ee}
+.btn-primary:hover{background:#f19340 !important}
+.btn-secondary:hover{background:#141d31 !important}
+.btn-ghost:hover{background:#141d31 !important;color:#f6f3ee !important}
+.dk-input::placeholder{color:#8a92a5}
+.dk-input:focus{outline:2px solid #f19340;outline-offset:2px}
+.shell{display:flex;flex-wrap:wrap;align-items:stretch;min-height:100vh}
+.side{flex:1 1 240px;max-width:260px;display:flex}
+.content{flex:999 1 560px;min-width:0}
+.detail-grid{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:24px;align-items:start}
+.two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+@media (max-width:1199px){.detail-grid{grid-template-columns:repeat(1,minmax(0,1fr))}}
+@media (max-width:899px){.side{flex-basis:100%;max-width:none}.dk-adminnav{min-height:0 !important;width:100%;flex-direction:row !important;flex-wrap:wrap;align-items:center;gap:16px !important;border-right:0 !important;border-bottom:1px solid #1d2842}.dk-adminnav-items{flex-direction:row !important;flex-wrap:wrap}.dk-adminnav-foot{display:none !important}}
+@media (max-width:639px){.irow .iname{flex-basis:calc(100% - 64px)}.irow .iqty{margin-left:64px;margin-right:auto}.pad{padding:24px 16px !important}.two{grid-template-columns:repeat(1,minmax(0,1fr))}}
+</style>
+</helmet>
+<div class="shell" style="background: #0a0f1b; color: #e7e3dc; font-family: Outfit, 'Noto Sans Bengali', system-ui, sans-serif; font-size: 16px; line-height: 24px; font-variant-numeric: tabular-nums; -webkit-font-smoothing: antialiased;">
+  <div class="side">
+    <dc-import name="AdminNav" active="orders" pending-count="{{pendingCount}}" hint-size="100%,760px"></dc-import>
+  </div>
+
+  <main class="content pad" style="box-sizing: border-box; padding: 32px 40px 64px; display: flex; flex-direction: column; gap: 24px;">
+    <nav aria-label="Breadcrumb">
+      <ol style="display: flex; gap: 8px; margin: 0; padding: 0; list-style: none; color: #8a92a5; font-size: 14px; line-height: 20px;">
+        <li><a href="AdminOrders.dc.html" style="color: #b3b8c4; text-decoration: none;">Orders</a></li>
+        <li aria-hidden="true">/</li>
+        <li aria-current="page">DRK-10043</li>
+      </ol>
+    </nav>
+
+    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px;">
+      <h1 style="margin: 0; color: #f6f3ee; font-size: 36px; line-height: 40px; font-weight: 600; letter-spacing: -0.02em;">DRK-10043</h1>
+      <span style="display: inline-flex; padding: 4px 12px; border: 1px solid {{badge.border}}; border-radius: 9999px; background: {{badge.bg}}; color: {{badge.color}}; font-size: 12px; line-height: 16px; font-weight: 500; letter-spacing: 0.01em;">{{badge.label}}</span>
+      <span style="color: #8a92a5; font-size: 14px; line-height: 20px;">Placed 11 Oct 2026, 11:30 PM · Cash on Delivery</span>
+    </div>
+
+    <!-- Next action -->
+    <sc-if value="{{isPending}}" hint-placeholder-val="{{true}}">
+      <section aria-labelledby="act-h" style="display: flex; flex-direction: column; gap: 20px; padding: 24px; border: 1px solid #55709e; border-radius: 20px; background: #0f1729;">
+        <div style="display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 16px;">
+          <div style="display: flex; flex-direction: column; gap: 4px;">
+            <h2 id="act-h" style="margin: 0; color: #f6f3ee; font-size: 20px; line-height: 28px; font-weight: 600;">Call to confirm this order</h2>
+            <span style="color: #b3b8c4; font-size: 14px; line-height: 20px;">Check the name, address and total of ৳3,800 with the customer.</span>
+          </div>
+          <span style="display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border: 1px solid #ed751a; border-radius: 9999px; background: #0a0f1b; color: #f19340; font-size: 14px; line-height: 20px; font-weight: 600;">
+            <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            Cancels automatically in 2h · 13 Oct, 11:30 PM
+          </span>
+        </div>
+        <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px;">
+          <a class="btn-secondary" href="tel:01512667788" style="display: inline-flex; align-items: center; gap: 8px; padding: 12px 20px; border: 1px solid #55709e; border-radius: 10px; color: #f6f3ee; font-size: 18px; line-height: 28px; font-weight: 600; text-decoration: none;">
+            <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f19340" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+            01512-667788
+          </a>
+          <button class="btn-primary" type="button" onClick="{{confirm}}" style="padding: 16px 24px; border: 0; border-radius: 10px; background: #ed751a; color: #0a0f1b; font-family: inherit; font-size: 16px; line-height: 24px; font-weight: 600; cursor: pointer;">Mark as confirmed</button>
+          <button class="btn-ghost" type="button" onClick="{{cancel}}" style="padding: 16px 20px; border: 0; border-radius: 10px; background: transparent; color: #b3b8c4; font-family: inherit; font-size: 16px; line-height: 24px; font-weight: 500; cursor: pointer;">Cancel order</button>
+        </div>
+      </section>
+    </sc-if>
+
+    <sc-if value="{{isConfirmed}}" hint-placeholder-val="{{false}}">
+      <section aria-labelledby="ship-h" style="display: flex; flex-direction: column; gap: 20px; padding: 24px; border: 1px solid #55709e; border-radius: 20px; background: #0f1729;">
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+          <h2 id="ship-h" style="margin: 0; color: #f6f3ee; font-size: 20px; line-height: 28px; font-weight: 600;">Ready to ship</h2>
+          <span style="color: #b3b8c4; font-size: 14px; line-height: 20px;">Pack the items, book the courier, then add the tracking number.</span>
+        </div>
+        <div class="two">
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <label for="s-courier" style="color: #b3b8c4; font-size: 14px; line-height: 20px; font-weight: 500;">Courier</label>
+            <div style="position: relative;">
+              <select class="dk-input" id="s-courier" value="{{courier}}" onChange="{{pickCourier}}" style="box-sizing: border-box; width: 100%; padding: 12px 44px 12px 16px; border: 1px solid #55709e; border-radius: 10px; background: #141d31; color: #e7e3dc; font-family: inherit; font-size: 16px; line-height: 24px; appearance: none; -webkit-appearance: none; cursor: pointer;">
+                <option value="Steadfast">Steadfast</option>
+                <option value="Pathao">Pathao</option>
+                <option value="RedX">RedX</option>
+                <option value="Other">Other</option>
+              </select>
+              <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#b3b8c4" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; top: 50%; right: 16px; margin-top: -8px; pointer-events: none;"><path d="m6 9 6 6 6-6"></path></svg>
+            </div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <label for="s-track" style="color: #b3b8c4; font-size: 14px; line-height: 20px; font-weight: 500;">Tracking number</label>
+            <input class="dk-input" id="s-track" type="text" value="{{tracking}}" onChange="{{typeTracking}}" placeholder="e.g. SF-4471029" style="box-sizing: border-box; width: 100%; padding: 12px 16px; border: 1px solid #55709e; border-radius: 10px; background: #141d31; color: #e7e3dc; font-family: inherit; font-size: 16px; line-height: 24px;">
+          </div>
+        </div>
+        <div style="display: flex; flex-wrap: wrap; gap: 12px;">
+          <button class="btn-primary" type="button" onClick="{{ship}}" disabled="{{noTracking}}" style="padding: 16px 24px; border: 0; border-radius: 10px; background: #ed751a; color: #0a0f1b; font-family: inherit; font-size: 16px; line-height: 24px; font-weight: 600; opacity: {{shipOpacity}}; cursor: pointer;">Mark as shipped</button>
+          <button class="btn-ghost" type="button" onClick="{{cancel}}" style="padding: 16px 20px; border: 0; border-radius: 10px; background: transparent; color: #b3b8c4; font-family: inherit; font-size: 16px; line-height: 24px; font-weight: 500; cursor: pointer;">Cancel order</button>
+        </div>
+      </section>
+    </sc-if>
+
+    <sc-if value="{{isShipped}}" hint-placeholder-val="{{false}}">
+      <section style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; padding: 24px; border: 1px solid #55709e; border-radius: 20px; background: #0f1729;">
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+          <h2 style="margin: 0; color: #f6f3ee; font-size: 20px; line-height: 28px; font-weight: 600;">On the way</h2>
+          <span style="color: #b3b8c4; font-size: 14px; line-height: 20px;">{{courier}} · {{tracking}}. The customer sees this on the tracking page.</span>
+        </div>
+        <button class="btn-primary" type="button" onClick="{{deliver}}" style="padding: 16px 24px; border: 0; border-radius: 10px; background: #ed751a; color: #0a0f1b; font-family: inherit; font-size: 16px; line-height: 24px; font-weight: 600; cursor: pointer;">Delivered, cash collected</button>
+      </section>
+    </sc-if>
+
+    <sc-if value="{{isClosed}}" hint-placeholder-val="{{false}}">
+      <section style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; padding: 24px; border: 1px solid #1d2842; border-radius: 20px; background: #0f1729;">
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+          <h2 style="margin: 0; color: #f6f3ee; font-size: 20px; line-height: 28px; font-weight: 600;">{{closedTitle}}</h2>
+          <span style="color: #b3b8c4; font-size: 14px; line-height: 20px;">{{closedText}}</span>
+        </div>
+        <button class="btn-secondary" type="button" onClick="{{reset}}" style="padding: 12px 20px; border: 1px solid #55709e; border-radius: 10px; background: transparent; color: #e7e3dc; font-family: inherit; font-size: 14px; line-height: 20px; font-weight: 500; cursor: pointer;">Reset demo</button>
+      </section>
+    </sc-if>
+
+    <div class="detail-grid">
+      <div style="display: flex; flex-direction: column; gap: 24px;">
+        <!-- Items -->
+        <section aria-labelledby="items-h" style="display: flex; flex-direction: column; gap: 16px; padding: 24px; border: 1px solid #1d2842; border-radius: 20px; background: #0f1729;">
+          <div style="display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px;">
+            <h2 id="items-h" style="margin: 0; color: #f6f3ee; font-size: 18px; line-height: 28px; font-weight: 600;">Items</h2>
+            <span style="color: #8a92a5; font-size: 12px; line-height: 16px;">Names and prices saved at the time of order</span>
+          </div>
+          <div style="display: flex; flex-direction: column;">
+            <div class="irow" style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 12px 0; border-bottom: 1px solid #1d2842;">
+              <img src="img/t-p-hoodie02-front.webp" alt="" style="flex-shrink: 0; width: 48px; height: 48px; border-radius: 8px; object-fit: cover; background: #141d31;">
+              <span class="iname" style="flex: 1 1 200px; min-width: 0; display: flex; flex-direction: column;"><span style="color: #f6f3ee; font-weight: 500;">Ember Night Hoodie · Edition 02</span><span style="color: #8a92a5; font-size: 12px; line-height: 16px;">Size M · SKU DRK-HOOD02-M</span></span>
+              <span class="iqty" style="color: #b3b8c4; font-size: 14px; white-space: nowrap;">1 × ৳2,450</span>
+              <span style="min-width: 72px; color: #f6f3ee; font-weight: 600; text-align: right;">৳2,450</span>
+            </div>
+            <div class="irow" style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 12px 0; border-bottom: 1px solid #1d2842;">
+              <img src="img/t-p-dragon-flame-set.webp" alt="" style="flex-shrink: 0; width: 48px; height: 48px; border-radius: 8px; object-fit: cover; background: #141d31;">
+              <span class="iname" style="flex: 1 1 200px; min-width: 0; display: flex; flex-direction: column;"><span style="color: #f6f3ee; font-weight: 500;">Dragon Flame Playcard Set</span><span style="color: #8a92a5; font-size: 12px; line-height: 16px;">Standard · SKU DRK-DFPS-STD</span></span>
+              <span class="iqty" style="color: #b3b8c4; font-size: 14px; white-space: nowrap;">1 × ৳1,250</span>
+              <span style="min-width: 72px; color: #f6f3ee; font-weight: 600; text-align: right;">৳1,250</span>
+            </div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 8px; align-self: flex-end; width: 280px; max-width: 100%; font-size: 14px; line-height: 20px;">
+            <div style="display: flex; justify-content: space-between;"><span style="color: #b3b8c4;">Subtotal</span><span style="color: #f6f3ee;">৳3,700</span></div>
+            <div style="display: flex; justify-content: space-between;"><span style="color: #b3b8c4;">Delivery · Outside Dhaka</span><span style="color: #f6f3ee;">৳100</span></div>
+            <div style="display: flex; justify-content: space-between; padding-top: 8px; border-top: 1px solid #1d2842;"><span style="color: #f6f3ee; font-weight: 600;">Collect in cash</span><span style="color: #f6f3ee; font-size: 20px; line-height: 28px; font-weight: 500;">৳3,800</span></div>
+          </div>
+        </section>
+
+        <!-- Customer -->
+        <section aria-labelledby="cust-h" style="display: flex; flex-direction: column; gap: 16px; padding: 24px; border: 1px solid #1d2842; border-radius: 20px; background: #0f1729;">
+          <h2 id="cust-h" style="margin: 0; color: #f6f3ee; font-size: 18px; line-height: 28px; font-weight: 600;">Customer and delivery</h2>
+          <dl style="display: grid; grid-template-columns: minmax(110px, auto) 1fr; gap: 8px 16px; margin: 0; font-size: 14px; line-height: 20px;">
+            <dt style="color: #8a92a5;">Name</dt><dd style="margin: 0; color: #e7e3dc;">Sadia Islam · guest</dd>
+            <dt style="color: #8a92a5;">Phone</dt><dd style="margin: 0; color: #e7e3dc;">01512-667788 · 1 earlier order, delivered</dd>
+            <dt style="color: #8a92a5;">Email</dt><dd style="margin: 0; color: #8a92a5;">Not given · updates show on the tracking page</dd>
+            <dt style="color: #8a92a5;">District</dt><dd style="margin: 0; color: #e7e3dc;">Sylhet · Outside Dhaka zone</dd>
+            <dt style="color: #8a92a5;">Address</dt><dd style="margin: 0; color: #e7e3dc;">Flat 3B, House 21, Zindabazar, Sylhet</dd>
+            <dt style="color: #8a92a5;">Courier note</dt><dd style="margin: 0; color: #e7e3dc;">Call before coming</dd>
+          </dl>
+          <button class="btn-ghost" type="button" style="align-self: flex-start; display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border: 0; border-radius: 10px; background: transparent; color: #b3b8c4; font-family: inherit; font-size: 14px; line-height: 20px; font-weight: 500; cursor: pointer;">
+            <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="m4.9 4.9 14.2 14.2"></path></svg>
+            Block this phone number
+          </button>
+        </section>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 24px;">
+        <!-- History -->
+        <section aria-labelledby="hist-h" style="display: flex; flex-direction: column; gap: 16px; padding: 24px; border: 1px solid #1d2842; border-radius: 20px; background: #0f1729;">
+          <h2 id="hist-h" style="margin: 0; color: #f6f3ee; font-size: 18px; line-height: 28px; font-weight: 600;">History</h2>
+          <ol style="display: flex; flex-direction: column; gap: 16px; margin: 0; padding: 0; list-style: none;">
+            <sc-for list="{{history}}" as="h" hint-placeholder-count="1">
+              <li style="display: flex; gap: 12px;">
+                <span aria-hidden="true" style="flex-shrink: 0; width: 10px; height: 10px; margin-top: 7px; border-radius: 9999px; background: {{h.dot}};"></span>
+                <span style="display: flex; flex-direction: column;"><span style="color: #e7e3dc; font-size: 14px; line-height: 20px; font-weight: 500;">{{h.text}}</span><span style="color: #8a92a5; font-size: 12px; line-height: 16px;">{{h.when}}</span></span>
+              </li>
+            </sc-for>
+          </ol>
+        </section>
+
+        <!-- Internal note -->
+        <section aria-labelledby="note-h" style="display: flex; flex-direction: column; gap: 12px; padding: 24px; border: 1px solid #1d2842; border-radius: 20px; background: #0f1729;">
+          <h2 id="note-h" style="margin: 0; color: #f6f3ee; font-size: 18px; line-height: 28px; font-weight: 600;">Internal note</h2>
+          <label for="n-note" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">Internal note</label>
+          <textarea class="dk-input" id="n-note" rows="3" placeholder="Only admins see this" style="box-sizing: border-box; width: 100%; padding: 12px 16px; border: 1px solid #55709e; border-radius: 10px; background: #141d31; color: #e7e3dc; font-family: inherit; font-size: 14px; line-height: 20px; resize: vertical;"></textarea>
+          <button class="btn-secondary" type="button" style="align-self: flex-start; padding: 8px 16px; border: 1px solid #55709e; border-radius: 10px; background: transparent; color: #e7e3dc; font-family: inherit; font-size: 14px; line-height: 20px; font-weight: 500; cursor: pointer;">Save note</button>
+        </section>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1300}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { stage: 'pending', courier: 'Steadfast', tracking: '' };
+  }
+  renderVals() {
+    const s = this.state.stage;
+    const looks = {
+      pending: { label: 'Pending call', border: '#ed751a', bg: '#0a0f1b', color: '#f19340' },
+      confirmed: { label: 'Confirmed', border: '#55709e', bg: 'transparent', color: '#e7e3dc' },
+      shipped: { label: 'Shipped', border: '#55709e', bg: '#141d31', color: '#f6f3ee' },
+      delivered: { label: 'Delivered', border: '#1d2842', bg: 'transparent', color: '#b3b8c4' },
+      cancelled: { label: 'Cancelled', border: '#1d2842', bg: 'transparent', color: '#8a92a5' }
+    };
+    const history = [{ text: 'Placed by customer on the website', when: '11 Oct, 11:30 PM', dot: '#55709e' }];
+    const reached = (x) => ['confirmed', 'shipped', 'delivered'].indexOf(s) >= ['confirmed', 'shipped', 'delivered'].indexOf(x) && s !== 'cancelled' && s !== 'pending';
+    if (reached('confirmed') || (s === 'cancelled' && this.state.confirmedOnce)) history.push({ text: 'Confirmed by phone · Owner', when: 'Just now', dot: '#e7e3dc' });
+    if (reached('shipped')) history.push({ text: 'Shipped with ' + this.state.courier + ' · ' + this.state.tracking, when: 'Just now', dot: '#e7e3dc' });
+    if (s === 'delivered') history.push({ text: 'Delivered · ৳3,800 cash collected', when: 'Just now', dot: '#e7e3dc' });
+    if (s === 'cancelled') history.push({ text: 'Cancelled by Owner · stock returned', when: 'Just now', dot: '#8a92a5' });
+    if (s === 'pending') history.push({ text: 'Waiting for a confirmation call', when: 'Auto-cancels 13 Oct, 11:30 PM', dot: '#1d2842' });
+    const noTracking = this.state.tracking.trim() === '';
+    return {
+      pendingCount: s === 'pending' ? 4 : 3,
+      badge: looks[s],
+      isPending: s === 'pending',
+      isConfirmed: s === 'confirmed',
+      isShipped: s === 'shipped',
+      isClosed: s === 'delivered' || s === 'cancelled',
+      closedTitle: s === 'delivered' ? 'Delivered and paid' : 'Order cancelled',
+      closedText: s === 'delivered' ? '৳3,800 collected in cash. Returns are open for 3 days.' : 'The items went back into stock. The customer can see this on the tracking page.',
+      courier: this.state.courier,
+      tracking: this.state.tracking,
+      noTracking: noTracking,
+      shipOpacity: noTracking ? 0.4 : 1,
+      history: history,
+      pickCourier: (e) => this.setState({ courier: e.target.value }),
+      typeTracking: (e) => this.setState({ tracking: e.target.value }),
+      confirm: () => this.setState({ stage: 'confirmed', confirmedOnce: true }),
+      ship: () => this.setState({ stage: 'shipped' }),
+      deliver: () => this.setState({ stage: 'delivered' }),
+      cancel: () => this.setState({ stage: 'cancelled' }),
+      reset: () => this.setState({ stage: 'pending', tracking: '', confirmedOnce: false })
+    };
+  }
+}
+</script>
+</body>
+</html>

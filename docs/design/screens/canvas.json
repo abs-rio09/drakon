@@ -1,0 +1,449 @@
+{
+  "v": 3,
+  "attachments": {},
+  "boards": {
+    "AdminNav.dc.html": {
+      "h": 760,
+      "page": "parts",
+      "title": "Admin menu",
+      "w": 260,
+      "x": 0,
+      "y": 704
+    },
+    "AdminOrder.dc.html": {
+      "expand": "fill",
+      "h": 1300,
+      "is_interactive": true,
+      "page": "admin",
+      "title": "Admin · Order detail",
+      "w": 1440,
+      "x": 1520,
+      "y": 0
+    },
+    "AdminOrders.dc.html": {
+      "expand": "fill",
+      "h": 1100,
+      "is_interactive": true,
+      "page": "admin",
+      "title": "Admin · Orders",
+      "w": 1440,
+      "x": 0,
+      "y": 0
+    },
+    "AdminProductEdit.dc.html": {
+      "expand": "fill",
+      "h": 1400,
+      "is_interactive": true,
+      "page": "admin",
+      "title": "Admin · Edit product",
+      "w": 1440,
+      "x": 4560,
+      "y": 0
+    },
+    "AdminProducts.dc.html": {
+      "expand": "fill",
+      "h": 1100,
+      "is_interactive": true,
+      "page": "admin",
+      "title": "Admin · Products",
+      "w": 1440,
+      "x": 3040,
+      "y": 0
+    },
+    "Cart.dc.html": {
+      "expand": "fill",
+      "h": 1130,
+      "is_interactive": true,
+      "page": "checkout",
+      "title": "Cart",
+      "w": 1440,
+      "x": 0,
+      "y": 0
+    },
+    "Checkout.dc.html": {
+      "expand": "fill",
+      "h": 1820,
+      "is_interactive": true,
+      "page": "checkout",
+      "title": "Checkout",
+      "w": 1440,
+      "x": 1520,
+      "y": 0
+    },
+    "CheckoutPhone.dc.html": {
+      "h": 2920,
+      "is_interactive": true,
+      "page": "checkout",
+      "radius": 32,
+      "title": "Checkout · phone",
+      "w": 390,
+      "x": 4560,
+      "y": 0
+    },
+    "Confirmation.dc.html": {
+      "expand": "fill",
+      "h": 1980,
+      "is_interactive": true,
+      "page": "checkout",
+      "title": "Order placed",
+      "w": 1440,
+      "x": 3040,
+      "y": 0
+    },
+    "Main.dc.html": {
+      "expand": "fill",
+      "h": 4120,
+      "page": "home",
+      "title": "Home · desktop",
+      "w": 1440,
+      "x": 0,
+      "y": 0
+    },
+    "Phone.dc.html": {
+      "h": 5160,
+      "page": "home",
+      "radius": 32,
+      "title": "Home · phone",
+      "w": 390,
+      "x": 1520,
+      "y": 0
+    },
+    "Product.dc.html": {
+      "expand": "fill",
+      "h": 2730,
+      "is_interactive": true,
+      "page": "product",
+      "title": "Product · desktop",
+      "w": 1440,
+      "x": 0,
+      "y": 0
+    },
+    "ProductPhone.dc.html": {
+      "h": 4040,
+      "is_interactive": true,
+      "page": "product",
+      "radius": 32,
+      "title": "Product · phone",
+      "w": 390,
+      "x": 1520,
+      "y": 0
+    },
+    "SiteFooter.dc.html": {
+      "h": 330,
+      "page": "parts",
+      "title": "Site footer",
+      "w": 1440,
+      "x": 0,
+      "y": 193
+    },
+    "SiteHeader.dc.html": {
+      "h": 73,
+      "page": "parts",
+      "title": "Site header",
+      "w": 1440,
+      "x": 0,
+      "y": 0
+    },
+    "Track.dc.html": {
+      "expand": "fill",
+      "h": 1790,
+      "is_interactive": true,
+      "page": "tracking",
+      "title": "Track order",
+      "w": 1440,
+      "x": 0,
+      "y": 0
+    },
+    "Directions.dc.html": {
+      "expand": "fill",
+      "h": 2260,
+      "page": "directions",
+      "title": "Art directions",
+      "w": 1440,
+      "x": 0,
+      "y": 0
+    },
+    "SoldOut.dc.html": {
+      "expand": "fill",
+      "h": 2120,
+      "is_interactive": true,
+      "page": "archive",
+      "title": "Sold out archive",
+      "w": 1440,
+      "x": 0,
+      "y": 0
+    },
+    "SoldOutPhone.dc.html": {
+      "h": 3430,
+      "is_interactive": true,
+      "page": "archive",
+      "radius": 32,
+      "title": "Sold out archive · phone",
+      "w": 390,
+      "x": 1520,
+      "y": 0
+    },
+    "ShotList.dc.html": {
+      "expand": "fill",
+      "h": 4190,
+      "page": "photos",
+      "title": "Photo shot list",
+      "w": 1440,
+      "x": 0,
+      "y": 0
+    },
+    "SignIn.dc.html": {
+      "expand": "fill",
+      "h": 1240,
+      "is_interactive": true,
+      "page": "account",
+      "title": "Sign in",
+      "w": 1440,
+      "x": 0,
+      "y": 0
+    },
+    "SignUp.dc.html": {
+      "expand": "fill",
+      "h": 1510,
+      "is_interactive": true,
+      "page": "account",
+      "title": "Create account",
+      "w": 1440,
+      "x": 1520,
+      "y": 0
+    },
+    "Account.dc.html": {
+      "expand": "fill",
+      "h": 1340,
+      "is_interactive": true,
+      "page": "account",
+      "title": "My account",
+      "w": 1440,
+      "x": 3040,
+      "y": 0
+    },
+    "SignInPhone.dc.html": {
+      "h": 1500,
+      "is_interactive": true,
+      "page": "account",
+      "radius": 32,
+      "title": "Sign in · phone",
+      "w": 390,
+      "x": 4560,
+      "y": 0
+    },
+    "SignUpPhone.dc.html": {
+      "h": 1860,
+      "is_interactive": true,
+      "page": "account",
+      "radius": 32,
+      "title": "Create account · phone",
+      "w": 390,
+      "x": 5030,
+      "y": 0
+    },
+    "AccountPhone.dc.html": {
+      "h": 1960,
+      "is_interactive": true,
+      "page": "account",
+      "radius": 32,
+      "title": "My account · phone",
+      "w": 390,
+      "x": 5500,
+      "y": 0
+    },
+    "ProductCard.dc.html": {
+      "expand": "fill",
+      "h": 3050,
+      "is_interactive": true,
+      "page": "product",
+      "title": "Card product · desktop",
+      "w": 1440,
+      "x": 1990,
+      "y": 0
+    },
+    "ProductCardPhone.dc.html": {
+      "h": 4370,
+      "is_interactive": true,
+      "page": "product",
+      "radius": 32,
+      "title": "Card product · phone",
+      "w": 390,
+      "x": 3510,
+      "y": 0
+    }
+  },
+  "createdOnFiles": {
+    "at": "2026-10-11T17:49:00Z",
+    "v": 1
+  },
+  "designSystems": [
+    {
+      "artifact": "https://claude.ai/artifact/WLKxxS3VXiSiut5qTgiPrM",
+      "copiedAt": "2026-10-13T05:12:00Z",
+      "namespace": "drakon",
+      "title": "DRAKON",
+      "version": "1791866330-d7a5"
+    }
+  ],
+  "launch": {
+    "page": "home",
+    "view": "canvas"
+  },
+  "notes": {
+    "admin": {
+      "kind": "title1",
+      "maxW": 6000,
+      "page": "admin",
+      "text": "Admin panel",
+      "w": 240,
+      "x": 0,
+      "y": -300
+    },
+    "checkout": {
+      "kind": "title1",
+      "maxW": 4950,
+      "page": "checkout",
+      "text": "Cart, checkout and order placed",
+      "w": 240,
+      "x": 0,
+      "y": -300
+    },
+    "home": {
+      "kind": "title1",
+      "maxW": 1910,
+      "page": "home",
+      "text": "Home page",
+      "w": 240,
+      "x": 0,
+      "y": -300
+    },
+    "parts": {
+      "kind": "title1",
+      "maxW": 1440,
+      "page": "parts",
+      "text": "Shared parts",
+      "w": 240,
+      "x": 0,
+      "y": -300
+    },
+    "product": {
+      "kind": "title1",
+      "maxW": 3900,
+      "page": "product",
+      "text": "Product pages: hoodie and card",
+      "w": 240,
+      "x": 0,
+      "y": -300
+    },
+    "directions": {
+      "kind": "title1",
+      "maxW": 1440,
+      "page": "directions",
+      "text": "Art directions",
+      "w": 240,
+      "x": 0,
+      "y": -300
+    },
+    "archive": {
+      "kind": "title1",
+      "maxW": 1910,
+      "page": "archive",
+      "text": "Sold Out archive",
+      "w": 240,
+      "x": 0,
+      "y": -300
+    },
+    "photos": {
+      "kind": "title1",
+      "maxW": 1440,
+      "page": "photos",
+      "text": "Photo shot list",
+      "w": 240,
+      "x": 0,
+      "y": -300
+    },
+    "account": {
+      "kind": "title1",
+      "maxW": 5890,
+      "page": "account",
+      "text": "Sign in, create account and profile",
+      "w": 240,
+      "x": 0,
+      "y": -300
+    }
+  },
+  "order": [
+    "Main.dc.html",
+    "Phone.dc.html",
+    "SiteHeader.dc.html",
+    "SiteFooter.dc.html",
+    "AdminNav.dc.html",
+    "Product.dc.html",
+    "ProductPhone.dc.html",
+    "Cart.dc.html",
+    "Checkout.dc.html",
+    "Confirmation.dc.html",
+    "CheckoutPhone.dc.html",
+    "Track.dc.html",
+    "AdminOrders.dc.html",
+    "AdminOrder.dc.html",
+    "AdminProducts.dc.html",
+    "AdminProductEdit.dc.html",
+    "Directions.dc.html",
+    "SoldOut.dc.html",
+    "SoldOutPhone.dc.html",
+    "ShotList.dc.html",
+    "SignIn.dc.html",
+    "SignUp.dc.html",
+    "Account.dc.html",
+    "SignInPhone.dc.html",
+    "SignUpPhone.dc.html",
+    "AccountPhone.dc.html",
+    "ProductCard.dc.html",
+    "ProductCardPhone.dc.html"
+  ],
+  "pages": [
+    {
+      "id": "directions",
+      "name": "Directions"
+    },
+    {
+      "id": "home",
+      "name": "Home"
+    },
+    {
+      "id": "product",
+      "name": "Product"
+    },
+    {
+      "id": "checkout",
+      "name": "Cart & Checkout"
+    },
+    {
+      "id": "tracking",
+      "name": "Order tracking"
+    },
+    {
+      "id": "account",
+      "name": "Customer account"
+    },
+    {
+      "id": "archive",
+      "name": "Sold Out archive"
+    },
+    {
+      "id": "admin",
+      "name": "Admin"
+    },
+    {
+      "id": "photos",
+      "name": "Photo shot list"
+    },
+    {
+      "id": "parts",
+      "name": "Shared parts"
+    }
+  ],
+  "title": "DRAKON Screens"
+}

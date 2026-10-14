@@ -1,0 +1,25 @@
+<!-- @dsCard group="Forms" height=420 subtitle="Default, required, error, textarea" -->
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Input</title>
+<style>.panel{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-6);margin:var(--space-6);padding:var(--space-8);border:1px solid var(--line);border-radius:var(--radius-3xl);background:var(--surface-raised);}.wide{grid-column:1 / -1;}</style>
+</head>
+<body class="dk-root">
+<form class="panel" onsubmit="return false">
+  <div class="dk-field">
+    <label class="dk-label" for="n">Full name<span class="dk-required" aria-hidden="true">*</span></label>
+    <input class="dk-input" id="n" required placeholder="Your full name" value="Nusrat Jahan">
+  </div>
+  <div class="dk-field">
+    <label class="dk-label" for="p">Phone<span class="dk-required" aria-hidden="true">*</span></label>
+    <input class="dk-input" id="p" required inputmode="tel" value="01700" aria-invalid="true" aria-describedby="p-err">
+    <span class="dk-error" id="p-err"><svg class="dk-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg> Enter an 11-digit number, like 01712345678.</span>
+  </div>
+  <div class="dk-field wide">
+    <label class="dk-label" for="a">Delivery address<span class="dk-required" aria-hidden="true">*</span></label>
+    <textarea class="dk-input" id="a" rows="3" placeholder="House, road, area, city"></textarea>
+    <span class="dk-hint">Inside Dhaka or outside Dhaka sets the delivery charge.</span>
+  </div>
+</form>
+</body>
+</html>

@@ -1,0 +1,33 @@
+<!-- @dsCard group="Navigation" height=232 width=1024 subtitle="Desktop and phone" -->
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Nav bar</title>
+<style>.stack{display:flex;flex-direction:column;gap:var(--space-6);padding:var(--space-6);}.phone{width:375px;}</style>
+</head>
+<body class="dk-root">
+<div class="stack">
+  <nav class="dk-nav" aria-label="Main">
+    <a class="dk-logo" href="#"><span class="dk-logo__mark" aria-hidden="true">D</span>Drakon</a>
+    <div class="dk-nav__links">
+      <a class="dk-nav__link" href="#" aria-current="page">Shop</a>
+      <a class="dk-nav__link" href="#">Collections</a>
+      <a class="dk-nav__link" href="#">Sold out</a>
+      <a class="dk-nav__link" href="#">Track order</a>
+    </div>
+    <div class="dk-nav__actions">
+      <button class="dk-btn dk-btn--icon" type="button" aria-label="Search"><svg class="dk-icon dk-icon--md" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></button>
+      <a class="dk-btn dk-btn--icon dk-nav__cart" href="#" aria-label="Cart, 2 items"><svg class="dk-icon dk-icon--md" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg><span class="dk-count">2</span></a>
+      <button class="dk-btn dk-btn--icon dk-nav__menu" type="button" aria-label="Menu"><svg class="dk-icon dk-icon--md" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h16"/></svg></button>
+    </div>
+  </nav>
+  <nav class="dk-nav dk-nav--compact phone" aria-label="Main, phone">
+    <a class="dk-logo" href="#"><span class="dk-logo__mark" aria-hidden="true">D</span>Drakon</a>
+    <div class="dk-nav__links"></div>
+    <div class="dk-nav__actions">
+      <a class="dk-btn dk-btn--icon dk-nav__cart" href="#" aria-label="Cart, 2 items"><svg class="dk-icon dk-icon--md" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg><span class="dk-count">2</span></a>
+      <button class="dk-btn dk-btn--icon dk-nav__menu" type="button" aria-label="Menu"><svg class="dk-icon dk-icon--md" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h16"/></svg></button>
+    </div>
+  </nav>
+</div>
+</body>
+</html>

@@ -1,0 +1,25 @@
+<!-- @dsCard group="Commerce" height=300 width=960 subtitle="Over a photo, flat, sold out" -->
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Gallery label</title>
+<style>.row{display:flex;flex-wrap:wrap;align-items:flex-start;gap:var(--space-10);padding:var(--space-8);}.stage{position:relative;width:360px;height:220px;border-radius:var(--radius-3xl);background:radial-gradient(120% 120% at 20% 10%, #1d2842 0%, #0a0f1b 60%);}.stage .dk-glabel{position:absolute;right:var(--space-4);bottom:var(--space-4);}.flat{width:240px;}</style>
+</head>
+<body class="dk-root">
+<div class="row">
+  <div class="stage" aria-label="Label over a photo">
+    <a class="dk-glabel" href="#">
+      <span class="dk-glabel__head"><span class="dk-glabel__name">Dragon Flame Playcard Set</span><span class="dk-glabel__meta">Playcard set, limited run</span></span>
+      <span class="dk-glabel__row"><span class="dk-glabel__price">৳1,250</span><span class="dk-glabel__fact">12 left</span></span>
+    </a>
+  </div>
+  <div class="dk-glabel dk-glabel--flat flat">
+    <span class="dk-glabel__head"><span class="dk-glabel__name">Midnight Circuit Desk Drone</span><span class="dk-glabel__meta">Tech toy, limited run</span></span>
+    <span class="dk-glabel__row"><span class="dk-glabel__price">৳3,400</span><span class="dk-glabel__fact">Only 3 left</span></span>
+  </div>
+  <div class="dk-glabel dk-glabel--flat dk-glabel--soldout flat">
+    <span class="dk-glabel__head"><span class="dk-glabel__name">Glow Arena Mini Goal</span><span class="dk-glabel__meta">Sports toy, limited run</span></span>
+    <span class="dk-glabel__row"><span class="dk-glabel__price">৳2,600</span><span class="dk-glabel__fact">Sold out</span></span>
+  </div>
+</div>
+</body>
+</html>

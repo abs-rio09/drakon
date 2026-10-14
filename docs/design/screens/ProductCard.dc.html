@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>DRAKON card product page</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&amp;family=Noto+Sans+Bengali:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0;background:#0a0f1b}
+a{color:#f19340}a:hover{color:#f6f3ee}
+a:focus-visible,button:focus-visible{outline:2px solid #f19340;outline-offset:2px}
+.btn-primary{transition:background-color 150ms ease-out}
+.btn-primary:hover{background:#f19340 !important}
+.size-btn{transition:border-color 150ms ease-out,background-color 150ms ease-out}
+.size-btn:hover{border-color:#b3b8c4 !important}
+.step-btn{transition:background-color 150ms ease-out}
+.step-btn:hover:not(:disabled){background:#141d31 !important}
+.step-btn:disabled{opacity:0.4;cursor:not-allowed !important}
+.thumb{transition:border-color 150ms ease-out,opacity 150ms ease-out}
+.thumb:hover{opacity:1 !important}
+.text-link{text-decoration-color:#55709e;text-underline-offset:5px;transition:color 150ms ease-out}
+.text-link:hover{color:#f6f3ee !important}
+@keyframes dk-fade{from{opacity:0}to{opacity:1}}
+.ph{position:relative;overflow:hidden;background:#141d31}
+.ph img{display:block;width:100%;height:100%;object-fit:cover;animation:dk-fade 600ms ease-out both;transition:transform 900ms cubic-bezier(.2,.7,.2,1)}
+.pcard:hover .ph img{transform:scale(1.03)}
+.wrap{max-width:1280px;margin:0 auto;padding:0 32px;box-sizing:border-box}
+.pd-grid{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:80px;align-items:start}
+.detail-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:80px}
+.rel-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));column-gap:40px;row-gap:48px}
+.thumbs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
+.num{font-variant-numeric:tabular-nums}
+.size-off{background:linear-gradient(to top right,transparent calc(50% - 0.75px),#3a4a6b 50%,transparent calc(50% + 0.75px)) !important}
+@media (max-width:1023px){.wrap{padding:0 24px}.pd-grid{grid-template-columns:repeat(1,minmax(0,1fr));gap:40px}.detail-grid{grid-template-columns:repeat(1,minmax(0,1fr));gap:40px}.rel-grid{grid-template-columns:repeat(2,minmax(0,1fr));column-gap:24px}}
+@media (max-width:767px){.dk-links{display:none !important}.dk-menu{display:inline-flex !important}}
+@media (max-width:639px){.wrap{padding:0 16px}.pd-title{font-size:36px !important;line-height:40px !important}.sec-title{font-size:28px !important;line-height:34px !important}.rel-grid{column-gap:16px;row-gap:32px}.r-title{font-size:16px !important;line-height:22px !important;white-space:normal !important;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;min-height:44px}.sec{padding-top:80px !important;padding-bottom:80px !important}.thumbs{gap:8px}}
+@media (prefers-reduced-motion:reduce){.ph img{animation:none;transition:none}.pcard:hover .ph img{transform:none}}
+</style>
+</helmet>
+<div style="min-height: 100vh; background: #0a0f1b url(img/grain.webp); color: #e7e3dc; font-family: Outfit, 'Noto Sans Bengali', system-ui, sans-serif; font-size: 16px; line-height: 26px; -webkit-font-smoothing: antialiased;">
+  <dc-import name="SiteHeader" active="shop" cart-count="{{cartCount}}" hint-size="100%,73px"></dc-import>
+
+  <main>
+    <!-- Breadcrumb -->
+    <nav aria-label="Breadcrumb" class="wrap" style="padding-top: 32px;">
+      <ol style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0; padding: 0; list-style: none; color: #8a92a5; font-size: 13px; line-height: 18px;">
+        <li><a class="text-link" href="Main.dc.html" style="color: #b3b8c4; text-decoration: none;">Shop</a></li>
+        <li aria-hidden="true">/</li>
+        <li><a class="text-link" href="Main.dc.html" style="color: #b3b8c4; text-decoration: none;">Playcards</a></li>
+        <li aria-hidden="true">/</li>
+        <li aria-current="page" style="color: #8a92a5;">Dragon Flame Card · Edition 01</li>
+      </ol>
+    </nav>
+
+    <!-- Product -->
+    <section class="wrap pd-grid" style="padding-top: 24px; padding-bottom: 96px;">
+      <!-- Gallery -->
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        <div class="ph" style="aspect-ratio: 1 / 1; border-radius: 14px;">
+          <img src="{{mainImg}}" alt="{{mainAlt}}">
+          <span style="position: absolute; top: 16px; left: 16px; display: inline-flex; align-items: center; gap: 8px; padding: 4px 12px; border: 1px solid #1d2842; border-radius: 9999px; background: rgba(10, 15, 27, 0.72); -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); color: #f6f3ee; font-size: 12px; line-height: 16px; font-weight: 500; letter-spacing: 0.02em;"><span aria-hidden="true" style="width: 6px; height: 6px; border-radius: 9999px; background: #f6f3ee;"></span>Edition of 100</span>
+        </div>
+        <div class="thumbs" role="group" aria-label="Product photos">
+          <sc-for list="{{images}}" as="img" hint-placeholder-count="5">
+            <button class="thumb" type="button" onClick="{{img.pick}}" aria-label="{{img.label}}" aria-pressed="{{img.pressed}}" style="position: relative; aspect-ratio: 1 / 1; padding: 0; overflow: hidden; border: 1px solid {{img.border}}; border-radius: 10px; background: #141d31; opacity: {{img.opacity}}; cursor: pointer;">
+              <img src="{{img.src}}" alt="" style="display: block; width: 100%; height: 100%; object-fit: cover;">
+            </button>
+          </sc-for>
+        </div>
+      </div>
+
+      <!-- Buy box -->
+      <div style="display: flex; flex-direction: column; gap: 32px; padding-top: 8px;">
+        <div style="display: flex; flex-direction: column; gap: 16px;">
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <h1 class="pd-title" style="margin: 0; color: #f6f3ee; font-size: 48px; line-height: 52px; font-weight: 600; letter-spacing: -0.025em;">Dragon Flame Card · Edition 01</h1>
+            <span style="color: #b3b8c4; font-size: 16px; line-height: 24px;">Collectible card, limited run of 100</span>
+          </div>
+          <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 16px; padding-top: 16px; border-top: 1px solid #1d2842;">
+            <span class="num" style="color: #f6f3ee; font-size: 28px; line-height: 32px; font-weight: 500; letter-spacing: -0.01em;">{{price}}</span>
+            <span class="num" style="color: #b3b8c4; font-size: 14px; line-height: 20px; font-weight: 500;">{{totalLeft}}</span>
+          </div>
+        </div>
+        <p style="margin: 0; max-width: 520px; color: #b3b8c4; font-size: 18px; line-height: 30px;">The first DRAKON card, for the people who stay awake at night. Every card is numbered from 1 to 100. Choose the material you want to hold.</p>
+
+        <!-- Material -->
+        <fieldset style="margin: 0; padding: 0; border: 0; display: flex; flex-direction: column; gap: 16px;">
+          <legend style="margin-bottom: 16px; padding: 0; color: #b3b8c4; font-size: 14px; line-height: 20px; font-weight: 500;">Material <span style="color: #f6f3ee;">{{matName}}</span></legend>
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <sc-for list="{{mats}}" as="m" hint-placeholder-count="5">
+              <sc-if value="{{m.available}}" hint-placeholder-val="{{true}}">
+                <button class="size-btn" type="button" onClick="{{m.pick}}" aria-pressed="{{m.pressed}}" style="display: flex; align-items: center; gap: 16px; width: 100%; min-height: 64px; padding: 8px 16px; box-sizing: border-box; border: 1px solid {{m.border}}; border-radius: 10px; background: {{m.bg}}; color: #e7e3dc; font-family: inherit; text-align: left; cursor: pointer;">
+                  <img src="{{m.thumb}}" alt="" style="flex-shrink: 0; width: 44px; height: 44px; border-radius: 6px; object-fit: cover;">
+                  <span style="flex: 1; min-width: 0; display: flex; flex-direction: column;"><span style="color: #f6f3ee; font-size: 16px; line-height: 24px; font-weight: 500;">{{m.name}}</span><span style="color: #8a92a5; font-size: 13px; line-height: 18px;">{{m.note}}</span></span>
+                  <span style="display: flex; flex-direction: column; align-items: flex-end;"><span class="num" style="color: #f6f3ee; font-size: 16px; line-height: 24px; font-weight: 500;">{{m.price}}</span><span class="num" style="color: #b3b8c4; font-size: 13px; line-height: 18px;">{{m.left}}</span></span>
+                </button>
+              </sc-if>
+              <sc-if value="{{m.soldOut}}" hint-placeholder-val="{{false}}">
+                <button type="button" disabled aria-label="{{m.soldOutLabel}}" style="display: flex; align-items: center; gap: 16px; width: 100%; min-height: 64px; padding: 8px 16px; box-sizing: border-box; border: 1px dashed #3a4a6b; border-radius: 10px; background: transparent; color: #8a92a5; font-family: inherit; text-align: left; cursor: not-allowed;">
+                  <img src="{{m.thumb}}" alt="" style="flex-shrink: 0; width: 44px; height: 44px; border-radius: 6px; object-fit: cover; filter: grayscale(1); opacity: 0.6;">
+                  <span style="flex: 1; min-width: 0; display: flex; flex-direction: column;"><span style="font-size: 16px; line-height: 24px; font-weight: 500;">{{m.name}}</span><span style="font-size: 13px; line-height: 18px;">{{m.note}}</span></span>
+                  <span style="display: flex; flex-direction: column; align-items: flex-end;"><span class="num" style="font-size: 16px; line-height: 24px; text-decoration: line-through;">{{m.price}}</span><span style="font-size: 13px; line-height: 18px;">Sold out</span></span>
+                </button>
+              </sc-if>
+            </sc-for>
+          </div>
+        </fieldset>
+
+        <!-- Quantity -->
+        <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px;">
+          <div role="group" aria-label="Quantity" style="display: inline-flex; align-items: center; border: 1px solid #55709e; border-radius: 10px;">
+            <button class="step-btn" type="button" onClick="{{dec}}" disabled="{{decDisabled}}" aria-label="Decrease quantity" style="display: grid; place-items: center; width: 48px; height: 46px; border: 0; border-radius: 9px 0 0 9px; background: transparent; color: #e7e3dc; cursor: pointer;">
+              <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path></svg>
+            </button>
+            <span aria-live="polite" style="min-width: 32px; text-align: center; color: #f6f3ee; font-size: 16px; line-height: 24px; font-weight: 500;">{{qty}}</span>
+            <button class="step-btn" type="button" onClick="{{inc}}" disabled="{{incDisabled}}" aria-label="Increase quantity" style="display: grid; place-items: center; width: 48px; height: 46px; border: 0; border-radius: 0 9px 9px 0; background: transparent; color: #e7e3dc; cursor: pointer;">
+              <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>
+            </button>
+          </div>
+          <span style="color: #8a92a5; font-size: 13px; line-height: 18px;">Limit {{limit}} per customer</span>
+        </div>
+
+        <!-- Add to cart -->
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+          <button class="btn-primary" type="button" onClick="{{add}}" aria-label="Add to cart, {{lineTotal}}" style="display: flex; align-items: center; justify-content: space-between; gap: 16px; width: 100%; min-height: 56px; padding: 0 24px; border: 0; border-radius: 10px; background: #ed751a; color: #0a0f1b; font-family: inherit; font-size: 16px; line-height: 20px; font-weight: 600; cursor: pointer;">
+            <span>Add to cart</span><span class="num">{{lineTotal}}</span>
+          </button>
+          <sc-if value="{{added}}" hint-placeholder-val="{{false}}">
+            <div role="status" style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; border: 1px solid #1d2842; border-radius: 10px; background: #0f1729;">
+              <span style="display: inline-flex; align-items: center; gap: 8px; color: #e7e3dc; font-size: 14px; line-height: 20px;">
+                <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f6f3ee" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>
+                Added {{qty}} × {{matName}} to your cart
+              </span>
+              <a class="text-link" href="Cart.dc.html" style="color: #f6f3ee; font-size: 14px; line-height: 20px; font-weight: 500; text-decoration: underline;">View cart</a>
+            </div>
+          </sc-if>
+        </div>
+
+        <!-- Promises: hairline list, no box -->
+        <ul style="display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; border-top: 1px solid #1d2842;">
+          <li style="display: flex; align-items: flex-start; gap: 16px; padding: 16px 0; border-bottom: 1px solid #1d2842;">
+            <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#b3b8c4" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0; margin-top: 3px;"><rect width="20" height="12" x="2" y="6" rx="2"></rect><circle cx="12" cy="12" r="2"></circle><path d="M6 12h.01M18 12h.01"></path></svg>
+            <div><div style="color: #f6f3ee; font-size: 16px; line-height: 24px; font-weight: 500;">Cash on Delivery</div><div style="color: #8a92a5; font-size: 13px; line-height: 18px;">Pay when it arrives. We call you to confirm before we ship.</div></div>
+          </li>
+          <li style="display: flex; align-items: flex-start; gap: 16px; padding: 16px 0; border-bottom: 1px solid #1d2842;">
+            <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#b3b8c4" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0; margin-top: 3px;"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"></path><path d="M15 18H9"></path><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"></path><circle cx="17" cy="18" r="2"></circle><circle cx="7" cy="18" r="2"></circle></svg>
+            <div><div style="color: #f6f3ee; font-size: 16px; line-height: 24px; font-weight: 500;">Delivery ৳60 inside Dhaka, ৳100 outside</div><div style="color: #8a92a5; font-size: 13px; line-height: 18px;">Set at checkout from your district.</div></div>
+          </li>
+          <li style="display: flex; align-items: flex-start; gap: 16px; padding: 16px 0; border-bottom: 1px solid #1d2842;">
+            <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#b3b8c4" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0; margin-top: 3px;"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
+            <div><div style="color: #f6f3ee; font-size: 16px; line-height: 24px; font-weight: 500;">Returns within 3 days</div><div style="color: #8a92a5; font-size: 13px; line-height: 18px;">Unused and in its sleeve. <a class="text-link" href="#" style="color: #b3b8c4; text-decoration: underline;">Return policy</a></div></div>
+          </li>
+          <li style="display: flex; align-items: flex-start; gap: 16px; padding: 16px 0; border-bottom: 1px solid #1d2842;">
+            <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#b3b8c4" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0; margin-top: 3px;"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+            <div><div style="color: #f6f3ee; font-size: 16px; line-height: 24px; font-weight: 500;">One run only</div><div style="color: #8a92a5; font-size: 13px; line-height: 18px;">Once it sells out it is never restocked.</div></div>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Details -->
+    <section id="details" style="border-top: 1px solid #1d2842;">
+      <div class="wrap detail-grid sec" style="padding-top: 96px; padding-bottom: 96px;">
+        <div style="display: flex; flex-direction: column; gap: 16px; max-width: 520px;">
+          <h2 class="sec-title" style="margin: 0 0 8px; color: #f6f3ee; font-size: 36px; line-height: 40px; font-weight: 600; letter-spacing: -0.02em;">About this piece</h2>
+          <p style="margin: 0; color: #b3b8c4; font-size: 16px; line-height: 26px;">Drakon comes from "dark". This card is a small gift for the people who stay awake when the night gets deep: night workers, gamers, coders, dream chasers.</p>
+          <p style="margin: 0; color: #b3b8c4; font-size: 16px; line-height: 26px;">[Add the story of the Dragon Flame artwork and the designer who made it.]</p>
+        </div>
+        <dl style="display: grid; grid-template-columns: minmax(96px, auto) 1fr; gap: 0 24px; margin: 0; align-content: start; border-top: 1px solid #1d2842;">
+          <dt style="padding: 16px 0; border-bottom: 1px solid #1d2842; color: #8a92a5; font-size: 14px; line-height: 20px;">Size</dt><dd style="margin: 0; padding: 16px 0; border-bottom: 1px solid #1d2842; color: #e7e3dc; font-size: 14px; line-height: 20px;">Card 63 × 88 mm, the standard playing card size. Key-ring [size in mm]</dd>
+          <dt style="padding: 16px 0; border-bottom: 1px solid #1d2842; color: #8a92a5; font-size: 14px; line-height: 20px;">Hard paper</dt><dd style="margin: 0; padding: 16px 0; border-bottom: 1px solid #1d2842; color: #e7e3dc; font-size: 14px; line-height: 20px;">[Paper weight and finish]</dd>
+          <dt style="padding: 16px 0; border-bottom: 1px solid #1d2842; color: #8a92a5; font-size: 14px; line-height: 20px;">Plastic</dt><dd style="margin: 0; padding: 16px 0; border-bottom: 1px solid #1d2842; color: #e7e3dc; font-size: 14px; line-height: 20px;">[Plastic type and thickness]</dd>
+          <dt style="padding: 16px 0; border-bottom: 1px solid #1d2842; color: #8a92a5; font-size: 14px; line-height: 20px;">Metal</dt><dd style="margin: 0; padding: 16px 0; border-bottom: 1px solid #1d2842; color: #e7e3dc; font-size: 14px; line-height: 20px;">[Metal type, thickness and etching]</dd>
+          <dt style="padding: 16px 0; border-bottom: 1px solid #1d2842; color: #8a92a5; font-size: 14px; line-height: 20px;">Print</dt><dd style="margin: 0; padding: 16px 0; border-bottom: 1px solid #1d2842; color: #e7e3dc; font-size: 14px; line-height: 20px;">[Print method and resolution]</dd>
+          <dt style="padding: 16px 0; border-bottom: 1px solid #1d2842; color: #8a92a5; font-size: 14px; line-height: 20px;">Edition</dt><dd style="margin: 0; padding: 16px 0; border-bottom: 1px solid #1d2842; color: #e7e3dc; font-size: 14px; line-height: 20px;">100 pieces across all materials, each card numbered</dd>
+        </dl>
+      </div>
+    </section>
+
+    <!-- Pairs well with -->
+    <section style="border-top: 1px solid #1d2842;">
+      <div class="wrap sec" style="display: flex; flex-direction: column; gap: 56px; padding-top: 96px; padding-bottom: 128px;">
+        <h2 class="sec-title" style="margin: 0; color: #f6f3ee; font-size: 36px; line-height: 40px; font-weight: 600; letter-spacing: -0.02em;">Pairs well with</h2>
+        <div class="rel-grid">
+          <sc-for list="{{related}}" as="p" hint-placeholder-count="4">
+            <a class="pcard" href="{{p.href}}" style="display: flex; flex-direction: column; gap: 16px; text-decoration: none;">
+              <span class="ph" style="display: block; aspect-ratio: 1 / 1; border-radius: 14px;"><img src="{{p.img}}" alt="{{p.alt}}" loading="lazy"></span>
+              <span style="display: flex; flex-direction: column; gap: 4px;">
+                <span class="r-title" style="overflow: hidden; color: #f6f3ee; font-size: 18px; line-height: 26px; font-weight: 500; white-space: nowrap; text-overflow: ellipsis;">{{p.name}}</span>
+                <span style="color: #b3b8c4; font-size: 13px; line-height: 18px;">{{p.meta}}</span>
+                <span style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-top: 8px; padding-top: 8px; border-top: 1px solid #1d2842;"><span class="num" style="color: #f6f3ee; font-size: 20px; line-height: 28px; font-weight: 500;">{{p.price}}</span><span class="num" style="color: #b3b8c4; font-size: 14px; line-height: 20px; font-weight: 500;">{{p.stock}}</span></span>
+              </span>
+            </a>
+          </sc-for>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <dc-import name="SiteFooter" hint-size="100%,330px"></dc-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":3050}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { mat: 'plastic', qty: 1, image: -1, added: false };
+  }
+  renderVals() {
+    const limit = 2;
+    const fmt = (n) => '৳' + n.toLocaleString('en-IN');
+    // Sample prices and stock: the real ones come from Admin > Products.
+    const mats = [
+      { id: 'paper', name: 'Hard paper', note: 'Thick matte card stock', price: 450, stock: 22, img: 'img/c-df-paper.webp', thumb: 'img/t-c-df-paper.webp' },
+      { id: 'plastic', name: 'Plastic', note: 'Smooth, waterproof', price: 690, stock: 9, img: 'img/c-df-plastic.webp', thumb: 'img/t-c-df-plastic.webp' },
+      { id: 'metal', name: 'Metal', note: 'Brushed steel, etched art', price: 1490, stock: 3, img: 'img/c-df-metal.webp', thumb: 'img/t-c-df-metal.webp' },
+      { id: 'pkey', name: 'Plastic key-ring', note: 'Mini card with a steel ring', price: 590, stock: 0, img: 'img/c-df-keyring.webp', thumb: 'img/t-c-df-keyring.webp' },
+      { id: 'mkey', name: 'Metal key-ring', note: 'Mini steel card with a ring', price: 1290, stock: 4, img: 'img/c-df-keyring.webp', thumb: 'img/t-c-df-keyring.webp' }
+    ];
+    const picked = mats.find((m) => m.id === this.state.mat) || mats[1];
+    const max = Math.min(limit, picked.stock);
+    const qty = Math.min(this.state.qty, Math.max(max, 1));
+    const gallery = [
+      { name: 'All materials', src: 'img/c-df-lineup.webp', alt: 'Dragon Flame card in hard paper, plastic and metal, with two key-rings' },
+      { name: 'Hard paper', src: 'img/c-df-paper.webp', alt: 'Hard paper Dragon Flame card with its back' },
+      { name: 'Plastic', src: 'img/c-df-plastic.webp', alt: 'Plastic Dragon Flame card with its back' },
+      { name: 'Metal', src: 'img/c-df-metal.webp', alt: 'Brushed metal Dragon Flame card with etched art' },
+      { name: 'Key-rings', src: 'img/c-df-keyring.webp', alt: 'Plastic and metal Dragon Flame key-rings' }
+    ];
+    const imgIndex = this.state.image >= 0 ? this.state.image : 0;
+    const cur = gallery[imgIndex];
+    const left = (m) => (m.stock === 0 ? 'Sold out' : m.stock <= 5 ? 'Only ' + m.stock + ' left' : m.stock + ' left');
+    return {
+      qty: qty,
+      limit: limit,
+      added: this.state.added,
+      cartCount: this.state.added ? 2 + qty : 2,
+      matName: picked.name,
+      price: fmt(picked.price),
+      lineTotal: fmt(picked.price * qty),
+      totalLeft: mats.reduce((n, m) => n + m.stock, 0) + ' of 100 left',
+      mainImg: cur.src,
+      mainAlt: cur.alt,
+      decDisabled: qty <= 1,
+      incDisabled: qty >= max,
+      dec: () => this.setState({ qty: Math.max(1, qty - 1), added: false }),
+      inc: () => this.setState({ qty: Math.min(max, qty + 1), added: false }),
+      add: () => this.setState({ added: true }),
+      images: gallery.map((g, i) => ({
+        src: g.src,
+        label: 'Show photo: ' + g.name,
+        pressed: i === imgIndex ? 'true' : 'false',
+        border: i === imgIndex ? '#f6f3ee' : '#1d2842',
+        opacity: i === imgIndex ? 1 : 0.6,
+        pick: () => this.setState({ image: i })
+      })),
+      mats: mats.map((m) => {
+        const on = m.id === picked.id;
+        return {
+          name: m.name, note: m.note, thumb: m.thumb,
+          price: fmt(m.price), left: left(m),
+          available: m.stock > 0, soldOut: m.stock === 0,
+          soldOutLabel: m.name + ', sold out',
+          pressed: on ? 'true' : 'false',
+          border: on ? '#f6f3ee' : '#55709e',
+          bg: on ? '#141d31' : 'transparent',
+          pick: () => {
+            const gi = gallery.findIndex((g) => g.src === m.img);
+            this.setState({ mat: m.id, qty: 1, added: false, image: gi >= 0 ? gi : 0 });
+          }
+        };
+      }),
+      related: [
+        { name: 'Card Sleeves · Ember 100', meta: 'Playcard sleeves, restocks', price: '৳350', stock: 'In stock', img: 'img/p-card-sleeves.webp', alt: 'Box of ember card sleeves', href: 'Product.dc.html' },
+        { name: 'Dragon Flame Playcard Set', meta: 'Playcard set, limited run', price: '৳1,250', stock: '12 left', img: 'img/p-dragon-flame-set.webp', alt: 'Dragon Flame playcards and box', href: 'Product.dc.html' },
+        { name: 'Ember Night Hoodie · Edition 02', meta: 'Clothes, limited run', price: '৳2,450', stock: '13 left', img: 'img/p-hoodie02-front.webp', alt: 'Folded black hoodie', href: 'Product.dc.html' },
+        { name: 'Midnight Circuit Desk Drone', meta: 'Tech toy, limited run', price: '৳3,400', stock: 'Only 3 left', img: 'img/p-desk-drone.webp', alt: 'Black desk drone', href: 'Product.dc.html' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

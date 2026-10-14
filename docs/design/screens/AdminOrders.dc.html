@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>DRAKON admin orders</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&amp;family=Noto+Sans+Bengali:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0;background:#0a0f1b}
+a{color:#f19340}a:hover{color:#f6f3ee}
+.btn-primary:hover{background:#f19340 !important}
+.btn-secondary:hover{background:#141d31 !important}
+.tab:hover{color:#f6f3ee !important}
+.trow:hover{background:#141d31}
+.row-link:hover{color:#f6f3ee !important;text-decoration-color:#f6f3ee !important}
+.dk-input::placeholder{color:#8a92a5}
+.dk-input:focus{outline:2px solid #f19340;outline-offset:2px}
+.shell{display:flex;flex-wrap:wrap;align-items:stretch;min-height:100vh}
+.side{flex:1 1 240px;max-width:260px;display:flex}
+.content{flex:999 1 560px;min-width:0}
+@media (max-width:899px){.side{flex-basis:100%;max-width:none}.dk-adminnav{min-height:0 !important;width:100%;flex-direction:row !important;flex-wrap:wrap;align-items:center;gap:16px !important;border-right:0 !important;border-bottom:1px solid #1d2842}.dk-adminnav-items{flex-direction:row !important;flex-wrap:wrap}.dk-adminnav-foot{display:none !important}}
+@media (max-width:639px){.pad{padding:24px 16px !important}.otable{display:none !important}.olist{display:flex !important}}
+</style>
+</helmet>
+<div class="shell" style="background: #0a0f1b; color: #e7e3dc; font-family: Outfit, 'Noto Sans Bengali', system-ui, sans-serif; font-size: 16px; line-height: 24px; font-variant-numeric: tabular-nums; -webkit-font-smoothing: antialiased;">
+  <div class="side">
+    <dc-import name="AdminNav" active="orders" pending-count="{{pendingCount}}" hint-size="100%,760px"></dc-import>
+  </div>
+
+  <main class="content pad" style="box-sizing: border-box; padding: 32px 40px 64px; display: flex; flex-direction: column; gap: 24px;">
+    <div style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px;">
+      <div style="display: flex; flex-direction: column; gap: 4px;">
+        <h1 style="margin: 0; color: #f6f3ee; font-size: 36px; line-height: 40px; font-weight: 600; letter-spacing: -0.02em;">Orders</h1>
+        <p style="margin: 0; color: #b3b8c4; font-size: 14px; line-height: 20px;">Call every new order to confirm it. Unconfirmed orders cancel after 48 hours.</p>
+      </div>
+      <div style="position: relative; width: 320px; max-width: 100%;">
+        <label for="o-search" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">Search orders</label>
+        <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8a92a5" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; top: 50%; left: 14px; margin-top: -8px; pointer-events: none;"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
+        <input class="dk-input" id="o-search" type="search" placeholder="Order number, name or phone" style="box-sizing: border-box; width: 100%; padding: 12px 16px 12px 40px; border: 1px solid #55709e; border-radius: 10px; background: #141d31; color: #e7e3dc; font-family: inherit; font-size: 14px; line-height: 20px;">
+      </div>
+    </div>
+
+    <!-- Attention banner -->
+    <div role="status" style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 16px 16px 20px; border: 1px solid #1d2842; border-radius: 14px; background: #0f1729;">
+      <span style="display: flex; align-items: center; gap: 12px;">
+        <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f19340" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+        <span style="color: #e7e3dc; font-size: 14px; line-height: 20px;"><strong style="color: #f6f3ee;">4 orders need a call.</strong> The oldest, DRK-10043, cancels automatically in 2 hours.</span>
+      </span>
+      <a class="btn-primary" href="AdminOrder.dc.html" style="display: inline-flex; align-items: center; min-height: 40px; box-sizing: border-box; padding: 0 16px; border-radius: 10px; background: #ed751a; color: #0a0f1b; font-size: 14px; line-height: 20px; font-weight: 600; text-decoration: none;">Call DRK-10043</a>
+    </div>
+
+    <!-- Status tabs -->
+    <div role="group" aria-label="Filter by status" style="display: flex; flex-wrap: wrap; gap: 4px; border-bottom: 1px solid #1d2842;">
+      <sc-for list="{{tabs}}" as="t" hint-placeholder-count="6">
+        <button class="tab" type="button" onClick="{{t.pick}}" aria-pressed="{{t.pressed}}" style="display: inline-flex; align-items: center; gap: 8px; margin-bottom: -1px; padding: 12px 16px; border: 0; border-bottom: 2px solid {{t.underline}}; background: transparent; color: {{t.color}}; font-family: inherit; font-size: 14px; line-height: 20px; font-weight: 500; cursor: pointer;">
+          {{t.label}}
+          <span style="min-width: 20px; padding: 0 8px; box-sizing: border-box; border-radius: 9999px; background: #141d31; color: #e7e3dc; font-size: 12px; line-height: 20px; font-weight: 600; text-align: center;">{{t.count}}</span>
+        </button>
+      </sc-for>
+    </div>
+
+    <!-- Table -->
+    <div class="otable" style="position: relative; overflow-x: auto; border: 1px solid #1d2842; border-radius: 14px; background: #0f1729;">
+      <table style="width: 100%; min-width: 880px; border-collapse: collapse; font-size: 14px; line-height: 20px;">
+        <thead>
+          <tr style="text-align: left;">
+            <th scope="col" style="padding: 12px 16px; border-bottom: 1px solid #1d2842; color: #8a92a5; font-size: 12px; line-height: 16px; font-weight: 500; letter-spacing: 0.01em;">Order</th>
+            <th scope="col" style="padding: 12px 16px; border-bottom: 1px solid #1d2842; color: #8a92a5; font-size: 12px; line-height: 16px; font-weight: 500; letter-spacing: 0.01em;">Customer</th>
+            <th scope="col" style="padding: 12px 16px; border-bottom: 1px solid #1d2842; color: #8a92a5; font-size: 12px; line-height: 16px; font-weight: 500; letter-spacing: 0.01em;">Delivery</th>
+            <th scope="col" style="padding: 12px 16px; border-bottom: 1px solid #1d2842; color: #8a92a5; font-size: 12px; line-height: 16px; font-weight: 500; letter-spacing: 0.01em; text-align: right;">Total</th>
+            <th scope="col" style="padding: 12px 16px; border-bottom: 1px solid #1d2842; color: #8a92a5; font-size: 12px; line-height: 16px; font-weight: 500; letter-spacing: 0.01em;">Status</th>
+            <th scope="col" style="padding: 12px 16px; border-bottom: 1px solid #1d2842; color: #8a92a5; font-size: 12px; line-height: 16px; font-weight: 500; letter-spacing: 0.01em;">Placed</th>
+            <th scope="col" style="padding: 12px 16px; border-bottom: 1px solid #1d2842;"><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">Action</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <sc-for list="{{rows}}" as="r" hint-placeholder-count="6">
+            <tr class="trow">
+              <td style="padding: 16px 16px; border-bottom: 1px solid #1d2842;"><a href="AdminOrder.dc.html" style="color: #f6f3ee; font-weight: 600; text-decoration: none;">{{r.no}}</a><div style="color: #8a92a5; font-size: 12px; line-height: 16px;">{{r.items}}</div></td>
+              <td style="padding: 16px 16px; border-bottom: 1px solid #1d2842;"><div style="color: #e7e3dc;">{{r.name}}</div><div style="color: #8a92a5; font-size: 12px; line-height: 16px;">{{r.phone}}</div></td>
+              <td style="padding: 16px 16px; border-bottom: 1px solid #1d2842;"><div style="color: #e7e3dc;">{{r.district}}</div><div style="color: #8a92a5; font-size: 12px; line-height: 16px;">{{r.zone}}</div></td>
+              <td style="padding: 16px 16px; border-bottom: 1px solid #1d2842; color: #f6f3ee; font-weight: 600; text-align: right; white-space: nowrap;">{{r.total}}</td>
+              <td style="padding: 16px 16px; border-bottom: 1px solid #1d2842;"><span style="display: inline-flex; padding: 4px 12px; border: 1px solid {{r.badgeBorder}}; border-radius: 9999px; background: {{r.badgeBg}}; color: {{r.badgeColor}}; font-size: 12px; line-height: 16px; font-weight: 500; letter-spacing: 0.01em; white-space: nowrap;">{{r.status}}</span></td>
+              <td style="padding: 16px 16px; border-bottom: 1px solid #1d2842; white-space: nowrap;"><div style="color: #e7e3dc;">{{r.placed}}</div><div style="color: {{r.noteColor}}; font-size: 12px; line-height: 16px; font-weight: 500;">{{r.note}}</div></td>
+              <td style="padding: 16px 16px; border-bottom: 1px solid #1d2842; text-align: right; white-space: nowrap;">
+                <sc-if value="{{r.isPending}}" hint-placeholder-val="{{false}}">
+                  <a class="btn-secondary" href="AdminOrder.dc.html" style="display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border: 1px solid #55709e; border-radius: 10px; color: #e7e3dc; font-size: 14px; line-height: 20px; font-weight: 500; text-decoration: none;">
+                    <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                    Call and confirm
+                  </a>
+                </sc-if>
+                <sc-if value="{{r.notPending}}" hint-placeholder-val="{{true}}">
+                  <a class="row-link" href="AdminOrder.dc.html" style="display: inline-flex; align-items: center; min-height: 40px; padding: 0 12px; color: #e7e3dc; font-size: 14px; line-height: 20px; font-weight: 500; text-decoration: underline; text-decoration-color: #55709e; text-underline-offset: 4px;">View</a>
+                </sc-if>
+              </td>
+            </tr>
+          </sc-for>
+        </tbody>
+      </table>
+    </div>
+    <!-- Phone: the same orders as a stacked list -->
+    <ul class="olist" aria-label="Orders" style="display: none; flex-direction: column; margin: 0; padding: 0; list-style: none; border: 1px solid #1d2842; border-radius: 14px; background: #0f1729;">
+      <sc-for list="{{rows}}" as="r" hint-placeholder-count="6">
+        <li style="display: flex; flex-direction: column; gap: 8px; padding: 16px; border-bottom: 1px solid #1d2842;">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+            <a href="AdminOrder.dc.html" style="color: #f6f3ee; font-weight: 600; text-decoration: none;">{{r.no}}</a>
+            <span style="display: inline-flex; padding: 4px 12px; border: 1px solid {{r.badgeBorder}}; border-radius: 9999px; background: {{r.badgeBg}}; color: {{r.badgeColor}}; font-size: 12px; line-height: 16px; font-weight: 500; letter-spacing: 0.01em; white-space: nowrap;">{{r.status}}</span>
+          </div>
+          <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px; font-size: 14px; line-height: 20px;">
+            <span style="color: #e7e3dc;">{{r.name}} · {{r.district}}</span>
+            <span style="color: #f6f3ee; font-weight: 600; white-space: nowrap;">{{r.total}}</span>
+          </div>
+          <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px; font-size: 12px; line-height: 16px;">
+            <span style="color: #8a92a5;">{{r.placed}} · {{r.items}}</span>
+            <span style="color: {{r.noteColor}}; font-weight: 500;">{{r.note}}</span>
+          </div>
+          <sc-if value="{{r.isPending}}" hint-placeholder-val="{{false}}">
+            <a class="btn-secondary" href="AdminOrder.dc.html" style="display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; border: 1px solid #55709e; border-radius: 10px; color: #f6f3ee; font-size: 14px; line-height: 20px; font-weight: 500; text-decoration: none;">
+              <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+              Call and confirm
+            </a>
+          </sc-if>
+        </li>
+      </sc-for>
+    </ul>
+    <p style="margin: 0; color: #8a92a5; font-size: 12px; line-height: 16px;">Showing {{shown}} of 9 orders · sample data</p>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1100}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { tab: 'all' };
+  }
+  renderVals() {
+    const orders = [
+      { no: 'DRK-10046', items: '1 item', name: 'Rafiq Ahmed', phone: '01811-223344', district: 'Gazipur', zone: 'Outside Dhaka', total: '৳3,500', status: 'pending', placed: '13 Oct, 8:12 PM', note: '46h left to call' },
+      { no: 'DRK-10045', items: '1 item', name: 'Tasnim Akter', phone: '01911-556677', district: 'Dhaka', zone: 'Inside Dhaka', total: '৳1,310', status: 'pending', placed: '13 Oct, 6:40 PM', note: '45h left to call' },
+      { no: 'DRK-10044', items: '1 item', name: 'Mehedi Hasan', phone: '01611-889900', district: 'Chattogram', zone: 'Outside Dhaka', total: '৳2,550', status: 'pending', placed: '12 Oct, 10:05 AM', note: '12h left to call' },
+      { no: 'DRK-10043', items: '2 items', name: 'Sadia Islam', phone: '01512-667788', district: 'Sylhet', zone: 'Outside Dhaka', total: '৳3,800', status: 'pending', placed: '11 Oct, 11:30 PM', note: 'Cancels in 2h', urgent: true },
+      { no: 'DRK-10042', items: '3 items', name: 'Nusrat Jahan', phone: '01712-345678', district: 'Dhaka', zone: 'Inside Dhaka', total: '৳5,010', status: 'confirmed', placed: '11 Oct, 9:41 PM', note: 'Confirmed 12 Oct' },
+      { no: 'DRK-10040', items: '1 item', name: 'Karim Uddin', phone: '01311-445566', district: 'Barishal', zone: 'Outside Dhaka', total: '৳1,350', status: 'cancelled', placed: '9 Oct, 2:15 PM', note: 'Not reached in 48h' },
+      { no: 'DRK-10039', items: '3 items', name: 'Arif Chowdhury', phone: '01711-998877', district: 'Khulna', zone: 'Outside Dhaka', total: '৳2,050', status: 'shipped', placed: '9 Oct, 11:20 AM', note: 'Steadfast' },
+      { no: 'DRK-10036', items: '2 items', name: 'Farhana Yasmin', phone: '01822-334455', district: 'Rajshahi', zone: 'Outside Dhaka', total: '৳2,890', status: 'delivered', placed: '7 Oct, 4:05 PM', note: 'Cash collected' },
+      { no: 'DRK-10031', items: '1 item', name: 'Imran Hossain', phone: '01922-667788', district: 'Dhaka', zone: 'Inside Dhaka', total: '৳1,050', status: 'delivered', placed: '5 Oct, 1:30 PM', note: 'Cash collected' }
+    ];
+    const look = {
+      pending: { label: 'Pending call', border: '#ed751a', bg: '#0a0f1b', color: '#f19340' },
+      confirmed: { label: 'Confirmed', border: '#55709e', bg: 'transparent', color: '#e7e3dc' },
+      shipped: { label: 'Shipped', border: '#55709e', bg: '#141d31', color: '#f6f3ee' },
+      delivered: { label: 'Delivered', border: '#1d2842', bg: 'transparent', color: '#b3b8c4' },
+      cancelled: { label: 'Cancelled', border: '#1d2842', bg: 'transparent', color: '#8a92a5' }
+    };
+    const tabDefs = [
+      { id: 'all', label: 'All' },
+      { id: 'pending', label: 'Pending call' },
+      { id: 'confirmed', label: 'Confirmed' },
+      { id: 'shipped', label: 'Shipped' },
+      { id: 'delivered', label: 'Delivered' },
+      { id: 'cancelled', label: 'Cancelled' }
+    ];
+    const tab = this.state.tab;
+    const visible = orders.filter((o) => tab === 'all' || o.status === tab);
+    return {
+      pendingCount: orders.filter((o) => o.status === 'pending').length,
+      shown: visible.length,
+      tabs: tabDefs.map((t) => ({
+        label: t.label,
+        count: t.id === 'all' ? orders.length : orders.filter((o) => o.status === t.id).length,
+        pressed: t.id === tab ? 'true' : 'false',
+        underline: t.id === tab ? '#f6f3ee' : 'transparent',
+        color: t.id === tab ? '#f6f3ee' : '#b3b8c4',
+        pick: () => this.setState({ tab: t.id })
+      })),
+      rows: visible.map((o) => ({
+        no: o.no,
+        items: o.items,
+        name: o.name,
+        phone: o.phone,
+        district: o.district,
+        zone: o.zone,
+        total: o.total,
+        status: look[o.status].label,
+        badgeBorder: look[o.status].border,
+        badgeBg: look[o.status].bg,
+        badgeColor: look[o.status].color,
+        placed: o.placed,
+        note: o.note,
+        noteColor: o.urgent ? '#f19340' : '#8a92a5',
+        isPending: o.status === 'pending',
+        notPending: o.status !== 'pending'
+      }))
+    };
+  }
+}
+</script>
+</body>
+</html>

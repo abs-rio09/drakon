@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>DRAKON site header</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&amp;family=Noto+Sans+Bengali:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0}
+.dk-navlink{transition:color 150ms ease-out}
+.dk-navlink:hover{color:#f6f3ee !important}
+.dk-iconbtn{transition:background-color 150ms ease-out,color 150ms ease-out}
+.dk-iconbtn:hover{background:#141d31 !important;color:#f6f3ee !important}
+</style>
+</helmet>
+<header style="position: relative; z-index: 10; border-bottom: 1px solid #1d2842; background: rgba(10, 15, 27, 0.72); -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); color: #e7e3dc; font-family: Outfit, 'Noto Sans Bengali', system-ui, sans-serif;">
+  <div style="max-width: 1280px; margin: 0 auto; padding: 0 clamp(16px, 2.5vw, 32px); box-sizing: border-box;">
+    <nav aria-label="Main" style="display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 72px;">
+      <a href="Main.dc.html" style="display: inline-flex; align-items: center; gap: 8px; color: #f6f3ee; font-size: 20px; line-height: 28px; font-weight: 600; letter-spacing: -0.02em; text-decoration: none;">
+        <span aria-hidden="true" style="display: grid; place-items: center; width: 36px; height: 36px; border-radius: 10px; background: #ed751a; color: #0a0f1b; font-size: 18px; font-weight: 700; letter-spacing: 0;">D</span>
+        Drakon
+      </a>
+      <div class="dk-links" style="display: flex; align-items: center; gap: 32px;">
+        <a class="dk-navlink" href="Main.dc.html" aria-current="{{shop.current}}" style="padding: 8px 0; box-shadow: {{shop.line}}; color: {{shop.color}}; font-size: 14px; line-height: 20px; font-weight: 500; text-decoration: none;">Shop</a>
+        <a class="dk-navlink" href="Main.dc.html" aria-current="{{collections.current}}" style="padding: 8px 0; box-shadow: {{collections.line}}; color: {{collections.color}}; font-size: 14px; line-height: 20px; font-weight: 500; text-decoration: none;">Collections</a>
+        <a class="dk-navlink" href="{{soldoutHref}}" aria-current="{{soldout.current}}" style="padding: 8px 0; box-shadow: {{soldout.line}}; color: {{soldout.color}}; font-size: 14px; line-height: 20px; font-weight: 500; text-decoration: none;">Sold out</a>
+        <a class="dk-navlink" href="Track.dc.html" aria-current="{{track.current}}" style="padding: 8px 0; box-shadow: {{track.line}}; color: {{track.color}}; font-size: 14px; line-height: 20px; font-weight: 500; text-decoration: none;">Track order</a>
+      </div>
+      <div style="display: flex; align-items: center; gap: 4px;">
+        <button class="dk-iconbtn" type="button" aria-label="Search" style="display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 9999px; background: transparent; color: #b3b8c4; cursor: pointer;">
+          <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
+        </button>
+        <a class="dk-iconbtn" href="{{accountHref}}" aria-label="{{accountLabel}}" aria-current="{{accountCurrent}}" style="display: grid; place-items: center; width: 44px; height: 44px; border-radius: 9999px; background: {{accountBg}}; color: {{accountColor}};">
+          <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"></circle><path d="M4 21a8 8 0 0 1 16 0"></path></svg>
+        </a>
+        <a class="dk-iconbtn" href="Cart.dc.html" aria-label="{{cartLabel}}" style="position: relative; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 9999px; color: #b3b8c4;">
+          <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path><path d="M3 6h18"></path><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
+          <sc-if value="{{hasItems}}" hint-placeholder-val="{{true}}">
+            <span style="position: absolute; top: 5px; right: 3px; display: grid; place-items: center; min-width: 18px; height: 18px; padding: 0 4px; box-sizing: border-box; border-radius: 9999px; background: #f6f3ee; color: #0a0f1b; font-size: 12px; line-height: 16px; font-weight: 600; font-variant-numeric: tabular-nums;">{{cartCount}}</span>
+          </sc-if>
+        </a>
+        <button class="dk-menu dk-iconbtn" type="button" aria-label="Menu" style="display: none; align-items: center; justify-content: center; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 9999px; background: transparent; color: #b3b8c4; cursor: pointer;">
+          <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"></path><path d="M4 12h16"></path><path d="M4 17h16"></path></svg>
+        </button>
+      </div>
+    </nav>
+  </div>
+</header>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"active":{"editor":"enum","options":["shop","collections","soldout","track","account","none"],"default":"shop"},"signedIn":{"editor":"boolean","default":false},"cartCount":{"editor":"int","min":0,"max":99,"default":2},"$preview":{"width":1440,"height":73}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const active = this.props.active ?? 'shop';
+    const count = this.props.cartCount ?? 2;
+    const link = (key) => ({
+      color: active === key ? '#f6f3ee' : '#b3b8c4',
+      line: active === key ? 'inset 0 -2px 0 #f6f3ee' : 'none',
+      current: active === key ? 'page' : 'false'
+    });
+    return {
+      shop: link('shop'),
+      collections: link('collections'),
+      soldout: link('soldout'),
+      track: link('track'),
+      soldoutHref: this.props.soldoutHref ?? 'SoldOut.dc.html',
+      accountHref: this.props.signedIn ? 'Account.dc.html' : 'SignIn.dc.html',
+      accountLabel: this.props.signedIn ? 'My account' : 'Sign in',
+      accountCurrent: active === 'account' ? 'page' : 'false',
+      accountBg: active === 'account' ? '#141d31' : 'transparent',
+      accountColor: active === 'account' ? '#f6f3ee' : '#b3b8c4',
+      cartCount: count,
+      hasItems: count > 0,
+      cartLabel: count > 0 ? 'Cart, ' + count + ' items' : 'Cart, empty'
+    };
+  }
+}
+</script>
+</body>
+</html>

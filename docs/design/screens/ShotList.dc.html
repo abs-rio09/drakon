@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>DRAKON photo shot list</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&amp;family=Noto+Sans+Bengali:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0;background:#0a0f1b}
+.num{font-variant-numeric:tabular-nums}
+.wrap{max-width:1280px;margin:0 auto;padding:0 32px;box-sizing:border-box}
+.srow{display:grid;grid-template-columns:112px minmax(0,1.1fr) minmax(0,0.6fr) minmax(0,2fr);gap:24px;align-items:start;padding:20px 0;border-bottom:1px solid #1d2842}
+.shead{padding:12px 0}
+@media (max-width:767px){.wrap{padding:0 16px}.srow{grid-template-columns:88px minmax(0,1fr);gap:8px 16px}.srow .brief,.srow .size{grid-column:2}.shead{display:none !important}.sl-title{font-size:36px !important;line-height:40px !important}}
+</style>
+</helmet>
+<div style="min-height: 100vh; background: #0a0f1b url(img/grain.webp); color: #e7e3dc; font-family: Outfit, 'Noto Sans Bengali', system-ui, sans-serif; font-size: 16px; line-height: 26px; -webkit-font-smoothing: antialiased;">
+  <main class="wrap" style="display: flex; flex-direction: column; gap: 40px; padding-top: 80px; padding-bottom: 128px;">
+    <header style="display: flex; flex-direction: column; gap: 16px; max-width: 760px;">
+      <h1 class="sl-title" style="margin: 0; color: #f6f3ee; font-size: 48px; line-height: 52px; font-weight: 600; letter-spacing: -0.025em;">Photo shot list</h1>
+      <p style="margin: 0; color: #b3b8c4; font-size: 18px; line-height: 30px;">One row per image slot. The pictures on the site now are code-made stand-ins. Replace each with a real photo shot to the same recipe: top-down on dark honed slate, one warm key light (about 3200K) from the upper left at a low angle, a weak cool fill from the lower right, matte materials, blacks lifted to the page colour #0a0f1b, WebP at 200 KB or less. No people, rooms or other brands.</p>
+    </header>
+    <div role="table" aria-label="Shot list" style="display: flex; flex-direction: column; border-top: 1px solid #1d2842;">
+      <div class="srow shead" role="row" style="color: #8a92a5; font-size: 13px; line-height: 18px;">
+        <span role="columnheader">Stand-in</span><span role="columnheader">Page and slot</span><span role="columnheader">Size</span><span role="columnheader">What the real photo should show</span>
+      </div>
+      <sc-for list="{{rows}}" as="r" hint-placeholder-count="6">
+        <div class="srow" role="row">
+          <span role="cell" style="display: block; width: 100%; aspect-ratio: 1 / 1; overflow: hidden; border-radius: 8px; background: #141d31;"><img src="{{r.img}}" alt="" style="display: block; width: 100%; height: 100%; object-fit: cover;"></span>
+          <span role="cell" style="color: #f6f3ee; font-size: 16px; line-height: 24px; font-weight: 500;">{{r.slot}}</span>
+          <span class="size num" role="cell" style="color: #b3b8c4; font-size: 14px; line-height: 20px;">{{r.size}}</span>
+          <span class="brief" role="cell" style="color: #b3b8c4; font-size: 14px; line-height: 22px;">{{r.brief}}<sc-if value="{{r.hasLabel}}" hint-placeholder-val="{{false}}"><span style="display: block; padding-top: 4px; color: #8a92a5; font-size: 13px; line-height: 18px;">{{r.label}}</span></sc-if></span>
+        </div>
+      </sc-for>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":4190}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const r = (slot, img, size, brief, label) => ({ slot: slot, img: img, size: size, brief: brief, label: label || '', hasLabel: !!label });
+    return {
+      rows: [
+        r('Home · hero (desktop)', 'img/hero-wide.webp', '1680 × 880', 'Dragon Flame set: 5 cards fanned plus the box, top-down on dark slate. Keep the left 45% empty for the headline and the bottom-right corner quiet: the gallery label sits there. One warm key light from the upper left, long shadows to the lower right.', 'Leave about 280 × 160 px of plain slate at the bottom right for the label.'),
+        r('Home · hero (phone)', 'img/hero-tall.webp', '900 × 1125 (4:5)', 'Same set as the desktop hero, framed tall and centred, cards a little larger in the frame.'),
+        r('Home · drop card 1', 'img/p-dragon-flame-set.webp', '1000 × 1000', 'Dragon Flame Playcard Set: box with a fan of cards, product filling about 70% of the frame.'),
+        r('Home · drop card 2', 'img/p-hoodie02-front.webp', '1000 × 1000', 'Reuses the product page front shot: Ember Night Hoodie Edition 02 folded, chest eye and grey drawcords visible.'),
+        r('Home · drop card 3', 'img/p-desk-drone.webp', '1000 × 1000', 'Midnight Circuit Desk Drone, top-down, slightly turned, ember light strip visible.'),
+        r('Home · drop card 4', 'img/p-striker-football.webp', '1000 × 1000', 'Night Striker Football alone, a third in from the left, long shadow to the lower right. Matte leather panels, no shine.'),
+        r('Home · collection: Playcards', 'img/cat-playcard.webp', '800 × 1000 (4:5)', 'Close-up, not a repeat: two Dragon Flame card faces big in the frame, foil eye catching the light, card backs fanned behind.', 'Keep the bottom 30% dark: the collection name sits there.'),
+        r('Home · collection: Sports toys', 'img/cat-sports.webp', '800 × 1000 (4:5)', 'Close-up of the football panels and seams, ball cropped by the frame, warm light raking across the stitching.', 'Keep the bottom 30% dark: the collection name sits there.'),
+        r('Home · collection: Tech toys', 'img/cat-tech.webp', '800 × 1000 (4:5)', 'Close-up of the drone body and its ember light strip, two rotor guards cropped at the edges.', 'Keep the bottom 30% dark: the collection name sits there.'),
+        r('Home · collection: Clothes', 'img/cat-clothes.webp', '800 × 1000 (4:5)', 'Close-up of the hoodie neckline: drawcords, metal tips and the small ember eye, fleece texture visible.', 'Keep the bottom 30% dark: the collection name sits there.'),
+        r('Product · pairs well with: tee', 'img/p-logo-tee.webp', '1000 × 1000', 'Ember Logo Tee, folded square, small ember D badge readable on the chest.'),
+        r('Home + Archive · sold out 1', 'img/so-hoodie01.webp', '1000 × 750 (4:3)', 'Ember Night Hoodie Edition 01, folded, back print up. Shoot in colour; the site makes it grayscale.'),
+        r('Home + Archive · sold out 2', 'img/so-founders-deck.webp', '1000 × 750 (4:3)', 'Founders Playcard Deck: box and fanned cards.'),
+        r('Home + Archive · sold out 3', 'img/so-mini-goal.webp', '1000 × 750 (4:3)', 'Glow Arena Mini Goal from above with a small ball beside it, crossbar light on.'),
+        r('Product · gallery front', 'img/p-hoodie02-front.webp', '1200 × 1200', 'Ember Night Hoodie Edition 02 folded, front, hood behind, drawstrings and chest mark visible.'),
+        r('Product · gallery back', 'img/p-hoodie02-back.webp', '1200 × 1200', 'Same hoodie flipped: large ember eye back print and the Edition 02 text.'),
+        r('Product · gallery detail', 'img/p-hoodie02-detail.webp', '1200 × 1200', 'Macro of the chest print texture with a drawstring and its metal tip crossing the frame.'),
+        r('Product · gallery tag', 'img/p-hoodie02-tag.webp', '1200 × 1200', 'Inside the collar: the woven Edition 02 label with the rib band above it.'),
+        r('Product · pairs well with', 'img/p-card-sleeves.webp', '1000 × 1000', 'Card Sleeves Ember 100: sleeve box with two sleeved cards; show the gloss of the sleeves. The other three reuse the drop shots.'),
+        r('Cart, checkout, order placed, tracking, admin lists', 'img/t-p-hoodie02-front.webp', '240 × 240', 'Made from each product main shot: crop so the whole product fills about 85% of the square, then lift exposure a third of a stop so it reads at 56 px. No separate shoot.'),
+        r('Admin · product photo 1', 'img/a-founders2-front.webp', '800 × 800', 'Founders Playcard Deck II box, front, champagne foil.'),
+        r('Admin · product photo 2', 'img/a-founders2-back.webp', '800 × 800', 'One Founders II card back, flat.'),
+        r('Admin · product photo 3', 'img/a-founders2-foil.webp', '800 × 800', 'Foil macro: the ember eye on a Founders II card, very close.'),
+        r('All full pages · texture', 'img/grain.webp', '256 × 256 tile', 'Not a photo: a faint grain tile in the page colour. Keep as is.')
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>DRAKON admin products</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&amp;family=Noto+Sans+Bengali:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0;background:#0a0f1b}
+a{color:#f19340}a:hover{color:#f6f3ee}
+.btn-primary:hover{background:#f19340 !important}
+.tab:hover{color:#f6f3ee !important}
+.trow:hover{background:#141d31}
+.row-link:hover{color:#f6f3ee !important;text-decoration-color:#f6f3ee !important}
+.dk-input::placeholder{color:#8a92a5}
+.dk-input:focus{outline:2px solid #f19340;outline-offset:2px}
+.shell{display:flex;flex-wrap:wrap;align-items:stretch;min-height:100vh}
+.side{flex:1 1 240px;max-width:260px;display:flex}
+.content{flex:999 1 560px;min-width:0}
+@media (max-width:899px){.side{flex-basis:100%;max-width:none}.dk-adminnav{min-height:0 !important;width:100%;flex-direction:row !important;flex-wrap:wrap;align-items:center;gap:16px !important;border-right:0 !important;border-bottom:1px solid #1d2842}.dk-adminnav-items{flex-direction:row !important;flex-wrap:wrap}.dk-adminnav-foot{display:none !important}}
+@media (max-width:639px){.pad{padding:24px 16px !important}}
+</style>
+</helmet>
+<div class="shell" style="background: #0a0f1b; color: #e7e3dc; font-family: Outfit, 'Noto Sans Bengali', system-ui, sans-serif; font-size: 16px; line-height: 24px; font-variant-numeric: tabular-nums; -webkit-font-smoothing: antialiased;">
+  <div class="side">
+    <dc-import name="AdminNav" active="products" pending-count="{{pendingCount}}" hint-size="100%,760px"></dc-import>
+  </div>
+
+  <main class="content pad" style="box-sizing: border-box; padding: 32px 40px 64px; display: flex; flex-direction: column; gap: 24px;">
+    <div style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px;">
+      <div style="display: flex; flex-direction: column; gap: 4px;">
+        <h1 style="margin: 0; color: #f6f3ee; font-size: 36px; line-height: 40px; font-weight: 600; letter-spacing: -0.02em;">Products</h1>
+        <p style="margin: 0; color: #b3b8c4; font-size: 14px; line-height: 20px;">Products are never deleted. Sold-out limited items move to the archive.</p>
+      </div>
+      <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px;">
+        <div style="position: relative; width: 280px; max-width: 100%;">
+          <label for="p-search" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">Search products</label>
+          <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8a92a5" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; top: 50%; left: 14px; margin-top: -8px; pointer-events: none;"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
+          <input class="dk-input" id="p-search" type="search" placeholder="Name or SKU" style="box-sizing: border-box; width: 100%; padding: 12px 16px 12px 40px; border: 1px solid #55709e; border-radius: 10px; background: #141d31; color: #e7e3dc; font-family: inherit; font-size: 14px; line-height: 20px;">
+        </div>
+        <a class="btn-primary" href="AdminProductEdit.dc.html" style="display: inline-flex; align-items: center; gap: 8px; padding: 12px 20px; border-radius: 10px; background: #ed751a; color: #0a0f1b; font-size: 14px; line-height: 20px; font-weight: 500; text-decoration: none;">
+          <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>
+          New product
+        </a>
+      </div>
+    </div>
+
+    <div role="group" aria-label="Filter by lifecycle" style="display: flex; flex-wrap: wrap; gap: 4px; border-bottom: 1px solid #1d2842;">
+      <sc-for list="{{tabs}}" as="t" hint-placeholder-count="5">
+        <button class="tab" type="button" onClick="{{t.pick}}" aria-pressed="{{t.pressed}}" style="display: inline-flex; align-items: center; gap: 8px; margin-bottom: -1px; padding: 12px 16px; border: 0; border-bottom: 2px solid {{t.underline}}; background: transparent; color: {{t.color}}; font-family: inherit; font-size: 14px; line-height: 20px; font-weight: 500; cursor: pointer;">
+          {{t.label}}
+          <span style="min-width: 20px; padding: 0 8px; box-sizing: border-box; border-radius: 9999px; background: #141d31; color: #e7e3dc; font-size: 12px; line-height: 20px; font-weight: 600; text-align: center;">{{t.count}}</span>
+        </button>
+      </sc-for>
+    </div>
+
+    <div style="position: relative; overflow-x: auto; border: 1px solid #1d2842; border-radius: 14px; background: #0f1729;">
+      <table style="width: 100%; min-width: 900px; border-collapse: collapse; font-size: 14px; line-height: 20px;">
+        <thead>
+          <tr style="text-align: left;">
+            <th scope="col" style="padding: 12px 16px; border-bottom: 1px solid #1d2842; color: #8a92a5; font-size: 12px; line-height: 16px; font-weight: 500; letter-spacing: 0.01em;">Product</th>
+            <th scope="col" style="padding: 12px 16px; border-bottom: 1px solid #1d2842; color: #8a92a5; font-size: 12px; line-height: 16px; font-weight: 500; letter-spacing: 0.01em;">Category</th>
+            <th scope="col" style="padding: 12px 16px; border-bottom: 1px solid #1d2842; color: #8a92a5; font-size: 12px; line-height: 16px; font-weight: 500; letter-spacing: 0.01em; text-align: right;">Price</th>
+            <th scope="col" style="padding: 12px 16px; border-bottom: 1px solid #1d2842; color: #8a92a5; font-size: 12px; line-height: 16px; font-weight: 500; letter-spacing: 0.01em;">Stock</th>
+            <th scope="col" style="padding: 12px 16px; border-bottom: 1px solid #1d2842; color: #8a92a5; font-size: 12px; line-height: 16px; font-weight: 500; letter-spacing: 0.01em;">Type</th>
+            <th scope="col" style="padding: 12px 16px; border-bottom: 1px solid #1d2842; color: #8a92a5; font-size: 12px; line-height: 16px; font-weight: 500; letter-spacing: 0.01em;">Status</th>
+            <th scope="col" style="padding: 12px 16px; border-bottom: 1px solid #1d2842;"><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">Action</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <sc-for list="{{rows}}" as="r" hint-placeholder-count="6">
+            <tr class="trow">
+              <td style="padding: 12px 16px; border-bottom: 1px solid #1d2842;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                  <img src="{{r.img}}" alt="" style="flex-shrink: 0; width: 44px; height: 44px; border-radius: 8px; object-fit: cover; background: #141d31; filter: {{r.filter}};">
+                  <span style="display: flex; flex-direction: column;"><a href="AdminProductEdit.dc.html" style="color: #f6f3ee; font-weight: 600; text-decoration: none;">{{r.name}}</a><span style="color: #8a92a5; font-size: 12px; line-height: 16px;">{{r.variants}}</span></span>
+                </div>
+              </td>
+              <td style="padding: 12px 16px; border-bottom: 1px solid #1d2842; color: #b3b8c4;">{{r.category}}</td>
+              <td style="padding: 12px 16px; border-bottom: 1px solid #1d2842; color: #f6f3ee; font-weight: 600; text-align: right; white-space: nowrap;">{{r.price}}</td>
+              <td style="padding: 12px 16px; border-bottom: 1px solid #1d2842; white-space: nowrap;"><div style="color: {{r.stockColor}}; font-weight: 500;">{{r.stock}}</div><div style="color: #8a92a5; font-size: 12px; line-height: 16px;">{{r.stockNote}}</div></td>
+              <td style="padding: 12px 16px; border-bottom: 1px solid #1d2842;">
+                <sc-if value="{{r.limited}}" hint-placeholder-val="{{false}}">
+                  <span style="display: inline-flex; align-items: center; gap: 8px; color: #e7e3dc; font-size: 13px; line-height: 18px; font-weight: 500;"><span aria-hidden="true" style="width: 6px; height: 6px; border-radius: 9999px; background: #f6f3ee;"></span>Limited</span>
+                </sc-if>
+                <sc-if value="{{r.regular}}" hint-placeholder-val="{{true}}">
+                  <span style="color: #b3b8c4;">Restockable</span>
+                </sc-if>
+              </td>
+              <td style="padding: 12px 16px; border-bottom: 1px solid #1d2842; white-space: nowrap;"><span style="display: inline-flex; padding: 4px 12px; border: 1px solid {{r.badgeBorder}}; border-radius: 9999px; background: {{r.badgeBg}}; color: {{r.badgeColor}}; font-size: 12px; line-height: 16px; font-weight: 500; letter-spacing: 0.01em;">{{r.status}}</span><div style="color: #8a92a5; font-size: 12px; line-height: 16px; padding-top: 4px;">{{r.statusNote}}</div></td>
+              <td style="padding: 12px 16px; border-bottom: 1px solid #1d2842; text-align: right;"><a class="row-link" href="AdminProductEdit.dc.html" style="display: inline-flex; align-items: center; min-height: 40px; padding: 0 12px; color: #e7e3dc; font-weight: 500; text-decoration: underline; text-decoration-color: #55709e; text-underline-offset: 4px;">Edit</a></td>
+            </tr>
+          </sc-for>
+        </tbody>
+      </table>
+    </div>
+    <p style="margin: 0; color: #8a92a5; font-size: 12px; line-height: 16px;">Showing {{shown}} of 11 products · sample data · Low stock means 5 or fewer left</p>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1100}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { tab: 'active' };
+  }
+  renderVals() {
+    const products = [
+      { name: 'Ember Night Hoodie · Edition 02', img: 'img/t-p-hoodie02-front.webp', variants: '4 sizes · L sold out', category: 'Clothes', price: '৳2,450', stock: 13, limited: true, status: 'active' },
+      { name: 'Midnight Circuit Desk Drone', img: 'img/t-p-desk-drone.webp', variants: '1 variant', category: 'Tech Toy', price: '৳3,400', stock: 3, limited: true, status: 'active' },
+      { name: 'Dragon Flame Playcard Set', img: 'img/t-p-dragon-flame-set.webp', variants: '1 variant', category: 'Playcard', price: '৳1,250', stock: 12, limited: true, status: 'active' },
+      { name: 'Night Striker Football', img: 'img/t-p-striker-football.webp', variants: '1 variant', category: 'Sports Toy', price: '৳1,800', stock: 20, limited: false, status: 'active' },
+      { name: 'Card Sleeves · Ember 100', img: 'img/t-p-card-sleeves.webp', variants: '1 variant', category: 'Playcard', price: '৳350', stock: 48, limited: false, status: 'active' },
+      { name: 'Ember Logo Tee · Black', img: 'img/t-p-logo-tee.webp', variants: '4 sizes', category: 'Clothes', price: '৳990', stock: 0, limited: false, status: 'active' },
+      { name: 'Founders Playcard Deck II', img: 'img/t-a-founders2-front.webp', variants: '2 variants', category: 'Playcard', price: '৳1,600', stock: 180, limited: true, status: 'draft', note: 'Not published' },
+      { name: 'Glow Arena Mini Goal v2', img: 'img/t-so-mini-goal.webp', variants: '1 variant', category: 'Sports Toy', price: '—', stock: 0, limited: true, status: 'draft', note: 'Price not set' },
+      { name: 'Founders Playcard Deck', img: 'img/t-so-founders-deck.webp', variants: '1 variant', category: 'Playcard', price: '৳1,500', stock: 0, limited: true, status: 'soldout', note: 'Archives in 5 days' },
+      { name: 'Glow Arena Mini Goal', img: 'img/t-so-mini-goal.webp', variants: '1 variant', category: 'Sports Toy', price: '৳2,600', stock: 0, limited: true, status: 'soldout', note: 'Archives in 2 days' },
+      { name: 'Ember Night Hoodie · Edition 01', img: 'img/t-so-hoodie01.webp', variants: '4 sizes', category: 'Clothes', price: '৳2,100', stock: 0, limited: true, status: 'archived', note: 'In the Sold Out showcase' }
+    ];
+    const look = {
+      draft: { label: 'Draft', border: '#1d2842', bg: '#141d31', color: '#b3b8c4' },
+      active: { label: 'Active', border: '#55709e', bg: 'transparent', color: '#f6f3ee' },
+      soldout: { label: 'Sold out', border: '#1d2842', bg: 'transparent', color: '#b3b8c4' },
+      archived: { label: 'Archived', border: '#1d2842', bg: 'transparent', color: '#8a92a5' }
+    };
+    const tabDefs = [
+      { id: 'active', label: 'Active' },
+      { id: 'draft', label: 'Draft' },
+      { id: 'soldout', label: 'Sold out' },
+      { id: 'archived', label: 'Archived' },
+      { id: 'all', label: 'All' }
+    ];
+    const tab = this.state.tab;
+    const visible = products.filter((p) => tab === 'all' || p.status === tab);
+    return {
+      pendingCount: 4,
+      shown: visible.length,
+      tabs: tabDefs.map((t) => ({
+        label: t.label,
+        count: t.id === 'all' ? products.length : products.filter((p) => p.status === t.id).length,
+        pressed: t.id === tab ? 'true' : 'false',
+        underline: t.id === tab ? '#f6f3ee' : 'transparent',
+        color: t.id === tab ? '#f6f3ee' : '#b3b8c4',
+        pick: () => this.setState({ tab: t.id })
+      })),
+      rows: visible.map((p) => {
+        const out = p.stock === 0;
+        const low = !out && p.stock <= 5;
+        let stockNote = '';
+        if (p.status === 'active' && out && !p.limited) stockNote = 'Out of stock · restock any time';
+        else if (low) stockNote = 'Low stock';
+        return {
+          name: p.name,
+          img: p.img,
+          variants: p.variants,
+          category: p.category,
+          price: p.price,
+          stock: out ? 'None left' : p.stock + ' left',
+          stockNote: stockNote,
+          stockColor: low ? '#f19340' : out ? '#8a92a5' : '#e7e3dc',
+          limited: p.limited,
+          regular: !p.limited,
+          status: look[p.status].label,
+          statusNote: p.note || '',
+          badgeBorder: look[p.status].border,
+          badgeBg: look[p.status].bg,
+          badgeColor: look[p.status].color,
+          filter: p.status === 'soldout' || p.status === 'archived' ? 'grayscale(1) opacity(0.6)' : (p.status === 'draft' ? 'opacity(0.7)' : 'none')
+        };
+      })
+    };
+  }
+}
+</script>
+</body>
+</html>

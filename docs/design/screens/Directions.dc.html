@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>DRAKON art directions</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&amp;family=Noto+Sans+Bengali:wght@400;500;600&amp;family=Saira+Condensed:wght@800&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap">
+<style>
+body{margin:0;background:#0a0f1b}
+a{color:#f19340}a:hover{color:#f6f3ee}
+.dir-wrap{max-width:1280px;margin:0 auto;padding:0 32px;box-sizing:border-box}
+.dir-row{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:56px;align-items:start}
+.spec{display:grid;grid-template-columns:88px minmax(0,1fr);gap:14px 20px;margin:0}
+.sample{position:relative;overflow:hidden;min-height:420px;box-sizing:border-box}
+.a-btn:hover{background:#f19340 !important}
+.a-img{-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 28%);mask-image:linear-gradient(90deg,transparent 0,#000 28%)}
+.b-img{-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 22%);mask-image:linear-gradient(90deg,transparent 0,#000 22%)}
+.grid-bg{background-image:linear-gradient(#1a2338 1px,transparent 1px),linear-gradient(90deg,#1a2338 1px,transparent 1px);background-size:24px 24px}
+@keyframes caret{0%,49%{opacity:1}50%,100%{opacity:0}}
+.caret{animation:caret 1.1s steps(1) infinite}
+@media (prefers-reduced-motion:reduce){.caret{animation:none}}
+@media (max-width:1023px){.dir-row{grid-template-columns:repeat(1,minmax(0,1fr));gap:32px}}
+@media (max-width:639px){.dir-wrap{padding:0 16px}.dir-title{font-size:36px !important;line-height:40px !important}.sample{min-height:0}.b-head{font-size:64px !important}.a-head{font-size:36px !important}.spec{grid-template-columns:72px minmax(0,1fr)}.a-sample,.b-sample{flex-direction:column;align-items:stretch !important}.a-img,.b-img{position:relative !important;width:100% !important;height:240px !important;-webkit-mask-image:none;mask-image:none}.c-grid{grid-template-columns:repeat(1,minmax(0,1fr)) !important}.a-label{position:relative !important;right:auto !important;bottom:auto !important;width:auto !important;margin:0 16px 16px}}
+</style>
+</helmet>
+<div style="min-height: 100vh; background: #0a0f1b url(img/grain.webp); color: #e7e3dc; font-family: Outfit, 'Noto Sans Bengali', system-ui, sans-serif; font-size: 16px; line-height: 26px; -webkit-font-smoothing: antialiased;">
+  <main class="dir-wrap" style="display: flex; flex-direction: column; gap: 96px; padding-top: 80px; padding-bottom: 128px;">
+    <header style="display: flex; flex-direction: column; gap: 20px; max-width: 760px;">
+      <h1 class="dir-title" style="margin: 0; color: #f6f3ee; font-size: 48px; line-height: 52px; font-weight: 600; letter-spacing: -0.025em;">Three looks for DRAKON</h1>
+      <p style="margin: 0; color: #b3b8c4; font-size: 18px; line-height: 30px;">Direction A is on every page and in the design system. B and C are here to compare, one small sample each. To switch, tell Claude “switch DRAKON to direction B” (or C). Prices, Cash on Delivery and every business rule stay the same in all three.</p>
+    </header>
+
+    <!-- A · Ember Gallery, refined (applied) -->
+    <section aria-labelledby="dir-a" class="dir-row">
+      <div style="display: flex; flex-direction: column; gap: 28px;">
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <span style="align-self: flex-start; display: inline-flex; align-items: center; gap: 8px; padding: 4px 12px; border: 1px solid #55709e; border-radius: 9999px; color: #f6f3ee; font-size: 13px; line-height: 18px; font-weight: 500;"><span aria-hidden="true" style="width: 6px; height: 6px; border-radius: 9999px; background: #ed751a;"></span>Applied to every page</span>
+          <h2 id="dir-a" style="margin: 0; color: #f6f3ee; font-size: 36px; line-height: 40px; font-weight: 600; letter-spacing: -0.02em;">A. Ember Gallery, with gallery labels</h2>
+        </div>
+        <dl class="spec">
+          <dt style="color: #8a92a5; font-size: 14px; line-height: 22px;">Mood</dt><dd style="margin: 0; color: #e7e3dc; font-size: 15px; line-height: 22px;">A private night gallery for collectors. Each piece sits alone under one warm light, with a small label that says what it is, if it is a limited run, and what is left.</dd>
+          <dt style="color: #8a92a5; font-size: 14px; line-height: 22px;">Colors</dt>
+          <dd style="margin: 0; display: flex; flex-direction: column; gap: 10px;">
+            <span style="display: flex; gap: 6px;">
+              <span title="#0a0f1b surface" style="width: 32px; height: 32px; border: 1px solid #1d2842; border-radius: 8px; background: #0a0f1b;"></span>
+              <span title="#0f1729 raised" style="width: 32px; height: 32px; border-radius: 8px; background: #0f1729;"></span>
+              <span title="#141d31 field" style="width: 32px; height: 32px; border-radius: 8px; background: #141d31;"></span>
+              <span title="#b3b8c4 steel" style="width: 32px; height: 32px; border-radius: 8px; background: #b3b8c4;"></span>
+              <span title="#f6f3ee bone" style="width: 32px; height: 32px; border-radius: 8px; background: #f6f3ee;"></span>
+              <span title="#ed751a ember" style="width: 32px; height: 32px; border-radius: 8px; background: #ed751a;"></span>
+            </span>
+            <span style="color: #e7e3dc; font-size: 15px; line-height: 22px;">Midnight ground, bone white text, steel greys. Ember orange only on the logo and the one main button of a screen.</span>
+          </dd>
+          <dt style="color: #8a92a5; font-size: 14px; line-height: 22px;">Type</dt><dd style="margin: 0; color: #e7e3dc; font-size: 15px; line-height: 22px;">Outfit only, with a proper Taka sign from Noto Sans Bengali. Big tight headlines, even-width numbers on every price, small steel labels.</dd>
+          <dt style="color: #8a92a5; font-size: 14px; line-height: 22px;">Photos</dt><dd style="margin: 0; color: #e7e3dc; font-size: 15px; line-height: 22px;">Top-down on dark slate, one warm light from the upper left, long soft shadows, matte materials. Collection tiles are close-ups, never repeats.</dd>
+          <dt style="color: #8a92a5; font-size: 14px; line-height: 22px;">Motion</dt><dd style="margin: 0; color: #e7e3dc; font-size: 15px; line-height: 22px;">One hero reveal on load. Images fade in once. A slow zoom on photo hover. Nothing loops.</dd>
+        </dl>
+      </div>
+      <div class="sample a-sample" style="display: flex; align-items: flex-end; border-radius: 20px; background: #0a0f1b;">
+        <img class="a-img" src="img/hero-wide.webp" alt="" style="position: absolute; top: 0; right: 0; width: 70%; height: 100%; object-fit: cover; object-position: 88% 50%;">
+        <div style="position: relative; display: flex; flex-direction: column; gap: 18px; max-width: 250px; padding: 36px;">
+          <span class="a-head" style="display: flex; flex-direction: column; color: #f6f3ee; font-size: 40px; line-height: 42px; font-weight: 600; letter-spacing: -0.035em;"><span>Made once.</span><span>Never again.</span></span>
+          <a class="a-btn" href="Main.dc.html" style="align-self: flex-start; padding: 12px 22px; border-radius: 10px; background: #ed751a; color: #0a0f1b; font-size: 15px; line-height: 22px; font-weight: 600; text-decoration: none;">Shop the drop</a>
+        </div>
+        <div class="a-label" style="position: absolute; right: 24px; bottom: 24px; display: flex; flex-direction: column; gap: 10px; width: 240px; padding: 16px 18px; box-sizing: border-box; border: 1px solid #1d2842; border-radius: 14px; background: rgba(10, 15, 27, 0.72); -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px);">
+          <span style="display: flex; flex-direction: column;"><span style="color: #f6f3ee; font-size: 15px; line-height: 22px; font-weight: 500;">Dragon Flame Playcard Set</span><span style="color: #b3b8c4; font-size: 13px; line-height: 18px;">Playcard set, limited run</span></span>
+          <span style="display: flex; align-items: baseline; justify-content: space-between; padding-top: 10px; border-top: 1px solid #1d2842;"><span style="color: #f6f3ee; font-size: 18px; line-height: 24px; font-weight: 500; font-variant-numeric: tabular-nums;">৳1,250</span><span style="color: #b3b8c4; font-size: 13px; line-height: 18px;">12 left</span></span>
+        </div>
+      </div>
+    </section>
+
+    <div aria-hidden="true" style="height: 1px; background: #1d2842;"></div>
+
+    <!-- B · Floodlight Matchday -->
+    <section aria-labelledby="dir-b" class="dir-row">
+      <div style="display: flex; flex-direction: column; gap: 28px;">
+        <h2 id="dir-b" style="margin: 0; color: #f6f3ee; font-size: 36px; line-height: 40px; font-weight: 600; letter-spacing: -0.02em;">B. Floodlight Matchday</h2>
+        <dl class="spec">
+          <dt style="color: #8a92a5; font-size: 14px; line-height: 22px;">Mood</dt><dd style="margin: 0; color: #e7e3dc; font-size: 15px; line-height: 22px;">Football under stadium lights. Louder, faster, more energy for match-night fans and gamers.</dd>
+          <dt style="color: #8a92a5; font-size: 14px; line-height: 22px;">Colors</dt>
+          <dd style="margin: 0; display: flex; flex-direction: column; gap: 10px;">
+            <span style="display: flex; gap: 6px;">
+              <span style="width: 32px; height: 32px; border: 1px solid #1d2842; border-radius: 2px; background: #0a0f1b;"></span>
+              <span style="width: 32px; height: 32px; border-radius: 2px; background: #ed751a;"></span>
+              <span style="width: 32px; height: 32px; border-radius: 2px; background: #f19340;"></span>
+              <span style="width: 32px; height: 32px; border-radius: 2px; background: #ffffff;"></span>
+            </span>
+            <span style="color: #e7e3dc; font-size: 15px; line-height: 22px;">Same midnight, but orange in big blocks: price tags, number plates, section bands.</span>
+          </dd>
+          <dt style="color: #8a92a5; font-size: 14px; line-height: 22px;">Type</dt><dd style="margin: 0; color: #e7e3dc; font-size: 15px; line-height: 22px;">Adds Saira Condensed for caps headlines and jersey-size numbers; Outfit for body.</dd>
+          <dt style="color: #8a92a5; font-size: 14px; line-height: 22px;">Photos</dt><dd style="margin: 0; color: #e7e3dc; font-size: 15px; line-height: 22px;">Same shots, cropped tighter and harder, with pitch-line graphics over them.</dd>
+          <dt style="color: #8a92a5; font-size: 14px; line-height: 22px;">Motion</dt><dd style="margin: 0; color: #e7e3dc; font-size: 15px; line-height: 22px;">Snappy slides and counters. More movement, less calm.</dd>
+        </dl>
+      </div>
+      <div class="sample b-sample" style="display: flex; align-items: stretch; border-radius: 4px; background: #0a0f1b;">
+        <img class="b-img" src="img/p-striker-football.webp" alt="" style="position: absolute; top: 0; right: 0; width: 62%; height: 100%; object-fit: cover; object-position: 40% 45%;">
+        <span aria-hidden="true" style="position: absolute; right: -60px; top: 50%; width: 320px; height: 320px; margin-top: -160px; border: 2px solid rgba(246, 243, 238, 0.22); border-radius: 9999px;"></span>
+        <div style="position: relative; display: flex; flex-direction: column; justify-content: space-between; gap: 24px; padding: 32px;">
+          <span style="font-family: 'Saira Condensed', Outfit, sans-serif; color: #ed751a; font-size: 120px; line-height: 0.8; font-weight: 800;">02</span>
+          <span class="b-head" style="font-family: 'Saira Condensed', Outfit, sans-serif; color: #ffffff; font-size: 84px; line-height: 0.86; font-weight: 800; text-transform: uppercase;">Night<br>Striker</span>
+          <span style="align-self: flex-start; padding: 10px 18px; background: #ed751a; color: #0a0f1b; font-family: 'Saira Condensed', Outfit, sans-serif; font-size: 30px; line-height: 32px; font-weight: 800;">৳1,800</span>
+        </div>
+      </div>
+    </section>
+
+    <div aria-hidden="true" style="height: 1px; background: #1d2842;"></div>
+
+    <!-- C · Night Terminal -->
+    <section aria-labelledby="dir-c" class="dir-row">
+      <div style="display: flex; flex-direction: column; gap: 28px;">
+        <h2 id="dir-c" style="margin: 0; color: #f6f3ee; font-size: 36px; line-height: 40px; font-weight: 600; letter-spacing: -0.02em;">C. Night Terminal</h2>
+        <dl class="spec">
+          <dt style="color: #8a92a5; font-size: 14px; line-height: 22px;">Mood</dt><dd style="margin: 0; color: #e7e3dc; font-size: 15px; line-height: 22px;">A coder's desk at 3 a.m. Spec sheets, serial numbers, visible grids. Precise and nerdy.</dd>
+          <dt style="color: #8a92a5; font-size: 14px; line-height: 22px;">Colors</dt>
+          <dd style="margin: 0; display: flex; flex-direction: column; gap: 10px;">
+            <span style="display: flex; gap: 6px;">
+              <span style="width: 32px; height: 32px; border: 1px solid #1d2842; background: #070b14;"></span>
+              <span style="width: 32px; height: 32px; background: #1a2338;"></span>
+              <span style="width: 32px; height: 32px; background: #b3b8c4;"></span>
+              <span style="width: 32px; height: 32px; background: #ed751a;"></span>
+            </span>
+            <span style="color: #e7e3dc; font-size: 15px; line-height: 22px;">Near-black midnight with grid lines; orange only as a cursor and live status.</span>
+          </dd>
+          <dt style="color: #8a92a5; font-size: 14px; line-height: 22px;">Type</dt><dd style="margin: 0; color: #e7e3dc; font-size: 15px; line-height: 22px;">Adds JetBrains Mono for labels, prices and codes; Outfit for headlines.</dd>
+          <dt style="color: #8a92a5; font-size: 14px; line-height: 22px;">Photos</dt><dd style="margin: 0; color: #e7e3dc; font-size: 15px; line-height: 22px;">Same shots in square frames with corner crop marks, like a product spec sheet.</dd>
+          <dt style="color: #8a92a5; font-size: 14px; line-height: 22px;">Motion</dt><dd style="margin: 0; color: #e7e3dc; font-size: 15px; line-height: 22px;">A blinking cursor, text that types in once. Square corners everywhere.</dd>
+        </dl>
+      </div>
+      <div class="sample grid-bg c-grid" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; border: 1px solid #1a2338; background-color: #070b14; font-family: 'JetBrains Mono', ui-monospace, monospace;">
+        <div style="position: relative; min-height: 300px; border-right: 1px solid #1a2338;">
+          <img src="img/p-desk-drone.webp" alt="" style="position: absolute; inset: 24px; width: calc(100% - 48px); height: calc(100% - 48px); object-fit: cover;">
+          <span aria-hidden="true" style="position: absolute; left: 16px; top: 16px; width: 16px; height: 16px; border-left: 2px solid #b3b8c4; border-top: 2px solid #b3b8c4;"></span>
+          <span aria-hidden="true" style="position: absolute; right: 16px; bottom: 16px; width: 16px; height: 16px; border-right: 2px solid #b3b8c4; border-bottom: 2px solid #b3b8c4;"></span>
+        </div>
+        <div style="display: flex; flex-direction: column; justify-content: center; gap: 14px; padding: 28px; font-size: 13px; line-height: 20px; color: #b3b8c4;">
+          <span style="color: #8a92a5;">~/drakon/tech-toy</span>
+          <span style="font-family: Outfit, sans-serif; color: #f6f3ee; font-size: 30px; line-height: 34px; font-weight: 600; letter-spacing: -0.02em;">Midnight Circuit Desk Drone</span>
+          <span>edition&#160;&#160;01</span>
+          <span>stock&#160;&#160;&#160;&#160;3 left</span>
+          <span>price&#160;&#160;&#160;&#160;<span style="color: #f6f3ee; font-weight: 600;">৳3,400</span></span>
+          <span style="display: inline-flex; align-items: center; gap: 6px; color: #f6f3ee;">$ add-to-cart<span class="caret" aria-hidden="true" style="display: inline-block; width: 9px; height: 18px; background: #ed751a;"></span></span>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":2260}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

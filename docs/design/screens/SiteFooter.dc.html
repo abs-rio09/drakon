@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>DRAKON site footer</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&amp;family=Noto+Sans+Bengali:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0}
+.dk-flink{transition:color 150ms ease-out}
+.dk-flink:hover{color:#f6f3ee !important}
+.dk-fgrid{display:grid;grid-template-columns:minmax(0,2fr) repeat(3,minmax(0,1fr));gap:32px}
+@media (max-width:1023px){.dk-fgrid{grid-template-columns:repeat(2,minmax(0,1fr));row-gap:40px}.dk-fbrand{grid-column:1 / -1}}
+</style>
+</helmet>
+<footer style="border-top: 1px solid #1d2842; background: #0a0f1b url(img/grain.webp); color: #e7e3dc; font-family: Outfit, 'Noto Sans Bengali', system-ui, sans-serif;">
+  <div style="max-width: 1280px; margin: 0 auto; padding: 80px clamp(16px, 2.5vw, 32px) 32px; box-sizing: border-box; display: flex; flex-direction: column; gap: 56px;">
+    <div class="dk-fgrid">
+      <div class="dk-fbrand" style="display: flex; flex-direction: column; gap: 16px;">
+        <a href="Main.dc.html" style="display: inline-flex; align-items: center; gap: 8px; color: #f6f3ee; font-size: 20px; line-height: 28px; font-weight: 600; letter-spacing: -0.02em; text-decoration: none;">
+          <span aria-hidden="true" style="display: grid; place-items: center; width: 36px; height: 36px; border-radius: 10px; background: #ed751a; color: #0a0f1b; font-size: 18px; font-weight: 700; letter-spacing: 0;">D</span>
+          Drakon
+        </a>
+        <p style="margin: 0; max-width: 300px; color: #8a92a5; font-size: 14px; line-height: 22px;">Limited playcards, toys, tech and clothes. Made once, never restocked. Cash on Delivery across Bangladesh.</p>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        <span style="color: #f6f3ee; font-size: 14px; line-height: 20px; font-weight: 500;">Shop</span>
+        <a class="dk-flink" href="Main.dc.html" style="color: #b3b8c4; font-size: 14px; line-height: 20px; text-decoration: none;">All products</a>
+        <a class="dk-flink" href="Main.dc.html" style="color: #b3b8c4; font-size: 14px; line-height: 20px; text-decoration: none;">Collections</a>
+        <a class="dk-flink" href="SoldOut.dc.html" style="color: #b3b8c4; font-size: 14px; line-height: 20px; text-decoration: none;">Sold out archive</a>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        <span style="color: #f6f3ee; font-size: 14px; line-height: 20px; font-weight: 500;">Help</span>
+        <a class="dk-flink" href="Track.dc.html" style="color: #b3b8c4; font-size: 14px; line-height: 20px; text-decoration: none;">Track order</a>
+        <a class="dk-flink" href="#" style="color: #b3b8c4; font-size: 14px; line-height: 20px; text-decoration: none;">Returns and refunds</a>
+        <a class="dk-flink" href="#" style="color: #b3b8c4; font-size: 14px; line-height: 20px; text-decoration: none;">Contact</a>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        <span style="color: #f6f3ee; font-size: 14px; line-height: 20px; font-weight: 500;">Drakon</span>
+        <a class="dk-flink" href="#" style="color: #b3b8c4; font-size: 14px; line-height: 20px; text-decoration: none;">About</a>
+        <a class="dk-flink" href="#" style="color: #b3b8c4; font-size: 14px; line-height: 20px; text-decoration: none;">Terms</a>
+        <a class="dk-flink" href="#" style="color: #b3b8c4; font-size: 14px; line-height: 20px; text-decoration: none;">Privacy</a>
+      </div>
+    </div>
+    <div style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; padding-top: 24px; border-top: 1px solid #1d2842; color: #8a92a5; font-size: 13px; line-height: 18px;">
+      <span>© 2026 Drakon. All rights reserved.</span>
+      <span>Made in Bangladesh, for the night shift.</span>
+    </div>
+  </div>
+</footer>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":330}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>
