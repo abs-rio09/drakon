@@ -50,7 +50,7 @@ export default function Cart() {
       {items.length === 0 ? (
         <EmptyCart />
       ) : (
-        <div className="grid items-start gap-10 lg:grid-cols-[minmax(0,1fr)_400px] lg:gap-16">
+        <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-10 lg:grid-cols-[minmax(0,1fr)_400px] lg:gap-16">
           <section aria-label="Items in your cart" className="flex flex-col">
             <ul className="flex flex-col border-t border-line">
               {items.map((item) => (

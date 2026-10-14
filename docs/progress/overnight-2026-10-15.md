@@ -208,3 +208,50 @@ Commit-গুলো দেখতে: `git log --oneline`
 - Cart-এর qty যদি limit/stock-এর বেশি জমা থাকে (যেমন stock পরে কমে গেছে), cart page সেটা সর্বোচ্চ সংখ্যায় নামিয়ে দেখায়। আসল যাচাই checkout-এ server করবে।
 - Purchase limit এখন শুধু এই browser-এর cart-এ দেখা হয়। Blueprint অনুযায়ী আসল limit server একই ফোন নম্বরের আগের order মিলিয়ে দেখবে।
 
+---
+
+## ধাপ 6 — Checkout (শুধু UI, কোনো order হয় না)
+
+### কী বানালাম
+- `pages/Checkout.tsx` (`/checkout`, Checkout.dc.html থেকে), শান্ত header সহ:
+  1. **Contact:** Full name*, Phone number* (01XXXXXXXXX), Email (optional)।
+  2. **Delivery:** District* (64টা জেলা, `mocks/delivery.ts` থেকে), Area / Thana*; জেলা **Dhaka** হলে "Dhaka city (৳60) / Outside Dhaka city (৳100)" বাছাই*; Full address*; courier note (optional); **"This is a gift"** চাপলে receiver-এর নাম*, ফোন*, gift note (150 অক্ষর, গণনা সহ), "Leave prices off the packing slip", আর মনে করিয়ে দেওয়া যে receiver টাকা দেবে।
+  3. **Payment:** শুধু Cash on Delivery।
+- **Order summary** (ডানে, phone-এ নিচে): item, Subtotal, Delivery (জেলা বাছলে zone আর charge বদলায়), Pay on delivery total।
+- **"Place order" বাটন বন্ধ** — লেখা "**Ordering opens soon**" (🔒 icon) আর নিচে ব্যাখ্যা "no order is placed yet"। কোনো নকল order, নকল order number বা নকল payment নেই।
+- "Check my details" (secondary) বাটন — form যাচাই করে: ভুল থাকলে প্রথম ভুল field-এ cursor নিয়ে যায়; সব ঠিক হলে লেখে "Your details look complete. Ordering opens soon, so nothing has been ordered yet."
+- Phone/tablet-এ নিচে আটকানো bar (total + বন্ধ বাটন), আর উপরে "Your order, see details" link।
+- Cart খালি হলে checkout "Your cart is empty" দেখায়।
+- `features/checkout/validation.ts` — সব নিয়ম এক জায়গায় (pure function, UI ছাড়া)। `features/checkout/deliveryQuote.ts` — জেলা → zone।
+- `components/ui/Field.tsx` — label, `*` চিহ্ন, hint, error (icon + বাক্য, শুধু লাল দাগ না)।
+
+### Phone নিয়ম
+`01` দিয়ে শুরু, তৃতীয় অঙ্ক 3–9, মোট 11 অঙ্ক: `/^01[3-9]\d{8}$/`। Space, dash আর `+880`/`880` আগে মুছে ফেলা হয়, তাই `+880 1712-345678` ঠিক বলে ধরা হয়।
+
+### মূল ধারণা
+- **Controlled input:** `<input value={form.name} onChange={…}>` — input-এর মান React state-এ থাকে, state-ই সত্যের উৎস।
+- **একটা object-এ পুরো form:** `useState<CheckoutForm>(emptyCheckoutForm)`; `update('name', value)` দিয়ে `{ ...prev, [name]: value }` — spread (`...`) দিয়ে পুরনো সব field কপি করে শুধু একটা বদলানো।
+- **Validation = pure function:** `validateCheckout(form)` শুধু input নেয়, error-এর object ফেরত দেয়। React ছাড়াই বোঝা আর test করা সহজ।
+- **কখন error দেখাব:** field ছেড়ে গেলে (`onBlur` → `touched`) বা submit করলে। টাইপ করার সময় না (Input README-র নিয়ম)।
+- **Regular expression (regex):** `^` শুরু, `$` শেষ, `\d{8}` = ঠিক 8টা অঙ্ক, `[3-9]` = 3 থেকে 9-এর যেকোনো একটা।
+- **`e.preventDefault()`:** form submit-এ browser-এর page reload থামানো।
+- **TypeScript generic:** `function update<K extends FieldName>(name: K, value: CheckoutForm[K])` — `name` যে field, `value`-কেও সেই field-এর type হতে হবে (`isGift`-এ string দিলে build error)।
+- **Mapped type:** `TextFieldName` = শুধু যেসব field string (checkbox বাদ)।
+- **Accessibility:** `aria-invalid`, `aria-describedby` (hint আর error input-এর সাথে জোড়া), `role="status"` (ফলাফল screen reader পড়ে), `<fieldset>/<legend>` radio দলের জন্য, `noValidate` দিয়ে browser-এর নিজের popup বন্ধ করে নিজেদের সুন্দর বার্তা।
+- **Bug যেটা ধরলাম:** 375px-এ form ডানে বেরিয়ে যাচ্ছিল। কারণ: CSS grid-এর default কলাম ভেতরের সবচেয়ে চওড়া জিনিসের সমান হতে চায়। সমাধান: `grid-cols-[minmax(0,1fr)]`। (সব page 375px-এ মেপে দেখেছি, আর কোথাও পাশে scroll নেই।)
+
+### ব্রাউজারে test
+1. Cart-এ কিছু রেখে "Go to checkout"।
+2. কিছু না লিখে "Check my details" → লাল বার্তা, cursor নামের ঘরে।
+3. Phone-এ `12345` লিখে Tab → ভুলের বার্তা। `+880 1712-345678` → ঠিক।
+4. District = Dhaka → নতুন প্রশ্ন "Where in Dhaka?"; Outside Dhaka city বাছলে Delivery ৳100, Dhaka city বাছলে ৳60। অন্য জেলা (যেমন Sylhet) → ৳100।
+5. "This is a gift" চাপো → নতুন ঘর; gift note-এ লিখলে অক্ষর গোনা দেখায়।
+6. "Ordering opens soon" বাটন চাপা যায় না। কোনো order তৈরি হয় না, কিছুই কোথাও পাঠানো হয় না।
+7. Reload করলে form খালি হয় — ইচ্ছা করেই: নাম/ফোন/ঠিকানা browser-এ জমা রাখি না (privacy)।
+
+### সিদ্ধান্ত / প্রশ্ন
+- **"Sign in to use your saved address" লাইন বাদ** (খোলা প্রশ্ন 3)।
+- **"bKash, Nagad, cards — Coming soon" বাদ দিয়েছি।** Design-এ ছিল, কিন্তু CLAUDE.md বলে MVP-তে শুধু COD, কোনো নকল payment নয়। চাইলে পরে যোগ করা যাবে।
+- **Dhaka-র "city / outside city" আগে থেকে বাছাই করা থাকে না** (design-এ "Dhaka city" আগে থেকে টিক দেওয়া ছিল)। ভুল করে কম charge দেখানো এড়াতে buyer-কে নিজে বাছতে হয়। ঠিক আছে কিনা বলো।
+- Delivery আর total এখন browser-এ mock থেকে হিসাব (শুধু দেখানোর জন্য)। Go API এলে `quote` endpoint থেকে আসবে।
+
