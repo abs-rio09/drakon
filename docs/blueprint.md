@@ -336,10 +336,12 @@ drakon/
 | 7 | Delivery zone + checkout quote + order তৈরি | Transaction, validation | Order DB-তে, confirmation screen |
 | 8 | Track + customer cancel | Status machine | `/track` কাজ করে |
 | 9 | Admin login + order screen + status বদলানো | Cookie session, bcrypt, middleware | Admin দিয়ে order CONFIRMED |
-| 10 | Admin product/variant/ছবি, settings, Sold Out, jobs, meta tag | File upload, background job | Admin থেকে নতুন product publish |
+| 10 | Admin product/variant/ছবি, settings, Sold Out, jobs | File upload, background job | Admin থেকে নতুন product publish |
 | 11 | Policy page, About, mobile ঠিক করা, SEO | Responsive, accessibility | Phone-এ সব page ঠিকঠাক |
 | 12 | Deploy: Neon, Render, Cloudflare Worker + proxy, R2 | Environment variable, build | `drakon.<account>.workers.dev` live |
 | 13 | Production review (Phase 5 checklist) | Security, backup, test | Launch-এর জন্য তৈরি |
+
+> নোট: Facebook share preview (product page-এ og:title / og:image meta tag) আপাতত পিছিয়ে দেওয়া হয়েছে, তাই কোনো ধাপে রাখা নেই। দেখো `docs/open-questions.md`-এর প্রশ্ন 2।
 
 এরপর (MVP-এর পরে): customer account → review → wishlist → Create With Drakon → coupon → reward points → online payment।
 
