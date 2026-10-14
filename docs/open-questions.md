@@ -5,7 +5,7 @@
 | # | প্রশ্ন | Claude-এর সুপারিশ | উত্তর |
 |---|---|---|---|
 | 1 | `/api` proxy দিয়ে API একই site-এ আনা (login cookie phone-এ কাজ করার জন্য)। **আপডেট:** Cloudflare এখন নতুন প্রজেক্টে Pages-এর বদলে Workers সুপারিশ করে, তাই hosting হবে Workers Static Assets (`drakon.<account>.workers.dev`) | হ্যাঁ, Workers দিয়ে | ✅ **হ্যাঁ** (Abu Bakkar Siddik, 2026-10-15) |
-| 2 | Facebook share preview: একই Worker দিয়ে product page-এ og:title / og:image বসানো (ভাগ ৩-এর "Go HTML পাঠাবে" লাইনের বদলে) | হ্যাঁ, roadmap ধাপ 10-এ | — |
+| 2 | Facebook share preview: একই Worker দিয়ে product page-এ og:title / og:image বসানো (ভাগ ৩-এর "Go HTML পাঠাবে" লাইনের বদলে) | হ্যাঁ, roadmap ধাপ 10-এ | ⏳ **পরে** (Abu Bakkar Siddik, 2026-10-15) |
 | 3 | Customer account (Sign in / Sign up / Account) MVP-তে নাকি পরে? | পরে; আগে guest checkout + tracking | — |
 | 4 | Checkout, track, admin login-এ rate limit (প্রয়োজনে পরে Turnstile) | হ্যাঁ, ধাপ 7-এ | — |
 | 5 | Repo public থাকলে `docs/`-এর blueprint আর brand vision (ব্যবসার পরিকল্পনা) সবাই দেখতে পাবে। Public রাখবে নাকি private? | Private (GitHub-এ private repo-ও ফ্রি)। পরে চাইলে public করা যাবে। | ✅ **Public** (Abu Bakkar Siddik, 2026-10-15) |

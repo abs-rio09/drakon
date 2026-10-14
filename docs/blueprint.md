@@ -117,7 +117,7 @@ Neon (ফ্রি) ── PostgreSQL
 - Local-এ একই কাজ Vite-এর `server.proxy` করবে। তাই dev আর production একই রকম থাকবে।
 - **Context7 যাচাই (2026-10-15):** Cloudflare-এর docs এখন বলছে নতুন প্রজেক্ট **Pages নয়, Workers Static Assets** দিয়ে শুরু করতে। Pages চলবে, কিন্তু নতুন feature শুধু Workers-এ আসছে। তাই সুপারিশ বদলেছে: একটা Worker build করা React ফাইল দেবে (`not_found_handling: "single-page-application"`), আর `run_worker_first: ["/api/*"]` দিয়ে শুধু `/api` request-গুলো Worker-এর code-এ যাবে, সেখান থেকে Render-এ। ঠিকানা হবে `drakon.<তোমার-account>.workers.dev`। কাজ আর খরচ একই, শুধু জায়গা বদল।
 
-**🟡 সিদ্ধান্ত দরকার ২ — Facebook share preview (meta tag)**
+**⏳ সিদ্ধান্ত ২ — Facebook share preview (meta tag): পরে ঠিক হবে (Abu Bakkar Siddik, 2026-10-15)**
 - ভাগ ৩-এ লেখা ছিল "Go server product page-এর HTML-এ meta tag বসাবে"। কিন্তু HTML এখন Cloudflare থেকে যাবে, Go থেকে নয়। তাই এই লাইনটা বর্তমান architecture-এর সাথে মেলে না।
 - সুপারিশ: একই Worker `/product/*` page-এর জন্য Go API থেকে নাম, ছবি আর দাম এনে `<head>`-এ og:title, og:image বসাবে। কাজটা বাকি সব ঠিকঠাক চালু হওয়ার পরে (roadmap ধাপ ১০)।
 
