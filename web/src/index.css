@@ -1,111 +1,123 @@
-:root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+@import "tailwindcss";
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
+/*
+  DRAKON design tokens (source: docs/design/tokens.json).
+  Default Tailwind colours and text sizes are removed so only brand values exist.
+*/
+@theme {
+  /* Colour roles: use these in UI, never raw hex */
+  --color-*: initial;
+  --color-surface: #0a0f1b; /* midnight-975: page background */
+  --color-surface-raised: #0f1729; /* midnight-950: panels, dialogs */
+  --color-surface-glass: rgba(10, 15, 27, 0.72);
+  --color-field: #141d31; /* midnight-925: inputs, empty image wells */
+  --color-line: #1d2842; /* midnight-850: decorative hairlines */
+  --color-line-strong: #55709e; /* midnight-450: edges of controls */
+  --color-ink-strong: #f6f3ee; /* bone-50: headlines, prices */
+  --color-ink: #e7e3dc; /* bone-100: body text */
+  --color-ink-muted: #b3b8c4; /* steel-300: secondary text */
+  --color-ink-subtle: #8a92a5; /* steel-400: hints, captions */
+  --color-accent: #ed751a; /* drakon-500: logo + one main action only */
+  --color-accent-hover: #f19340; /* drakon-400 */
+  --color-accent-text: #f19340; /* drakon-400: inline links only */
+  --color-on-accent: #0a0f1b; /* text on orange, never white */
+  --color-focus: #f19340;
+  --color-danger-text: #fca5a5;
+  --color-scrim: rgba(5, 8, 15, 0.6);
 
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  /* Fonts: Noto Sans Bengali second so ৳ always renders */
+  --font-sans: Outfit, "Noto Sans Bengali", system-ui, sans-serif;
+  --font-bengali: "Noto Sans Bengali", system-ui, sans-serif;
 
-  @media (max-width: 1024px) {
-    font-size: 16px;
+  /* Type scale: one scale, nothing in between */
+  --text-*: initial;
+  --text-display: 88px;
+  --text-display--line-height: 0.95;
+  --text-display--font-weight: 600;
+  --text-display--letter-spacing: -0.035em;
+  --text-display-md: 64px;
+  --text-display-md--line-height: 0.98;
+  --text-display-md--font-weight: 600;
+  --text-display-md--letter-spacing: -0.035em;
+  --text-display-sm: 52px;
+  --text-display-sm--line-height: 1;
+  --text-display-sm--font-weight: 600;
+  --text-display-sm--letter-spacing: -0.03em;
+  --text-heading-1: 48px;
+  --text-heading-1--line-height: 52px;
+  --text-heading-1--font-weight: 600;
+  --text-heading-1--letter-spacing: -0.025em;
+  --text-heading-2: 36px;
+  --text-heading-2--line-height: 40px;
+  --text-heading-2--font-weight: 600;
+  --text-heading-2--letter-spacing: -0.02em;
+  --text-heading-3: 24px;
+  --text-heading-3--line-height: 30px;
+  --text-heading-3--font-weight: 600;
+  --text-heading-3--letter-spacing: -0.01em;
+  --text-title: 18px;
+  --text-title--line-height: 26px;
+  --text-title--font-weight: 500;
+  --text-body-lg: 18px;
+  --text-body-lg--line-height: 30px;
+  --text-body-lg--font-weight: 400;
+  --text-body: 16px;
+  --text-body--line-height: 26px;
+  --text-body--font-weight: 400;
+  --text-label: 14px;
+  --text-label--line-height: 20px;
+  --text-label--font-weight: 500;
+  --text-caption: 13px;
+  --text-caption--line-height: 18px;
+  --text-caption--font-weight: 400;
+  --text-micro: 12px;
+  --text-micro--line-height: 16px;
+  --text-micro--font-weight: 500;
+  --text-micro--letter-spacing: 0.02em;
+  --text-price: 20px;
+  --text-price--line-height: 28px;
+  --text-price--font-weight: 500;
+  --text-price-lg: 28px;
+  --text-price-lg--line-height: 32px;
+  --text-price-lg--font-weight: 500;
+  --text-price-lg--letter-spacing: -0.01em;
+  --text-figure: 14px;
+  --text-figure--line-height: 20px;
+  --text-figure--font-weight: 500;
+  --text-bangla-body: 16px;
+  --text-bangla-body--line-height: 28px;
+  --text-bangla-body--font-weight: 400;
+
+  /* Spacing: 4px base, so p-1 = 4px, p-4 = 16px, p-8 = 32px (= space-N tokens) */
+  --spacing: 4px;
+
+  /* Radius grows with the size of the thing (rounded-full is built in) */
+  --radius-lg: 6px;
+  --radius-xl: 10px;
+  --radius-2xl: 14px;
+  --radius-3xl: 20px;
+
+  /* Shadows: neutral black only */
+  --shadow-raised: 0 1px 0 0 rgba(255, 255, 255, 0.04) inset, 0 24px 48px -28px rgba(0, 0, 0, 0.7);
+  --shadow-overlay: 0 32px 72px -24px rgba(0, 0, 0, 0.75);
+  --shadow-label: 0 1px 0 0 rgba(255, 255, 255, 0.05) inset, 0 20px 40px -24px rgba(0, 0, 0, 0.8);
+
+  /* Max widths: max-w-page, max-w-form, max-w-text */
+  --container-page: 1280px;
+  --container-form: 760px;
+  --container-text: 560px;
+}
+
+@layer base {
+  html {
+    color-scheme: dark;
   }
-}
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
+  body {
+    @apply bg-surface font-sans text-body text-ink antialiased;
   }
 
-  #social .button-icon {
-    filter: invert(1) brightness(2);
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-focus;
   }
-}
-
-#root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
-}
-
-body {
-  margin: 0;
-}
-
-h1,
-h2 {
-  font-family: var(--heading);
-  font-weight: 500;
-  color: var(--text-h);
-}
-
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
-  }
-}
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
-}
-p {
-  margin: 0;
-}
-
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
-}
-
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
 }
