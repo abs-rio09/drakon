@@ -50,7 +50,7 @@ Open decisions: `docs/open-questions.md` — **do not build anything marked 🟡
 `../drakon-old-nextjs` (= `~/Desktop/projects/Drakon/drakon-old-nextjs`) is the old Next.js + Supabase version. **Reference only.** Copy pieces only when Rio asks, converting `next/link` → react-router `Link`, `next/image` → `<img>`, and dropping Supabase. Never copy its `.env`, `node_modules`, `.next`.
 
 ## Git
-- Branch `main`, remote `origin`. Small commits with clear messages. Ask before pushing.
+- Branch `main`, remote `origin` = https://github.com/abs-rio09/drakon (public, created 2026-10-15 with `gh`). Small commits with clear messages. Ask before pushing.
 - Do not commit `node_modules/`, `dist/`, `.env`, build output.
 
 ## Library notes (checked with Context7, 2026-10-15)
