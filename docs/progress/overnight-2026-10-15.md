@@ -321,3 +321,70 @@ git log --oneline | head -8
 cd web && npm run dev
 ```
 তারপর পুরো পথটা হেঁটে দেখো: Home → collection → product → variant বাছাই → Add to cart → Cart → Checkout (form ভরে "Check my details") → Track → Sold out।
+
+---
+---
+
+# Second pass — শুধু মান উন্নয়ন (নতুন feature নেই)
+
+Commit: `web: second pass, match design references and fix accessibility`। Commit-এর আগে `npm run build` আর `npm run lint` চালিয়েছি — 0 error, 0 warning। কিছুই push করা হয়নি।
+
+## 1. react-router v7 বনাম v8 (Context7 থেকে দেখা)
+
+**সুপারিশ: এখনই v8-এ যেও না। MVP-র frontend শেষ হলে (বা Go API জোড়ার আগে) এক ধাপে upgrade করো।**
+
+আমাদের ব্যবহার একদম সাধারণ "declarative mode": `BrowserRouter`, `Routes`, `Route`, `Outlet`, `Link`, `useParams`, `useLocation`, `useSearchParams`। এর জন্য v8-এ বদল খুব কম:
+
+| বিষয় | আমাদের অবস্থা |
+|---|---|
+| v8-এর জন্য দরকার Node 22.22+ | ✅ তোমার Node 24.21 |
+| v8-এর জন্য দরকার React/React DOM 19.2.7+ | ✅ আছে 19.3.1 |
+| `react-router-dom` বাদ, সব import `"react-router"` থেকে | ✅ আমরা শুরু থেকেই `"react-router"` ব্যবহার করি |
+| Future flag (`v8_middleware`, `v8_viteEnvironmentApi` ইত্যাদি) | ❌ লাগবে না — ওগুলো data/framework mode-এর জন্য, আমরা ব্যবহার করি না |
+| React Transitions (`<BrowserRouter useTransitions />`) | ঐচ্ছিক; লাগবে না |
+
+**Upgrade করলে কী বদলাবে:** সম্ভবত শুধু `npm i react-router@8`, তারপর `npm run build` আর পুরো সাইট একবার ঘুরে দেখা। Code বদলানোর দরকার দেখছি না।
+
+**কেন এখন না:** (ক) CLAUDE.md আর blueprint v7 বলে, তোমার নির্দেশও v7; (খ) v8 নতুন, একসাথে শেখা আর major upgrade না মেশানোই ভালো; (গ) পরে upgrade করা সস্তা, কারণ আমরা কোনো বাদ-পড়া API ব্যবহার করি না। Upgrade করার সিদ্ধান্ত নিলে CLAUDE.md-র "React Router v7" লাইনও বদলাতে হবে।
+
+## 2. Design-এর সাথে মিলানো (`docs/design/screens/*.dc.html` থেকে)
+
+প্রতিটা page-এর `.dc.html` ফাইলের inline style আর CSS পড়ে মাপ মিলিয়েছি (সব রং theme token দিয়ে):
+
+- **Home:** header এখন hero ছবির উপর **transparent**, scroll করলে glass হয় (NavBar README-র নিয়ম)। Hero header-এর নিচে ঢুকে উপর থেকে শুরু হয়। Facts সারির বাড়তি ফাঁক বাদ।
+- **Product:** "Limited run" badge 16px ভেতরে; **"Size guide" এখন "Size S"-এর একই লাইনে ডানে**; Add to cart বাটন 56px উঁচু; breadcrumb link-এ underline নেই (hover-এ আসে); "About this piece" লেখা 16px, details table 14px (term ধূসর, মান উজ্জ্বল), 96px section ফাঁক।
+- **Cart:** উপরে 56px ফাঁক, শিরোনামের পাশেই item সংখ্যা; ছবি 112px (phone-এ 84px); নাম 18px; ছোট quantity stepper (44px); Summary-র ফাঁক 20px; নিচের তথ্য 14px; খালি cart-এর অংশ design মতো।
+- **Sold Out:** শিরোনাম বড় (64px, phone-এ 48px); সাম্প্রতিক run-এর নাম উজ্জ্বল রঙে; chip ছোট (36px, 13px লেখা), phone-এ পাশে scroll; grid 3 / 2 / 1 কলাম; শেষ সারি design মতো।
+- **Track:** design-এর মতো 760px চওড়া মাঝের কলাম; Track বাটন input-এর সমান উঁচু (48px)।
+- **Checkout:** উপরের ফাঁক 56px; form panel-এর padding 40px; phone-এর "Your order" link-এ দুটো ছোট ছবি; radio card 16px padding; textarea-র উচ্চতা (ঠিকানা 104px, gift note 96px); gift অংশ এখন আলাদা বাক্সে; COD নোট icon সহ; summary-র ছবি 64px।
+
+### একটা আসল bug ধরা পড়ল: Tailwind class-এর সংঘর্ষ
+`secondaryButton + ' min-h-12'` লিখলে একই element-এ `min-h-11` আর `min-h-12` দুটোই থাকে। **কোনটা জিতবে তা string-এর ক্রমে নয়, Tailwind-এর তৈরি CSS ফাইলের ক্রমে ঠিক হয়** — তাই Track বাটন ছোট দেখাচ্ছিল। সমাধান: `components/ui/styles.ts`-এ `button(variant, size)` function — প্রতিটা বাটন ঠিক একটা size পায় (`sm` 44px, `md` 48px, `lg` 52px, `hero`, `xl` 56px)। Textarea-র জন্য আলাদা `textareaClass`।
+
+**শেখার কথা:** Tailwind-এ একই property-র দুটো class (যেমন `px-5` আর `px-6`) একসাথে দিও না। ভিন্নতা লাগলে variant/size বেছে নেওয়ার function বানাও।
+
+## 3. 375px, 1280px, keyboard, focus, alt, label
+
+- সব 18টা route **375px আর 1280px-এ** script দিয়ে মেপেছি: পাশে scroll নেই, প্রতিটা `<img>`-এ `alt` আছে, প্রতিটা input/select/textarea-র label আছে, প্রতিটা page-এ ঠিক একটা `<h1>`, heading-এর ধাপ লাফায় না। তারপর screenshot দিয়ে চোখে দেখেছি।
+- **ঠিক করা সমস্যা:**
+  - "Skip to content" link (প্রথম Tab চাপলে আসে) এর padding হারিয়ে যাচ্ছিল (`not-sr-only` padding মুছে দেয়)। এখন উপর থেকে নেমে আসা সুন্দর বাটন, আর চাপলে keyboard focus সত্যিই `<main>`-এ যায়।
+  - Shop আর Archive-এর পাশে-scroll হওয়া chip সারি focus-এর কমলা দাগ কেটে দিচ্ছিল — ভেতরে একটু জায়গা দিয়েছি।
+  - Shop আর Search-এ `<h1>`-এর পরে সরাসরি `<h3>` (product নাম) ছিল — লুকানো `<h2>` যোগ করেছি (screen reader-এর জন্য)।
+  - Archive filter বদলালে screen reader এখন সংক্ষেপে বলে "3 sold-out runs shown" (পুরো তালিকা আবার পড়ে না)।
+  - Variant picker-এর `<fieldset>`-এ `min-w-0` — না হলে ছোট screen-এ বাইরে বেরোতে পারত।
+- Keyboard দিয়ে পরীক্ষা: Tab → Skip link → logo → header link → chip; প্রতিটায় কমলা focus দাগ স্পষ্ট।
+
+## সকালে কী test করবে (ছোট তালিকা)
+
+```zsh
+cd ~/Desktop/projects/Drakon/drakon/web && npm run dev
+```
+
+1. **Home** (http://localhost:5173): উপরে header স্বচ্ছ, ছবি একদম উপর থেকে; একটু scroll করলে header ঝাপসা glass হয়।
+2. **Keyboard:** page খুলে `Tab` চাপো → বাঁ-উপরে "Skip to content" নেমে আসে; `Enter` চাপলে পরের `Tab` সরাসরি page-এর ভেতরে যায়।
+3. **Product** (Ember Night Hoodie): "Size guide" একই লাইনে ডানে; Add to cart বাটন বড়।
+4. **Cart:** দুটো item রাখো — ছবি বড়, stepper ছোট, "3 items" শিরোনামের পাশে।
+5. **Sold out:** বড় শিরোনাম; phone মাপে (DevTools → 375) chip সারি পাশে টেনে সরানো যায়।
+6. **Track:** বাটন input-এর সমান উঁচু; খালি রেখে চাপলে লাল বার্তা।
+7. **Checkout:** "This is a gift" চাপো → আলাদা বাক্স; phone মাপে নিচে "Ordering opens soon" bar।
+8. **v8 নিয়ে সিদ্ধান্ত:** উপরের সুপারিশ পড়ে বলো — এখন v7-এ থাকব, পরে upgrade করব, ঠিক আছে?
