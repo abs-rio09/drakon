@@ -176,3 +176,53 @@ I ran exactly this: health 200, unknown path JSON 404, Ctrl+C printed `shutting 
 - A wrong method on a known path (e.g. `POST /api/health`) gets the JSON 404, not 405. Simple and harmless; tell me if you prefer 405.
 - Test packages take turns using `drakon_test` with a Postgres **advisory lock**, so `go test ./...` is safe even though Go runs packages in parallel.
 
+---
+
+## Phase 4: public catalog API
+
+### What I built
+| Endpoint | Answer |
+|---|---|
+| `GET /api/categories` | `{"categories":[{slug,name,image}]}` |
+| `GET /api/products?category=&q=&limit=&offset=` | ACTIVE products only. `q` searches name and kind (any case). `limit` 1–100 (default 24), `offset` 0–10000. Answer: `{products,total,limit,offset}` |
+| `GET /api/products/featured` | "The current drop" in `featured_order`, plus `hero` (the product under the home gallery label) |
+| `GET /api/products/{slug}` | `{product, related}`. A DRAFT product answers 404, exactly like an unknown slug |
+| `GET /api/sold-out` | SOLD_OUT + ARCHIVED, the most recent first |
+| `GET /api/delivery/areas` | `{zones, districts:[{name, areas:[{id,label,hint,zoneCode}]}], freeDeliveryEnabled}` |
+| `GET /api/settings/public` | codConfirmHours, defaultPurchaseLimit, returnDays, lowStockThreshold, giftNoteMaxChars, courierNoteMaxChars, currency |
+
+- `api/internal/catalog`: turns database rows into the JSON shape of the website's `Product` type.
+- `api/internal/settings`: reads the settings table. **No fallback numbers in code**: if a setting is missing, the API answers 500 and logs which key is missing.
+- 11 integration tests (`api/internal/httpapi/catalog_test.go`) against `drakon_test`.
+
+### Why
+This is what the website needs to stop using mock files (Phase 5). The JSON field names (`pricePaisa`, `variantKind`, `successorSlug` ...) are the same as the TypeScript types, so the switch is small.
+
+### Key concepts
+- **Query string**: the part after `?` in a URL: `/api/products?category=clothes&limit=2`. Go reads it with `r.URL.Query().Get("limit")`.
+- **Bounded pagination**: `limit` can never be more than 100, so nobody can ask for a million rows and slow the server.
+- **ILIKE + escaping**: `ILIKE '%hoodie%'` means "contains hoodie, any case". `%` and `_` are wildcards, so the search text is escaped first: searching `100%` looks for the real text "100%".
+- **The N+1 problem** (and how we avoid it): loading 20 products one by one with their images and variants would be 1 + 20×3 queries. `LoadProducts` uses `WHERE product_id = ANY($1)` and does **4 queries in total**, however many products.
+- **httptest**: Go's standard way to call a handler in a test without a real network: `httptest.NewRequest` + `httptest.NewRecorder`.
+
+### How to test it yourself
+```zsh
+cd ~/Desktop/projects/Drakon/drakon/api
+make run     # terminal 1
+# terminal 2:
+curl -s localhost:8080/api/categories
+curl -s 'localhost:8080/api/products?category=clothes'
+curl -s 'localhost:8080/api/products?q=hoodie'
+curl -s localhost:8080/api/products/dragon-flame-card-edition-01
+curl -s localhost:8080/api/sold-out
+curl -s localhost:8080/api/settings/public
+curl -s 'localhost:8080/api/products?limit=500'     # 400 BAD_QUERY
+make test
+```
+I ran these against the dev database: 4 categories, featured = card, hoodie 02, drone, football; hero = playcard set; 64 districts; settings 48/5/3/5/150/200.
+
+### Decisions and questions
+- `GET /api/products` returns full products (with variants and images), because the product cards need price and stock. With 10 products that is small. Later, with hundreds, we can add a lighter "card" shape.
+- Search covers ACTIVE products only (as the prompt says). The old mock search also showed sold-out runs. Tell me if the search page should include the archive.
+- `related` (4 products under the product page) is now computed on the server: same category first, then others.
+
