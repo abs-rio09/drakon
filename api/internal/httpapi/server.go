@@ -63,6 +63,15 @@ func (s *Server) Handler() http.Handler {
 func (s *Server) routes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/health", s.wrap(s.handleHealth))
 
+	// Public catalog
+	mux.HandleFunc("GET /api/categories", s.wrap(s.handleCategories))
+	mux.HandleFunc("GET /api/products", s.wrap(s.handleProducts))
+	mux.HandleFunc("GET /api/products/featured", s.wrap(s.handleFeatured))
+	mux.HandleFunc("GET /api/products/{slug}", s.wrap(s.handleProduct))
+	mux.HandleFunc("GET /api/sold-out", s.wrap(s.handleSoldOut))
+	mux.HandleFunc("GET /api/delivery/areas", s.wrap(s.handleDeliveryAreas))
+	mux.HandleFunc("GET /api/settings/public", s.wrap(s.handlePublicSettings))
+
 	// Any other /api path: a JSON 404 instead of Go's plain text one.
 	mux.HandleFunc("/api/", s.wrap(func(w http.ResponseWriter, r *http.Request) error {
 		return notFound("There is no such API endpoint.")

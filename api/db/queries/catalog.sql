@@ -9,7 +9,7 @@ ORDER BY sort_order, id;
 -- name: ListShopProducts :many
 -- Products on sale. category and q are optional (NULL = no filter).
 -- q is already a LIKE pattern (the Go code escapes % and _).
-SELECT p.id, count(*) OVER () AS total
+SELECT p.id
 FROM products p
 JOIN categories c ON c.id = p.category_id
 WHERE p.status = 'ACTIVE'
@@ -18,6 +18,16 @@ WHERE p.status = 'ACTIVE'
        OR p.name ILIKE sqlc.narg('pattern') OR p.kind ILIKE sqlc.narg('pattern'))
 ORDER BY p.featured_order NULLS LAST, p.id
 LIMIT sqlc.arg('limit') OFFSET sqlc.arg('offset');
+
+-- name: CountShopProducts :one
+-- Same filters as ListShopProducts, for "total" in the paginated answer.
+SELECT count(*)
+FROM products p
+JOIN categories c ON c.id = p.category_id
+WHERE p.status = 'ACTIVE'
+  AND (sqlc.narg('category')::text IS NULL OR c.slug = sqlc.narg('category'))
+  AND (sqlc.narg('pattern')::text IS NULL
+       OR p.name ILIKE sqlc.narg('pattern') OR p.kind ILIKE sqlc.narg('pattern'));
 
 -- name: ListFeaturedProductIDs :many
 SELECT id FROM products

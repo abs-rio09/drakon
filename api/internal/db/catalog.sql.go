@@ -10,6 +10,29 @@ import (
 	"time"
 )
 
+const countShopProducts = `-- name: CountShopProducts :one
+SELECT count(*)
+FROM products p
+JOIN categories c ON c.id = p.category_id
+WHERE p.status = 'ACTIVE'
+  AND ($1::text IS NULL OR c.slug = $1)
+  AND ($2::text IS NULL
+       OR p.name ILIKE $2 OR p.kind ILIKE $2)
+`
+
+type CountShopProductsParams struct {
+	Category *string
+	Pattern  *string
+}
+
+// Same filters as ListShopProducts, for "total" in the paginated answer.
+func (q *Queries) CountShopProducts(ctx context.Context, arg CountShopProductsParams) (int64, error) {
+	row := q.db.QueryRow(ctx, countShopProducts, arg.Category, arg.Pattern)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const getProductIDBySlug = `-- name: GetProductIDBySlug :one
 SELECT id FROM products
 WHERE slug = $1 AND status <> 'DRAFT'
@@ -247,7 +270,7 @@ func (q *Queries) ListImagesForProducts(ctx context.Context, ids []int64) ([]Lis
 }
 
 const listShopProducts = `-- name: ListShopProducts :many
-SELECT p.id, count(*) OVER () AS total
+SELECT p.id
 FROM products p
 JOIN categories c ON c.id = p.category_id
 WHERE p.status = 'ACTIVE'
@@ -265,14 +288,9 @@ type ListShopProductsParams struct {
 	Limit    int32
 }
 
-type ListShopProductsRow struct {
-	ID    int64
-	Total int64
-}
-
 // Products on sale. category and q are optional (NULL = no filter).
 // q is already a LIKE pattern (the Go code escapes % and _).
-func (q *Queries) ListShopProducts(ctx context.Context, arg ListShopProductsParams) ([]ListShopProductsRow, error) {
+func (q *Queries) ListShopProducts(ctx context.Context, arg ListShopProductsParams) ([]int64, error) {
 	rows, err := q.db.Query(ctx, listShopProducts,
 		arg.Category,
 		arg.Pattern,
@@ -283,13 +301,13 @@ func (q *Queries) ListShopProducts(ctx context.Context, arg ListShopProductsPara
 		return nil, err
 	}
 	defer rows.Close()
-	var items []ListShopProductsRow
+	var items []int64
 	for rows.Next() {
-		var i ListShopProductsRow
-		if err := rows.Scan(&i.ID, &i.Total); err != nil {
+		var id int64
+		if err := rows.Scan(&id); err != nil {
 			return nil, err
 		}
-		items = append(items, i)
+		items = append(items, id)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
