@@ -1,0 +1,23 @@
+# sqlc turns the SQL in db/queries/ into typed Go functions in internal/db.
+# Regenerate after changing a query or a migration:  make sqlc
+version: "2"
+sql:
+  - engine: "postgresql"
+    # sqlc reads the goose migrations and skips the "-- +goose Down" parts.
+    schema: "db/migrations"
+    queries: "db/queries"
+    gen:
+      go:
+        package: "db"
+        out: "internal/db"
+        sql_package: "pgx/v5"
+        # Nullable columns become Go pointers (*int32, *string): nil = NULL.
+        emit_pointers_for_null_types: true
+        overrides:
+          - db_type: "timestamptz"
+            go_type: "time.Time"
+          - db_type: "timestamptz"
+            nullable: true
+            go_type:
+              type: "time.Time"
+              pointer: true
