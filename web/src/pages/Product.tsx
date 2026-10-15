@@ -5,12 +5,13 @@ import { LimitedBadge, SoldOutBadge } from '../components/product/Badge'
 import { ProductGrid } from '../components/product/ProductCard'
 import { ProductPhoto } from '../components/product/ProductPhoto'
 import { VariantPicker } from '../components/product/VariantPicker'
+import { Loaded } from '../components/ui/LoadState'
 import { QuantityStepper } from '../components/ui/QuantityStepper'
 import { button, container, textLink } from '../components/ui/styles'
+import { useCart } from '../features/cart/useCart'
+import { useSite } from '../features/site/SiteContext'
+import { ApiError, getCategories, getProduct } from '../lib/api'
 import {
-  getCategory,
-  getProduct,
-  getRelated,
   isArchived,
   maxQuantity,
   metaLine,
@@ -20,25 +21,35 @@ import {
   totalStock,
   variantName,
 } from '../lib/catalog'
-import { getZone } from '../lib/delivery'
+import { zoneCharge } from '../lib/delivery'
 import { formatTaka } from '../lib/money'
-import { useCart } from '../features/cart/useCart'
-import type { Product as ProductType, Variant } from '../mocks/catalog'
-import { settings } from '../mocks/settings'
+import type { Product as ProductType, PublicSettings, Variant } from '../lib/types'
+import { useApi } from '../lib/useApi'
 import NotFound from './NotFound'
 
 // /product/:slug — laid out from Product.dc.html (sizes) and
 // ProductCard.dc.html (materials with their own price).
 export default function Product() {
   const { slug = '' } = useParams()
-  const product = getProduct(slug)
-  if (!product) return <NotFound />
+  const page = useApi(`product:${slug}`, () => getProduct(slug))
 
-  // `key` makes React start fresh (new state) when we move to another product.
-  return <ProductView key={product.id} product={product} />
+  // Unknown slug, or a DRAFT product (the API hides those).
+  if (page.status === 'error' && page.error instanceof ApiError && page.error.status === 404) return <NotFound />
+
+  return (
+    <Loaded state={page}>
+      {/* `key` makes React start fresh (new state) when we move to another product. */}
+      {({ product, related }) =>
+        // A product needs at least one variant (price) to be shown.
+        product.variants.length === 0 ? <NotFound /> : <ProductView key={product.id} product={product} related={related} />
+      }
+    </Loaded>
+  )
 }
 
-function ProductView({ product }: { product: ProductType }) {
+function ProductView({ product, related }: { product: ProductType; related: ProductType[] }) {
+  const { settings } = useSite()
+  const cats = useApi('categories', getCategories)
   const archived = isArchived(product)
   const firstInStock = product.variants.find((v) => v.stock > 0) ?? product.variants[0]
 
@@ -50,20 +61,20 @@ function ProductView({ product }: { product: ProductType }) {
   const cart = useCart()
 
   const variant = product.variants.find((v) => v.id === variantId) ?? firstInStock
-  const limit = purchaseLimit(product)
+  const limit = purchaseLimit(product, settings)
   const inCart = cart.qtyOf(variant.id)
   // How many more of this variant may still go in the cart.
-  const remaining = Math.max(0, maxQuantity(product, variant) - inCart)
+  const remaining = Math.max(0, maxQuantity(product, variant, settings) - inCart)
   const canBuy = !archived && variant.stock > 0
   const canAdd = canBuy && remaining > 0
-  const category = getCategory(product.categorySlug)
+  const category = cats.data?.find((c) => c.slug === product.categorySlug)
   const image = product.images[imageIndex] ?? product.images[0]
 
   function selectVariant(v: Variant) {
     setVariantId(v.id)
     setQty(1)
     setAdded(null)
-    if (v.imageIndex !== undefined) setImageIndex(v.imageIndex)
+    if (v.imageIndex !== null) setImageIndex(v.imageIndex)
   }
 
   return (
@@ -155,7 +166,7 @@ function ProductView({ product }: { product: ProductType }) {
                 {archived ? priceLabel(product) : formatTaka(variant.pricePaisa)}
               </span>
               <span className="text-figure text-ink-muted tabular-nums">
-                {archived ? 'Sold out, never restocked' : totalStockLabel(product)}
+                {archived ? 'Sold out, never restocked' : totalStockLabel(product, settings)}
               </span>
             </div>
           </div>
@@ -181,7 +192,7 @@ function ProductView({ product }: { product: ProductType }) {
                     }
                   />
                   {!product.variants.some((v) => v.note) && (
-                    <span className="text-caption text-ink-muted tabular-nums">{variantNote(product, variant)}</span>
+                    <span className="text-caption text-ink-muted tabular-nums">{variantNote(product, variant, settings)}</span>
                   )}
                 </div>
               )}
@@ -241,7 +252,7 @@ function ProductView({ product }: { product: ProductType }) {
             </>
           )}
 
-          <Promises product={product} />
+          <Promises product={product} settings={settings} />
         </div>
       </section>
 
@@ -272,27 +283,29 @@ function ProductView({ product }: { product: ProductType }) {
         </section>
       )}
 
-      <section aria-labelledby="related-title" className="border-t border-line">
-        <div className={container + ' flex flex-col gap-14 pt-20 pb-24 sm:pt-24 sm:pb-32'}>
-          <h2 id="related-title" className="text-heading-3 text-ink-strong sm:text-heading-2">
-            Pairs well with
-          </h2>
-          <ProductGrid products={getRelated(product)} />
-        </div>
-      </section>
+      {related.length > 0 && (
+        <section aria-labelledby="related-title" className="border-t border-line">
+          <div className={container + ' flex flex-col gap-14 pt-20 pb-24 sm:pt-24 sm:pb-32'}>
+            <h2 id="related-title" className="text-heading-3 text-ink-strong sm:text-heading-2">
+              Pairs well with
+            </h2>
+            <ProductGrid products={related} />
+          </div>
+        </section>
+      )}
     </>
   )
 }
 
-function totalStockLabel(product: ProductType): string {
+function totalStockLabel(product: ProductType, settings: PublicSettings): string {
   // For a run of known size the fact counts the whole run; otherwise all variants.
-  if (product.editionSize || product.variants.length === 1) return stockFact(product)
+  if (product.editionSize || product.variants.length === 1) return stockFact(product, settings)
   const left = totalStock(product)
-  if (left === 0) return stockFact(product)
+  if (left === 0) return stockFact(product, settings)
   return `${left} left in all ${product.variantKind.toLowerCase()}s`
 }
 
-function variantNote(product: ProductType, variant: Variant): string {
+function variantNote(product: ProductType, variant: Variant, settings: PublicSettings): string {
   const name = `${product.variantKind.toLowerCase()} ${variant.label}`
   if (variant.stock === 0) return `Sold out in ${name}`
   if (variant.stock <= settings.lowStockThreshold) return `Only ${variant.stock} left in ${name}`
@@ -318,9 +331,14 @@ function ArchivedNote() {
 }
 
 // The promises under the buy box: facts, as a hairline list without a box.
-function Promises({ product }: { product: ProductType }) {
-  const inside = formatTaka(getZone('INSIDE_DHAKA').chargePaisa)
-  const outside = formatTaka(getZone('OUTSIDE_DHAKA').chargePaisa)
+function Promises({ product, settings }: { product: ProductType; settings: PublicSettings }) {
+  const { delivery } = useSite()
+  const inside = zoneCharge(delivery, 'INSIDE_DHAKA')
+  const outside = zoneCharge(delivery, 'OUTSIDE_DHAKA')
+  const deliveryTitle =
+    inside !== undefined && outside !== undefined
+      ? `Delivery ${formatTaka(inside)} inside Dhaka, ${formatTaka(outside)} outside`
+      : 'Delivery across Bangladesh'
   const items = [
     {
       icon: <CashIcon size={18} />,
@@ -329,7 +347,7 @@ function Promises({ product }: { product: ProductType }) {
     },
     {
       icon: <TruckIcon size={18} />,
-      title: `Delivery ${inside} inside Dhaka, ${outside} outside`,
+      title: deliveryTitle,
       text: <>Set at checkout from your district.</>,
     },
     {

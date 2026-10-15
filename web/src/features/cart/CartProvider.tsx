@@ -23,7 +23,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const value = useMemo<CartContextValue>(() => {
-    const qtyOf = (variantId: string) => lines.find((l) => l.variantId === variantId)?.qty ?? 0
+    const qtyOf = (variantId: number) => lines.find((l) => l.variantId === variantId)?.qty ?? 0
 
     return {
       lines,
@@ -43,6 +43,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
       },
       remove(variantId) {
         setLines((prev) => prev.filter((l) => l.variantId !== variantId))
+      },
+      removeMany(variantIds) {
+        setLines((prev) => prev.filter((l) => !variantIds.includes(l.variantId)))
       },
       clear() {
         setLines([])

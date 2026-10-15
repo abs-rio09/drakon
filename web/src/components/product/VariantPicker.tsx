@@ -1,11 +1,12 @@
 import type { ReactNode } from 'react'
-import type { Product, Variant } from '../../mocks/catalog'
-import { formatTaka } from '../../lib/money'
+import { useSite } from '../../features/site/SiteContext'
 import { variantStockFact } from '../../lib/catalog'
+import { formatTaka } from '../../lib/money'
+import type { Product, Variant } from '../../lib/types'
 
 type VariantPickerProps = {
   product: Product
-  selectedId: string
+  selectedId: number
   onSelect: (variant: Variant) => void
   // Shown on the right of the legend row, for example a "Size guide" link.
   aside?: ReactNode
@@ -15,6 +16,7 @@ type VariantPickerProps = {
 // (hidden, but still there), so arrow keys and screen readers work for free.
 // Sold out variants stay visible but cannot be picked.
 export function VariantPicker({ product, selectedId, onSelect, aside }: VariantPickerProps) {
+  const { settings } = useSite()
   const selected = product.variants.find((v) => v.id === selectedId)
   // Rich rows (photo, note, price) when variants differ; small chips for sizes.
   const rich = product.variants.some((v) => v.note)
@@ -32,7 +34,7 @@ export function VariantPicker({ product, selectedId, onSelect, aside }: VariantP
         {product.variants.map((v) => {
           const soldOut = v.stock === 0
           const checked = v.id === selectedId
-          const thumb = v.imageIndex !== undefined ? product.images[v.imageIndex]?.thumb : undefined
+          const thumb = v.imageIndex !== null ? product.images[v.imageIndex]?.thumb : undefined
           return (
             <label
               key={v.id}
@@ -87,7 +89,7 @@ export function VariantPicker({ product, selectedId, onSelect, aside }: VariantP
                     >
                       {formatTaka(v.pricePaisa)}
                     </span>
-                    <span className="text-caption text-ink-muted tabular-nums">{variantStockFact(product, v)}</span>
+                    <span className="text-caption text-ink-muted tabular-nums">{variantStockFact(product, v, settings)}</span>
                   </span>
                 </>
               ) : (

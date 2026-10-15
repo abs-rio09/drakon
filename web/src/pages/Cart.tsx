@@ -1,21 +1,28 @@
 import { Link } from 'react-router'
 import { CashIcon, TruckIcon } from '../components/icons'
+import { LoadError, Loading } from '../components/ui/LoadState'
 import { QuantityStepper } from '../components/ui/QuantityStepper'
 import { button, container, ghostButton, panel, textLink } from '../components/ui/styles'
-import { resolveCart, subtotalPaisa, type CartItem } from '../features/cart/cartItems'
+import { splitItems, useCartQuote } from '../features/cart/cartItems'
 import { useCart } from '../features/cart/useCart'
-import { findVariant, variantName } from '../lib/catalog'
-import { getZone } from '../lib/delivery'
+import { useSite } from '../features/site/SiteContext'
+import { zoneCharge } from '../lib/delivery'
 import { formatTaka } from '../lib/money'
-import { settings } from '../mocks/settings'
+import type { QuoteItem } from '../lib/types'
 
 // /cart — laid out from docs/design/screens/Cart.dc.html
 export default function Cart() {
   const cart = useCart()
-  const { items, unavailable } = resolveCart(cart.lines)
+  const { settings, delivery } = useSite()
+  const priced = useCartQuote()
+  const quote = priced.status === 'empty' ? undefined : priced.quote
+  const { items, unavailable } = quote ? splitItems(quote) : { items: [], unavailable: [] }
   const count = items.reduce((sum, item) => sum + item.qty, 0)
   const countLabel = count === 1 ? '1 item' : `${count} items`
-  const subtotal = subtotalPaisa(items)
+  // The server's subtotal (prices from the database), never added up here.
+  const subtotal = quote?.subtotalPaisa ?? 0
+  const inside = zoneCharge(delivery, 'INSIDE_DHAKA')
+  const outside = zoneCharge(delivery, 'OUTSIDE_DHAKA')
 
   return (
     <div className={container + ' flex flex-col gap-10 pt-14 pb-32'}>
@@ -32,29 +39,32 @@ export default function Cart() {
             longer be ordered:
           </p>
           <ul className="flex flex-col gap-1 text-caption text-ink-muted">
-            {unavailable.map((line) => {
-              const found = findVariant(line.variantId)
-              return (
-                <li key={line.variantId} className="flex flex-wrap items-center justify-between gap-3">
-                  <span>{found ? `${found.product.name}, ${variantName(found.product, found.variant)}` : 'A removed product'}</span>
-                  <button type="button" className={ghostButton} onClick={() => cart.remove(line.variantId)}>
-                    Remove
-                  </button>
-                </li>
-              )
-            })}
+            {unavailable.map((item) => (
+              <li key={item.variantId} className="flex flex-wrap items-center justify-between gap-3">
+                <span>
+                  {item.productName}, {item.variantName}
+                </span>
+                <button type="button" className={ghostButton} onClick={() => cart.remove(item.variantId)}>
+                  Remove
+                </button>
+              </li>
+            ))}
           </ul>
         </div>
       )}
 
-      {items.length === 0 ? (
+      {priced.status === 'error' && !quote ? (
+        <LoadError error={priced.error} onRetry={priced.retry} />
+      ) : cart.lines.length > 0 && !quote ? (
+        <Loading label="Checking prices and stock" />
+      ) : items.length === 0 ? (
         <EmptyCart />
       ) : (
         <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-10 lg:grid-cols-[minmax(0,1fr)_400px] lg:gap-20">
           <section aria-label="Items in your cart" className="flex flex-col">
             <ul className="flex flex-col border-t border-line">
               {items.map((item) => (
-                <CartRow key={item.variant.id} item={item} />
+                <CartRow key={item.variantId} item={item} />
               ))}
             </ul>
             <Link to="/shop" className={textLink + ' mt-8 self-start text-label font-normal text-ink-muted'}>
@@ -72,10 +82,11 @@ export default function Cart() {
               <div className="flex justify-between gap-4">
                 <dt className="flex flex-col">
                   <span className="text-body text-ink-muted">Delivery</span>
-                  <span className="text-caption text-ink-subtle tabular-nums">
-                    {formatTaka(getZone('INSIDE_DHAKA').chargePaisa)} inside Dhaka,{' '}
-                    {formatTaka(getZone('OUTSIDE_DHAKA').chargePaisa)} outside
-                  </span>
+                  {inside !== undefined && outside !== undefined && (
+                    <span className="text-caption text-ink-subtle tabular-nums">
+                      {formatTaka(inside)} inside Dhaka, {formatTaka(outside)} outside
+                    </span>
+                  )}
                 </dt>
                 <dd className="text-body whitespace-nowrap text-ink-muted">Set at checkout</dd>
               </div>
@@ -104,16 +115,16 @@ export default function Cart() {
   )
 }
 
-function CartRow({ item }: { item: CartItem }) {
+function CartRow({ item }: { item: QuoteItem }) {
   const cart = useCart()
-  const { product, variant, qty, max } = item
-  const href = `/product/${product.slug}`
-  const thumb = product.images[variant.imageIndex ?? 0]?.thumb ?? product.images[0].thumb
+  const { qty } = item
+  const max = Math.max(1, item.maxQty)
+  const href = `/product/${item.productSlug}`
 
   return (
     <li className="flex gap-5 border-b border-line py-6">
       <Link to={href} tabIndex={-1} aria-hidden="true" className="shrink-0">
-        <img src={thumb} alt="" className="size-21 rounded-lg bg-field object-cover sm:size-28" />
+        <img src={item.thumb} alt="" className="size-21 rounded-lg bg-field object-cover sm:size-28" />
       </Link>
       <div className="flex min-w-0 flex-1 flex-col justify-between gap-4">
         <div className="flex items-start justify-between gap-4">
@@ -122,34 +133,40 @@ function CartRow({ item }: { item: CartItem }) {
               to={href}
               className="text-title text-ink-strong transition-colors duration-150 ease-out hover:text-ink"
             >
-              {product.name}
+              {item.productName}
             </Link>
             <span className="text-caption text-ink-subtle tabular-nums">
-              {variantName(product, variant)}, {formatTaka(variant.pricePaisa)} each
+              {item.variantName}, {formatTaka(item.unitPricePaisa)} each
             </span>
           </div>
-          <span className="shrink-0 text-price text-ink-strong tabular-nums">{formatTaka(item.linePaisa)}</span>
+          <span className="shrink-0 text-price text-ink-strong tabular-nums">{formatTaka(item.lineTotalPaisa)}</span>
         </div>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-4">
             <QuantityStepper
               size="sm"
-              label={`Quantity for ${product.name}`}
-              value={qty}
+              label={`Quantity for ${item.productName}`}
+              value={Math.min(qty, max)}
               max={max}
-              onChange={(n) => cart.setQty(variant.id, n)}
+              onChange={(n) => cart.setQty(item.variantId, n)}
             />
-            {qty >= max && (
-              <span className="text-caption text-ink-subtle tabular-nums">
-                {max < variant.stock || variant.stock === 0 ? `Limit ${max} per customer` : `Only ${variant.stock} left`}
+            {item.problem ? (
+              <span role="alert" className="text-caption text-ink tabular-nums">
+                {item.problem.message}
               </span>
+            ) : (
+              qty >= max && (
+                <span className="text-caption text-ink-subtle tabular-nums">
+                  {max < item.stock ? `Limit ${max} per customer` : `Only ${item.stock} left`}
+                </span>
+              )
             )}
           </div>
           <button
             type="button"
             className={ghostButton + ' min-h-11 px-1'}
-            aria-label={`Remove ${product.name}`}
-            onClick={() => cart.remove(variant.id)}
+            aria-label={`Remove ${item.productName}`}
+            onClick={() => cart.remove(item.variantId)}
           >
             Remove
           </button>

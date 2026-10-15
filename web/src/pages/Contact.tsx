@@ -4,11 +4,12 @@ import { MailIcon, PhoneIcon } from '../components/icons'
 import { PageIntro } from '../components/ui/PageIntro'
 import { container, inlineLink, textLink } from '../components/ui/styles'
 import { contact } from '../mocks/contact'
-import { settings } from '../mocks/settings'
+import { useSite } from '../features/site/SiteContext'
 
 // /contact — how to reach Drakon. The details are placeholders in
 // src/mocks/contact.ts until Abu Bakkar Siddik decides them.
 export default function Contact() {
+  const { settings } = useSite()
   return (
     <div className={container + ' flex flex-col gap-14 py-16 sm:py-20'}>
       <title>Contact: Drakon</title>

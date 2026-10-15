@@ -1,16 +1,21 @@
 import { useSearchParams } from 'react-router'
 import { SearchIcon } from '../components/icons'
 import { ProductGrid } from '../components/product/ProductCard'
+import { Loaded, ProductGridSkeleton } from '../components/ui/LoadState'
 import { PageIntro } from '../components/ui/PageIntro'
 import { container } from '../components/ui/styles'
-import { searchProducts } from '../lib/catalog'
+import { getProducts } from '../lib/api'
+import type { ProductPage } from '../lib/api'
+import { useApi } from '../lib/useApi'
+
+const noResults: Promise<ProductPage> = Promise.resolve({ products: [], total: 0, limit: 0, offset: 0 })
 
 // /search?q=hoodie — search by product name. The words live in the URL,
 // so a search can be shared or reloaded.
 export default function Search() {
   const [params, setParams] = useSearchParams()
-  const query = params.get('q') ?? ''
-  const results = searchProducts(query)
+  const query = (params.get('q') ?? '').trim().slice(0, 100)
+  const search = useApi(`search:${query}`, () => (query === '' ? noResults : getProducts({ q: query, limit: 48 })))
 
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -48,19 +53,25 @@ export default function Search() {
       </form>
 
       {query !== '' && (
-        <p className="text-body text-ink-muted" aria-live="polite">
-          {results.length === 0
-            ? `Nothing found for "${query}".`
-            : `${results.length} ${results.length === 1 ? 'result' : 'results'} for "${query}"`}
-        </p>
-      )}
-      {results.length > 0 && (
-        <section aria-labelledby="results-title">
-          <h2 id="results-title" className="sr-only">
-            Results
-          </h2>
-          <ProductGrid products={results} />
-        </section>
+        <Loaded state={search} loading={<ProductGridSkeleton />}>
+          {({ products: results, total }) => (
+            <>
+              <p className="text-body text-ink-muted" aria-live="polite">
+                {total === 0
+                  ? `Nothing found for "${query}".`
+                  : `${total} ${total === 1 ? 'result' : 'results'} for "${query}"`}
+              </p>
+              {results.length > 0 && (
+                <section aria-labelledby="results-title">
+                  <h2 id="results-title" className="sr-only">
+                    Results
+                  </h2>
+                  <ProductGrid products={results} />
+                </section>
+              )}
+            </>
+          )}
+        </Loaded>
       )}
     </div>
   )

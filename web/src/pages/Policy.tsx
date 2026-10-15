@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import { Link } from 'react-router'
 import { PageIntro } from '../components/ui/PageIntro'
 import { container, inlineLink } from '../components/ui/styles'
-import { settings } from '../mocks/settings'
+import { useSite } from '../features/site/SiteContext'
 
 // Return / Terms / Privacy. The text is a PLACEHOLDER until Abu Bakkar Siddik
 // writes the real policies; the numbers come from settings, not from here.
@@ -29,7 +29,7 @@ function PolicyPage({ title, intro, sections }: { title: string; intro: string; 
 }
 
 export function ReturnsPolicy() {
-  const days = settings.returnDays
+  const days = useSite().settings.returnDays
   return (
     <PolicyPage
       title="Returns and refunds"
@@ -66,7 +66,7 @@ export function ReturnsPolicy() {
 }
 
 export function TermsPolicy() {
-  const hours = settings.codConfirmHours
+  const hours = useSite().settings.codConfirmHours
   return (
     <PolicyPage
       title="Terms"

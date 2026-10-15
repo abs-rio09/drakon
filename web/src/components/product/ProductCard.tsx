@@ -1,6 +1,7 @@
 import { Link } from 'react-router'
+import { useSite } from '../../features/site/SiteContext'
 import { isArchived, metaLine, priceLabel, stockFact } from '../../lib/catalog'
-import type { Product } from '../../mocks/catalog'
+import type { Product } from '../../lib/types'
 import { SoldOutBadge } from './Badge'
 import { GalleryLabel } from './GalleryLabel'
 import { ProductPhoto } from './ProductPhoto'
@@ -9,6 +10,7 @@ import { QuickAdd } from './QuickAdd'
 // The product tile in every grid. No box: the photo, then a flat gallery label.
 // See docs/design/components/ProductCard/README.md
 export function ProductCard({ product }: { product: Product }) {
+  const { settings } = useSite()
   const href = `/product/${product.slug}`
   const soldOut = isArchived(product)
   const cover = product.images[0]
@@ -18,7 +20,7 @@ export function ProductCard({ product }: { product: Product }) {
       <div className="relative">
         {/* The photo repeats the title link, so screen readers and the Tab key skip it */}
         <Link to={href} tabIndex={-1} aria-hidden="true">
-          <ProductPhoto src={cover.src} alt="" soldOut={soldOut} />
+          <ProductPhoto src={cover?.src ?? ''} alt="" soldOut={soldOut} />
         </Link>
         {soldOut ? <SoldOutBadge /> : <QuickAdd product={product} />}
       </div>
@@ -30,7 +32,7 @@ export function ProductCard({ product }: { product: Product }) {
         }
         meta={metaLine(product)}
         price={priceLabel(product)}
-        fact={stockFact(product)}
+        fact={stockFact(product, settings)}
         soldOut={soldOut}
       />
     </article>

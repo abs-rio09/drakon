@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router'
 import { useCart } from '../../features/cart/useCart'
+import { useSite } from '../../features/site/SiteContext'
 import { maxQuantity } from '../../lib/catalog'
-import type { Product } from '../../mocks/catalog'
+import type { Product } from '../../lib/types'
 import { CheckIcon, PlusIcon } from '../icons'
 
 const roundButton =
@@ -12,6 +13,7 @@ const roundButton =
 // into the cart; a product with sizes or materials opens its page to choose.
 export function QuickAdd({ product }: { product: Product }) {
   const cart = useCart()
+  const { settings } = useSite()
   const [justAdded, setJustAdded] = useState(false)
 
   // Turn the check mark back into a plus after a moment.
@@ -37,7 +39,7 @@ export function QuickAdd({ product }: { product: Product }) {
   }
 
   const variant = inStock[0]
-  const full = cart.qtyOf(variant.id) >= maxQuantity(product, variant)
+  const full = cart.qtyOf(variant.id) >= maxQuantity(product, variant, settings)
 
   return (
     <>

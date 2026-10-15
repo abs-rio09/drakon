@@ -4,14 +4,22 @@ import { ArchiveCard } from '../components/product/ArchiveCard'
 import { SoldOutBadge } from '../components/product/Badge'
 import { ProductPhoto } from '../components/product/ProductPhoto'
 import { ChipButton } from '../components/ui/Chip'
+import { Loaded } from '../components/ui/LoadState'
 import { button, container, textLink } from '../components/ui/styles'
-import { getArchive, getCategories, getProduct, metaLine, priceLabel } from '../lib/catalog'
+import { getCategories, getProducts, getSoldOut } from '../lib/api'
+import { metaLine, priceLabel } from '../lib/catalog'
+import type { Product } from '../lib/types'
+import { useApi } from '../lib/useApi'
+
+const loadShop = () => getProducts({ limit: 100 })
 
 // /sold-out — the archive of every limited run that sold out (SoldOut.dc.html).
 // Sold-out products are never deleted or hidden; they live here for good.
 export default function SoldOut() {
-  const archive = getArchive()
+  const state = useApi('sold-out', getSoldOut)
+  const cats = useApi('categories', getCategories)
   const [filter, setFilter] = useState('all')
+  const archive = state.data ?? []
   const latest = archive[0]
   const shown = archive.filter((p) => filter === 'all' || p.categorySlug === filter)
 
@@ -26,7 +34,12 @@ export default function SoldOut() {
         </p>
       </section>
 
-      {latest && <LatestSoldOut slug={latest.slug} />}
+      {state.status !== 'ready' && (
+        <div className={container}>
+          <Loaded state={state}>{() => null}</Loaded>
+        </div>
+      )}
+      {latest && <LatestSoldOut product={latest} />}
 
       <section aria-labelledby="all-title" className={container + ' flex flex-col gap-8 pb-20 sm:pb-32'}>
         <div className="flex flex-wrap items-center justify-between gap-4 border-t border-line pt-10">
@@ -41,7 +54,7 @@ export default function SoldOut() {
             <ChipButton pressed={filter === 'all'} onClick={() => setFilter('all')}>
               All
             </ChipButton>
-            {getCategories().map((c) => (
+            {(cats.data ?? []).map((c) => (
               <ChipButton key={c.slug} pressed={filter === c.slug} onClick={() => setFilter(c.slug)}>
                 {c.name}
               </ChipButton>
@@ -52,7 +65,7 @@ export default function SoldOut() {
         <p role="status" className="sr-only">
           {shown.length === 1 ? '1 sold-out run shown' : `${shown.length} sold-out runs shown`}
         </p>
-        {shown.length > 0 ? (
+        {state.status !== 'ready' ? null : shown.length > 0 ? (
           <ul className="grid gap-y-10 sm:grid-cols-2 sm:gap-x-6 sm:gap-y-14 lg:grid-cols-3 lg:gap-x-10">
             {shown.map((p) => (
               <li key={p.id}>
@@ -78,17 +91,19 @@ export default function SoldOut() {
 }
 
 // The most recent run to sell out, shown large.
-function LatestSoldOut({ slug }: { slug: string }) {
-  const product = getProduct(slug)
-  if (!product) return null
+function LatestSoldOut({ product }: { product: Product }) {
   const cover = product.images[0]
-  const successor = product.successorSlug ? getProduct(product.successorSlug) : undefined
+  // The newer edition is linked only while it is on sale.
+  const shop = useApi('shop:all', loadShop)
+  const successor = product.successorSlug
+    ? shop.data?.products.find((p) => p.slug === product.successorSlug)
+    : undefined
 
   return (
     <section aria-labelledby="latest-title" className={container + ' pb-24'}>
       <div className="grid grid-cols-[minmax(0,1fr)] items-center gap-8 border-t border-line pt-10 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:gap-16">
         <div className="relative">
-          <ProductPhoto src={cover.src} alt={cover.alt} aspect="aspect-[4/3]" soldOut zoomOnHover={false} eager />
+          <ProductPhoto src={cover?.src ?? ''} alt={cover?.alt ?? product.name} aspect="aspect-[4/3]" soldOut zoomOnHover={false} eager />
           <SoldOutBadge />
         </div>
         <div className="flex max-w-110 flex-col gap-6">

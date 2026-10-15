@@ -2,21 +2,18 @@ import { Link } from 'react-router'
 import { ArrowUpRightIcon } from '../components/icons'
 import { ArchiveCard } from '../components/product/ArchiveCard'
 import { ProductGrid } from '../components/product/ProductCard'
+import { Loaded, ProductGridSkeleton } from '../components/ui/LoadState'
 import { SectionHeader } from '../components/ui/SectionHeader'
 import { button, container, secondaryButton, textLink } from '../components/ui/styles'
-import {
-  getArchive,
-  getCategories,
-  getFeaturedProducts,
-  getProduct,
-  getShopProducts,
-  metaLine,
-  priceLabel,
-  stockFact,
-} from '../lib/catalog'
-import { getZone } from '../lib/delivery'
+import { useSite } from '../features/site/SiteContext'
+import { getCategories, getFeatured, getProducts, getSoldOut } from '../lib/api'
+import { metaLine, priceLabel, stockFact } from '../lib/catalog'
+import { zoneCharge } from '../lib/delivery'
 import { formatTaka } from '../lib/money'
-import { heroProductSlug } from '../mocks/catalog'
+import { useApi } from '../lib/useApi'
+
+// Every product on sale, for the collection counts (the shop has under 100).
+const loadShop = () => getProducts({ limit: 100 })
 
 // Home page, laid out from docs/design/screens/Main.dc.html
 export default function Home() {
@@ -36,7 +33,10 @@ export default function Home() {
 const sectionPadding = 'py-20 sm:py-24 lg:py-32'
 
 function Hero() {
-  const product = getProduct(heroProductSlug)
+  const { settings } = useSite()
+  const featured = useApi('featured', getFeatured)
+  // The label appears when the data arrives; the photo and headline do not wait.
+  const product = featured.data?.hero
 
   return (
     // The hero slides up under the sticky header (72px bar + 1px line), so the
@@ -70,7 +70,7 @@ function Hero() {
       {product && (
         <Link
           to={`/product/${product.slug}`}
-          aria-label={`${product.name}, ${priceLabel(product)}, ${stockFact(product)}`}
+          aria-label={`${product.name}, ${priceLabel(product)}, ${stockFact(product, settings)}`}
           className="relative z-10 mx-4 -mt-12 flex flex-col gap-3 self-stretch rounded-2xl border border-line bg-surface-glass p-4 shadow-label backdrop-blur-xl transition-colors duration-150 ease-out hover:border-line-strong motion-safe:animate-rise motion-safe:[animation-delay:480ms] sm:mx-6 md:-mt-14 md:w-64 md:self-end xl:absolute xl:right-[max(32px,calc((100%-1280px)/2+32px))] xl:bottom-6 xl:mx-0 xl:mt-0"
         >
           <span className="flex flex-col gap-1">
@@ -79,7 +79,7 @@ function Hero() {
           </span>
           <span className="flex items-baseline justify-between gap-3 border-t border-line pt-3">
             <span className="text-price text-ink-strong tabular-nums">{priceLabel(product)}</span>
-            <span className="text-figure text-ink-muted tabular-nums">{stockFact(product)}</span>
+            <span className="text-figure text-ink-muted tabular-nums">{stockFact(product, settings)}</span>
           </span>
         </Link>
       )}
@@ -110,12 +110,13 @@ function Hero() {
 }
 
 function Facts() {
-  const inside = getZone('INSIDE_DHAKA')
-  const outside = getZone('OUTSIDE_DHAKA')
+  const { delivery } = useSite()
+  const inside = zoneCharge(delivery, 'INSIDE_DHAKA')
+  const outside = zoneCharge(delivery, 'OUTSIDE_DHAKA')
   const facts = [
     { title: 'Cash on Delivery', text: 'Pay the courier when it arrives' },
-    { title: `${formatTaka(inside.chargePaisa)} inside Dhaka`, text: 'Delivery charge' },
-    { title: `${formatTaka(outside.chargePaisa)} outside Dhaka`, text: 'Delivery charge' },
+    ...(inside !== undefined ? [{ title: `${formatTaka(inside)} inside Dhaka`, text: 'Delivery charge' }] : []),
+    ...(outside !== undefined ? [{ title: `${formatTaka(outside)} outside Dhaka`, text: 'Delivery charge' }] : []),
     { title: 'No account needed', text: 'Order and track as a guest' },
   ]
   return (
@@ -133,21 +134,28 @@ function Facts() {
 }
 
 function CurrentDrop() {
-  const products = getFeaturedProducts()
+  const featured = useApi('featured', getFeatured)
+  const products = featured.data?.products ?? []
   return (
     <section id="featured" aria-labelledby="drop-title" className={sectionPadding}>
       <div className={container + ' flex flex-col gap-14'}>
         <SectionHeader
           id="drop-title"
           title="The current drop"
-          intro={`${products.length} pieces on sale now. Limited runs never come back once they sell out.`}
+          intro={
+            featured.status === 'ready'
+              ? `${products.length} pieces on sale now. Limited runs never come back once they sell out.`
+              : 'Limited runs never come back once they sell out.'
+          }
           action={
             <Link to="/shop" className={textLink + ' text-label text-ink-muted'}>
               All products
             </Link>
           }
         />
-        <ProductGrid products={products} />
+        <Loaded state={featured} loading={<ProductGridSkeleton />}>
+          {(data) => <ProductGrid products={data.products} />}
+        </Loaded>
       </div>
     </section>
   )
@@ -192,18 +200,27 @@ function BrandStory() {
 }
 
 function Collections() {
-  const categories = getCategories()
+  const cats = useApi('categories', getCategories)
+  const shop = useApi('shop:all', loadShop)
+  const categories = cats.data ?? []
+  // Pieces on sale per collection; undefined while the products load.
+  const countIn = (slug: string) => shop.data?.products.filter((p) => p.categorySlug === slug).length
   return (
     <section id="collections" aria-labelledby="col-title" className={sectionPadding + ' scroll-mt-18'}>
       <div className={container + ' flex flex-col gap-14'}>
         <SectionHeader
           id="col-title"
           title="Shop by collection"
-          intro={`Every piece belongs to one of ${categories.length} collections.`}
+          intro={
+            cats.status === 'ready'
+              ? `Every piece belongs to one of ${categories.length} collections.`
+              : 'Every piece belongs to one collection.'
+          }
         />
+        {cats.status !== 'ready' && <Loaded state={cats}>{() => null}</Loaded>}
         <ul className="grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-4">
           {categories.map((c) => {
-            const count = getShopProducts(c.slug).length
+            const count = countIn(c.slug)
             return (
               <li key={c.slug}>
                 <Link to={`/shop/${c.slug}`} className="group relative block overflow-hidden rounded-2xl">
@@ -222,9 +239,11 @@ function Collections() {
                   <span className="absolute inset-x-4 bottom-4 flex items-end justify-between gap-3 sm:inset-x-6 sm:bottom-6">
                     <span className="flex flex-col gap-1">
                       <span className="text-title font-semibold text-ink-strong sm:text-heading-3">{c.name}</span>
-                      <span className="hidden text-caption text-ink-muted tabular-nums sm:block">
-                        {count === 1 ? '1 piece on sale' : `${count} pieces on sale`}
-                      </span>
+                      {count !== undefined && (
+                        <span className="hidden text-caption text-ink-muted tabular-nums sm:block">
+                          {count === 1 ? '1 piece on sale' : `${count} pieces on sale`}
+                        </span>
+                      )}
                     </span>
                     <ArrowUpRightIcon className="shrink-0 text-ink-muted" />
                   </span>
@@ -239,7 +258,9 @@ function Collections() {
 }
 
 function ArchivePreview() {
-  const archive = getArchive().slice(0, 3)
+  const archive = useApi('sold-out', getSoldOut)
+  // Nothing has sold out yet: leave the section out instead of an empty box.
+  if (archive.status === 'ready' && archive.data.length === 0) return null
   return (
     <section id="sold-out" aria-labelledby="arc-title" className={'border-t border-line ' + sectionPadding}>
       <div className={container + ' flex flex-col gap-14'}>
@@ -253,13 +274,17 @@ function ArchivePreview() {
             </Link>
           }
         />
-        <ul className="grid border-t border-line md:grid-cols-3 md:gap-6 md:border-0 lg:gap-10">
-          {archive.map((p) => (
-            <li key={p.id}>
-              <ArchiveCard product={p} />
-            </li>
-          ))}
-        </ul>
+        <Loaded state={archive}>
+          {(products) => (
+            <ul className="grid border-t border-line md:grid-cols-3 md:gap-6 md:border-0 lg:gap-10">
+              {products.slice(0, 3).map((p) => (
+                <li key={p.id}>
+                  <ArchiveCard product={p} />
+                </li>
+              ))}
+            </ul>
+          )}
+        </Loaded>
       </div>
     </section>
   )

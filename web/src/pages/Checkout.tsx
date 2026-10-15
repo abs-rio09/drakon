@@ -3,22 +3,22 @@ import { Link } from 'react-router'
 import { CashIcon, CheckIcon, ChevronDownIcon, LockIcon } from '../components/icons'
 import { describedBy } from '../components/ui/describedBy'
 import { Field, FieldError, inputClass, textareaClass } from '../components/ui/Field'
+import { LoadError, Loading } from '../components/ui/LoadState'
 import { button, container, inlineLink, panel, primaryButton, secondaryButton } from '../components/ui/styles'
-import { resolveCart, subtotalPaisa, type CartItem } from '../features/cart/cartItems'
-import { useCart } from '../features/cart/useCart'
-import { zoneFor } from '../features/checkout/deliveryQuote'
+import { splitItems, useCartQuote } from '../features/cart/cartItems'
 import {
-  COURIER_NOTE_MAX,
   emptyCheckoutForm,
-  GIFT_NOTE_MAX,
+  findDistrict,
+  needsAreaChoice,
+  selectedArea,
   validateCheckout,
   type CheckoutForm,
   type FieldName,
 } from '../features/checkout/validation'
-import { variantName } from '../lib/catalog'
+import { useSite } from '../features/site/SiteContext'
+import { getZone } from '../lib/delivery'
 import { formatTaka } from '../lib/money'
-import { dhakaAreas, dhakaDistrict, districts, type DeliveryZone } from '../mocks/delivery'
-import { settings } from '../mocks/settings'
+import type { Problem, Quote, QuoteItem } from '../lib/types'
 
 // /checkout — the form and the order summary, from Checkout.dc.html.
 // IMPORTANT: there is no backend yet, so this page never places an order.
@@ -30,7 +30,7 @@ const FIELD_ORDER: FieldName[] = [
   'phone',
   'email',
   'district',
-  'dhakaArea',
+  'districtArea',
   'area',
   'address',
   'courierNote',
@@ -45,10 +45,32 @@ const fieldId = (name: FieldName) => `co-${name}`
 type TextFieldName = { [K in FieldName]: CheckoutForm[K] extends string ? K : never }[FieldName]
 
 export default function Checkout() {
-  const cart = useCart()
-  const { items } = resolveCart(cart.lines)
+  const [form, setForm] = useState<CheckoutForm>(emptyCheckoutForm)
+  const { delivery } = useSite()
+  const area = selectedArea(delivery, form)
+  // The server prices the cart and the delivery for the chosen area.
+  const priced = useCartQuote(area?.id)
+  const quote = priced.status === 'empty' ? undefined : priced.quote
 
-  if (items.length === 0) {
+  if (priced.status === 'error' && !quote) {
+    return (
+      <div className={container}>
+        <title>Checkout: Drakon</title>
+        <LoadError error={priced.error} onRetry={priced.retry} />
+      </div>
+    )
+  }
+  if (priced.status === 'loading' && !quote) {
+    return (
+      <div className={container}>
+        <title>Checkout: Drakon</title>
+        <Loading label="Checking prices and stock" />
+      </div>
+    )
+  }
+
+  const items = quote ? splitItems(quote).items : []
+  if (!quote || items.length === 0) {
     return (
       <div className={container + ' flex flex-col items-center gap-6 py-24 text-center'}>
         <title>Checkout: Drakon</title>
@@ -61,24 +83,37 @@ export default function Checkout() {
     )
   }
 
-  return <CheckoutView items={items} />
+  // The shown quote may be for the previous area while the new one loads.
+  const quoteIsCurrent = priced.status === 'ready' && (quote.delivery?.areaId ?? undefined) === area?.id
+  return <CheckoutView form={form} setForm={setForm} quote={quote} items={items} quoteIsCurrent={quoteIsCurrent} />
 }
 
-function CheckoutView({ items }: { items: CartItem[] }) {
-  const [form, setForm] = useState<CheckoutForm>(emptyCheckoutForm)
+type CheckoutViewProps = {
+  form: CheckoutForm
+  setForm: React.Dispatch<React.SetStateAction<CheckoutForm>>
+  quote: Quote
+  items: QuoteItem[]
+  quoteIsCurrent: boolean
+}
+
+function CheckoutView({ form, setForm, quote, items, quoteIsCurrent }: CheckoutViewProps) {
+  const { settings, delivery } = useSite()
   // Fields the buyer has left at least once. We only show errors for these,
   // so nobody sees red messages before they have even started typing.
   const [touched, setTouched] = useState<Set<FieldName>>(new Set())
   const [submitted, setSubmitted] = useState(false)
 
-  const errors = validateCheckout(form)
+  const errors = validateCheckout(form, delivery, settings)
   const errorFor = (name: FieldName) => (submitted || touched.has(name) ? errors[name] : undefined)
   const isComplete = Object.keys(errors).length === 0
 
-  const subtotal = subtotalPaisa(items)
-  const zone = zoneFor(form.district, form.dhakaArea)
-  const total = subtotal + (zone?.chargePaisa ?? 0)
+  // Every amount comes from the server's quote.
+  const subtotal = quote.subtotalPaisa
+  const quoteDelivery = quoteIsCurrent ? quote.delivery : null
+  const zoneName = quoteDelivery ? (getZone(delivery, quoteDelivery.zoneCode)?.name ?? quoteDelivery.zoneCode) : undefined
+  const total = quoteDelivery && quote.totalPaisa !== null ? quote.totalPaisa : subtotal
   const count = items.reduce((sum, i) => sum + i.qty, 0)
+  const problems = quote.problems.filter((p) => p.code !== 'UNKNOWN_VARIANT')
 
   // One function updates any field: update('name', 'Nusrat')
   function update<K extends FieldName>(name: K, value: CheckoutForm[K]) {
@@ -108,16 +143,18 @@ function CheckoutView({ items }: { items: CartItem[] }) {
     setSubmitted(true)
     const first = FIELD_ORDER.find((name) => errors[name])
     if (first) {
-      // For the Dhaka choice, focus the first radio button.
+      // For the district area choice, focus the first radio button.
       const el =
-        first === 'dhakaArea'
-          ? document.querySelector<HTMLInputElement>('input[name="dhakaArea"]')
+        first === 'districtArea'
+          ? document.querySelector<HTMLInputElement>('input[name="districtArea"]')
           : document.getElementById(fieldId(first))
       el?.focus()
     }
   }
 
-  const isDhaka = form.district === dhakaDistrict
+  const district = findDistrict(delivery, form.district)
+  const hasChoice = needsAreaChoice(district)
+  const choiceAreas = hasChoice && district ? district.areas : []
 
   return (
     <div className={container + ' flex flex-col gap-10 pt-14 pb-0 lg:pb-32'}>
@@ -134,10 +171,10 @@ function CheckoutView({ items }: { items: CartItem[] }) {
       >
         <span className="flex items-center gap-3">
           <span className="flex" aria-hidden="true">
-            {items.slice(0, 2).map(({ product, variant }, i) => (
+            {items.slice(0, 2).map((item, i) => (
               <img
-                key={variant.id}
-                src={product.images[variant.imageIndex ?? 0]?.thumb ?? product.images[0].thumb}
+                key={item.variantId}
+                src={item.thumb}
                 alt=""
                 className={
                   'size-10 rounded-lg border-2 border-surface-raised bg-field object-cover' + (i > 0 ? ' -ml-3' : '')
@@ -211,7 +248,15 @@ function CheckoutView({ items }: { items: CartItem[] }) {
               id={fieldId('district')}
               label="District"
               required
-              hint={<DeliveryStatus district={form.district} zone={zone} />}
+              hint={
+                <DeliveryStatus
+                  district={form.district}
+                  hasChoice={hasChoice}
+                  chargePaisa={quoteDelivery?.chargePaisa}
+                  zoneName={zoneName}
+                  free={quoteDelivery?.freeDelivery ?? false}
+                />
+              }
               error={errorFor('district')}
             >
               <div className="relative">
@@ -228,9 +273,9 @@ function CheckoutView({ items }: { items: CartItem[] }) {
                   className={inputClass + ' appearance-none pr-12'}
                 >
                   <option value="">Select your district</option>
-                  {districts.map((d) => (
-                    <option key={d} value={d}>
-                      {d}
+                  {delivery.districts.map((d) => (
+                    <option key={d.name} value={d.name}>
+                      {d.name}
                     </option>
                   ))}
                 </select>
@@ -245,49 +290,50 @@ function CheckoutView({ items }: { items: CartItem[] }) {
             <div
               className={
                 '-mx-1 grid transition-[grid-template-rows,opacity,margin] duration-200 ease-out motion-reduce:transition-none ' +
-                (isDhaka ? '-my-1 grid-rows-[1fr] opacity-100' : '-mt-6 mb-0 grid-rows-[0fr] opacity-0')
+                (hasChoice ? '-my-1 grid-rows-[1fr] opacity-100' : '-mt-6 mb-0 grid-rows-[0fr] opacity-0')
               }
-              inert={!isDhaka}
+              inert={!hasChoice}
             >
               <div className="min-h-0 overflow-hidden">
                 <fieldset
                   className="flex flex-col gap-3 p-1"
-                  aria-describedby={errorFor('dhakaArea') ? `${fieldId('dhakaArea')}-error` : undefined}
+                  aria-describedby={errorFor('districtArea') ? `${fieldId('districtArea')}-error` : undefined}
                 >
                   <legend className="mb-3 text-label text-ink-muted">
-                    Where in Dhaka district?
+                    Where in {district?.name ?? 'the'} district?
                     <span aria-hidden="true" className="ml-1 text-accent-text">
                       *
                     </span>
                   </legend>
                   <div className="grid gap-3 sm:grid-cols-2">
-                    {dhakaAreas.map((a) => {
-                      const z = zoneFor(dhakaDistrict, a.id)
+                    {choiceAreas.map((a) => {
+                      const z = getZone(delivery, a.zoneCode)
+                      const id = String(a.id)
                       return (
-                        <ChoiceCard key={a.id} checked={form.dhakaArea === a.id}>
+                        <ChoiceCard key={a.id} checked={form.districtArea === id}>
                           <input
                             type="radio"
-                            name="dhakaArea"
-                            value={a.id}
-                            checked={form.dhakaArea === a.id}
+                            name="districtArea"
+                            value={id}
+                            checked={form.districtArea === id}
                             onChange={() => {
-                              update('dhakaArea', a.id)
-                              touch('dhakaArea')
+                              update('districtArea', id)
+                              touch('districtArea')
                             }}
                             className="mt-0.5 size-4.5 shrink-0 accent-ink-strong"
                           />
                           <span className="flex flex-col">
                             <span className="text-body font-medium text-ink-strong">{a.label}</span>
                             <span className="text-caption text-ink-subtle tabular-nums">
-                              {a.hint}, {z ? formatTaka(z.chargePaisa) : ''}
+                              {[a.hint, z ? formatTaka(z.chargePaisa) : ''].filter(Boolean).join(', ')}
                             </span>
                           </span>
                         </ChoiceCard>
                       )
                     })}
                   </div>
-                  {errorFor('dhakaArea') && (
-                    <FieldError id={`${fieldId('dhakaArea')}-error`}>{errorFor('dhakaArea')}</FieldError>
+                  {errorFor('districtArea') && (
+                    <FieldError id={`${fieldId('districtArea')}-error`}>{errorFor('districtArea')}</FieldError>
                   )}
                 </fieldset>
               </div>
@@ -324,7 +370,7 @@ function CheckoutView({ items }: { items: CartItem[] }) {
               <input
                 {...textProps('courierNote')}
                 type="text"
-                maxLength={COURIER_NOTE_MAX}
+                maxLength={settings.courierNoteMaxChars}
                 placeholder="e.g. Call before coming"
                 className={inputClass}
               />
@@ -382,7 +428,7 @@ function CheckoutView({ items }: { items: CartItem[] }) {
                     optional
                     hint={
                       <span className="tabular-nums">
-                        {form.giftNote.length} of {GIFT_NOTE_MAX} characters. We print it on a card inside the box.
+                        {[...form.giftNote].length} of {settings.giftNoteMaxChars} characters. We print it on a card inside the box.
                       </span>
                     }
                     error={errorFor('giftNote')}
@@ -390,7 +436,7 @@ function CheckoutView({ items }: { items: CartItem[] }) {
                     <textarea
                       {...textProps('giftNote', true)}
                       rows={3}
-                      maxLength={GIFT_NOTE_MAX}
+                      maxLength={settings.giftNoteMaxChars}
                       placeholder="Happy birthday. Stay up late, build great things."
                       className={textareaClass + ' min-h-24'}
                     />
@@ -458,11 +504,13 @@ function CheckoutView({ items }: { items: CartItem[] }) {
 
         <OrderSummary
           items={items}
+          problems={problems}
           subtotal={subtotal}
           total={total}
-          zoneLabel={zone?.label ?? (isDhaka ? 'Choose Dhaka city or outside' : 'Choose your district')}
-          deliveryPaisa={zone?.chargePaisa}
+          zoneLabel={zoneName ?? (hasChoice ? `Choose where in ${form.district}` : 'Choose your district')}
+          deliveryPaisa={quoteDelivery?.chargePaisa}
           isGift={form.isGift}
+          codConfirmHours={settings.codConfirmHours}
         />
       </div>
 
@@ -470,7 +518,7 @@ function CheckoutView({ items }: { items: CartItem[] }) {
       <div className="sticky bottom-0 z-20 -mx-4 border-t border-line bg-surface-raised px-4 py-3 sm:-mx-6 sm:px-6 lg:hidden">
         <div className="flex items-center justify-between gap-4">
           <span className="flex flex-col">
-            <span className="text-caption text-ink-muted">{zone ? 'Pay on delivery' : 'Delivery not added yet'}</span>
+            <span className="text-caption text-ink-muted">{quoteDelivery ? 'Pay on delivery' : 'Delivery not added yet'}</span>
             <span className="text-price text-ink-strong tabular-nums">{formatTaka(total)}</span>
           </span>
           <PlaceOrderButton />
@@ -482,12 +530,21 @@ function CheckoutView({ items }: { items: CartItem[] }) {
 
 // The delivery charge, shown right under the district so the buyer sees it
 // change as they choose. Screen readers hear the new charge too (aria-live).
-function DeliveryStatus({ district, zone }: { district: string; zone: DeliveryZone | undefined }) {
+type DeliveryStatusProps = {
+  district: string
+  hasChoice: boolean
+  chargePaisa: number | undefined
+  zoneName: string | undefined
+  free: boolean
+}
+
+function DeliveryStatus({ district, hasChoice, chargePaisa, zoneName, free }: DeliveryStatusProps) {
   // Keep every message to one line on a 375px phone, so the form below
   // does not jump when the message changes.
   let text = 'Pick a district to see the delivery charge.'
-  if (zone) text = `Delivery charge: ${formatTaka(zone.chargePaisa)}, ${zone.label}.`
-  else if (district === dhakaDistrict) text = 'Pick Dhaka city or outside to see the charge.'
+  if (chargePaisa !== undefined) text = free ? `Free delivery, ${zoneName}.` : `Delivery charge: ${formatTaka(chargePaisa)}, ${zoneName}.`
+  else if (district !== '' && hasChoice) text = `Pick where in ${district} to see the charge.`
+  else if (district !== '') text = 'Checking the delivery charge…'
   return (
     <span aria-live="polite" className="tabular-nums">
       {text}
@@ -542,15 +599,17 @@ function PlaceOrderButton({ block = false }: { block?: boolean }) {
 }
 
 type OrderSummaryProps = {
-  items: CartItem[]
+  items: QuoteItem[]
+  problems: Problem[]
   subtotal: number
   total: number
   zoneLabel: string
   deliveryPaisa?: number
   isGift: boolean
+  codConfirmHours: number
 }
 
-function OrderSummary({ items, subtotal, total, zoneLabel, deliveryPaisa, isGift }: OrderSummaryProps) {
+function OrderSummary({ items, problems, subtotal, total, zoneLabel, deliveryPaisa, isGift, codConfirmHours }: OrderSummaryProps) {
   return (
     <aside
       id="summary"
@@ -559,23 +618,29 @@ function OrderSummary({ items, subtotal, total, zoneLabel, deliveryPaisa, isGift
     >
       <h2 className="text-heading-3 text-ink-strong">Your order</h2>
       <ul className="flex flex-col gap-4">
-        {items.map(({ product, variant, qty, linePaisa }) => (
-          <li key={variant.id} className="flex items-center gap-4">
-            <img
-              src={product.images[variant.imageIndex ?? 0]?.thumb ?? product.images[0].thumb}
-              alt=""
-              className="size-16 shrink-0 rounded-lg bg-field object-cover"
-            />
+        {items.map((item) => (
+          <li key={item.variantId} className="flex items-center gap-4">
+            <img src={item.thumb} alt="" className="size-16 shrink-0 rounded-lg bg-field object-cover" />
             <span className="flex min-w-0 flex-1 flex-col">
-              <span className="truncate text-body text-ink-strong">{product.name}</span>
+              <span className="truncate text-body text-ink-strong">{item.productName}</span>
               <span className="text-caption text-ink-muted tabular-nums">
-                {variantName(product, variant)}, qty {qty}
+                {item.variantName}, qty {item.qty}
               </span>
+              {item.problem && <span className="text-caption text-danger-text">{item.problem.message}</span>}
             </span>
-            <span className="text-body font-medium text-ink-strong tabular-nums">{formatTaka(linePaisa)}</span>
+            <span className="text-body font-medium text-ink-strong tabular-nums">{formatTaka(item.lineTotalPaisa)}</span>
           </li>
         ))}
       </ul>
+      {problems.length > 0 && (
+        <p role="alert" className="text-label font-normal text-danger-text">
+          Some items need a change before you can order.{' '}
+          <Link to="/cart" className={inlineLink}>
+            Fix them in your cart
+          </Link>
+          .
+        </p>
+      )}
 
       <dl className="flex flex-col gap-3 border-t border-line pt-5">
         <div className="flex justify-between gap-4">
@@ -616,7 +681,7 @@ function OrderSummary({ items, subtotal, total, zoneLabel, deliveryPaisa, isGift
 
       <div className="flex flex-col gap-3 border-t border-line pt-6 text-caption text-ink-subtle">
         <p>
-          We call you within {settings.codConfirmHours} hours to confirm. Orders we cannot confirm are cancelled
+          We call you within {codConfirmHours} hours to confirm. Orders we cannot confirm are cancelled
           automatically.
         </p>
         <p>

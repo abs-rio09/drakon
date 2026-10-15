@@ -1,5 +1,4 @@
 import { Outlet, useLocation } from 'react-router'
-import { resolveCart } from '../../features/cart/cartItems'
 import { useCart } from '../../features/cart/useCart'
 import { ScrollManager } from './ScrollManager'
 import { SiteFooter } from './SiteFooter'
@@ -8,10 +7,8 @@ import { SiteHeader } from './SiteHeader'
 // The frame around every customer page: header on top, footer at the bottom.
 // <Outlet /> is where react-router puts the page that matches the URL.
 export function RootLayout() {
-  const { lines } = useCart()
+  const { count } = useCart()
   const { pathname } = useLocation()
-  // Count only what can still be ordered (sold-out lines are left out).
-  const count = resolveCart(lines).items.reduce((sum, item) => sum + item.qty, 0)
   return (
     <div className="flex min-h-screen flex-col">
       <ScrollManager />

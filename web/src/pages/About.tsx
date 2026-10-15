@@ -1,12 +1,13 @@
 import { Link } from 'react-router'
 import { PageIntro } from '../components/ui/PageIntro'
 import { container, primaryButton } from '../components/ui/styles'
-import { settings } from '../mocks/settings'
+import { useSite } from '../features/site/SiteContext'
 
 // /about — the brand story, from docs/brand-vision.md.
 const PEOPLE = ['Night workers', 'Dream chasers', 'Gamers', 'Coders', 'Creative minds', 'Silent hardworking people']
 
 export default function About() {
+  const { settings } = useSite()
   return (
     <div className="flex flex-col">
       <title>About: Drakon</title>

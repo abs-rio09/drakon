@@ -1,5 +1,5 @@
 import { metaLine, priceLabel } from '../../lib/catalog'
-import type { Product } from '../../mocks/catalog'
+import type { Product } from '../../lib/types'
 import { GalleryLabel } from './GalleryLabel'
 import { ProductPhoto } from './ProductPhoto'
 
@@ -11,7 +11,7 @@ export function ArchiveCard({ product, layout = 'list' }: { product: Product; la
   if (layout === 'grid') {
     return (
       <article className="flex flex-col gap-4">
-        <ProductPhoto src={cover.src} alt={cover.alt} soldOut zoomOnHover={false} aspect="aspect-[4/3]" />
+        <ProductPhoto src={cover?.src ?? ''} alt={cover?.alt ?? product.name} soldOut zoomOnHover={false} aspect="aspect-[4/3]" />
         <GalleryLabel name={product.name} meta={metaLine(product)} price={priceLabel(product)} fact="Sold out" soldOut />
       </article>
     )
@@ -19,8 +19,8 @@ export function ArchiveCard({ product, layout = 'list' }: { product: Product; la
   return (
     <article className="flex items-center gap-4 border-b border-line py-4 md:flex-col md:items-stretch md:border-0 md:py-0">
       <ProductPhoto
-        src={cover.src}
-        alt={cover.alt}
+        src={cover?.src ?? ''}
+        alt={cover?.alt ?? product.name}
         soldOut
         zoomOnHover={false}
         aspect="aspect-square md:aspect-[4/3]"
