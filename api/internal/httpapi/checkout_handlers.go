@@ -19,6 +19,12 @@ func asAPIError(err error) error {
 		}
 		return &apiError{Status: status, Code: in.Code, Message: in.Message, Fields: in.Fields}
 	}
+	if errors.Is(err, orders.ErrNotFound) {
+		return errorf(http.StatusNotFound, "ORDER_NOT_FOUND", "We could not find an order with this number and phone number. Check both and try again.")
+	}
+	if errors.Is(err, orders.ErrCannotCancel) {
+		return errorf(http.StatusConflict, "CANNOT_CANCEL", "This order can no longer be cancelled online (it has shipped or is closed). Please contact us.")
+	}
 	var refused *orders.RefusedError
 	if errors.As(err, &refused) {
 		status := http.StatusConflict
@@ -72,5 +78,41 @@ func (s *Server) handlePlaceOrder(w http.ResponseWriter, r *http.Request) error 
 		return asAPIError(err)
 	}
 	writeJSON(w, http.StatusCreated, placed)
+	return nil
+}
+
+// POST /api/orders/track: order number + phone (or the saved token) ->
+// status timeline and items. A wrong number and a wrong phone get the same
+// "not found" answer.
+func (s *Server) handleTrackOrder(w http.ResponseWriter, r *http.Request) error {
+	var in orders.Lookup
+	if err := decodeJSON(w, r, &in); err != nil {
+		return err
+	}
+	view, err := orders.Track(r.Context(), s.pool, in)
+	if err != nil {
+		return asAPIError(err)
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"order": view})
+	return nil
+}
+
+type cancelRequest struct {
+	orders.Lookup
+	Reason string `json:"reason"`
+}
+
+// POST /api/orders/cancel: the buyer cancels while the order is PENDING or
+// CONFIRMED. The stock goes back.
+func (s *Server) handleCancelOrder(w http.ResponseWriter, r *http.Request) error {
+	var in cancelRequest
+	if err := decodeJSON(w, r, &in); err != nil {
+		return err
+	}
+	view, err := orders.Cancel(r.Context(), s.pool, in.Lookup, in.Reason, s.now())
+	if err != nil {
+		return asAPIError(err)
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"order": view})
 	return nil
 }

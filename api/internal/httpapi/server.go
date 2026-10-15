@@ -75,6 +75,8 @@ func (s *Server) routes(mux *http.ServeMux) {
 	// Checkout and orders (Cash on Delivery only)
 	mux.HandleFunc("POST /api/checkout/quote", s.wrap(s.handleQuote))
 	mux.HandleFunc("POST /api/orders", s.wrap(s.handlePlaceOrder))
+	mux.HandleFunc("POST /api/orders/track", s.wrap(s.handleTrackOrder))
+	mux.HandleFunc("POST /api/orders/cancel", s.wrap(s.handleCancelOrder))
 
 	// Any other /api path: a JSON 404 instead of Go's plain text one.
 	mux.HandleFunc("/api/", s.wrap(func(w http.ResponseWriter, r *http.Request) error {
