@@ -63,6 +63,12 @@ Open decisions: `docs/open-questions.md` — **do not build anything marked 🟡
 - Hosting (decided 2026-10-15): Cloudflare **Workers Static Assets** (not Pages) with `not_found_handling: "single-page-application"` and `run_worker_first: ["/api/*"]` proxying to Render.
 
 ## Commands (fill in as the project grows)
-- web: `cd web && npm run dev` (http://localhost:5173)
-- api: `cd api && go run ./cmd/server` (http://localhost:8080)
-- db: `docker compose up -d db`
+- db: `cd api && make db-up` (= `docker compose up -d --wait db`); psql: `docker compose exec db psql -U drakon -d drakon`
+- migrations: `cd api && make migrate` / `make migrate-status` (goose reads the repo-root `.env`)
+- seed: `cd api && make seed` (`api/db/seed/dev_seed.sql`, safe to run twice, never overwrites)
+- api: `cd api && make run` (http://localhost:8080); checks: `make check` (gofmt + vet + test)
+- sqlc: `cd api && make sqlc` after changing `api/db/queries/*.sql` or a migration
+- tests use the `drakon_test` database (auto-created, wiped per run). Never point tests at `drakon`.
+- web: `cd web && npm run dev` (http://localhost:5173); checks: `npm run build` and `npm run lint`
+- Go tools live in `$(go env GOPATH)/bin` (goose, sqlc)
+- Endpoints: `docs/api.md`
