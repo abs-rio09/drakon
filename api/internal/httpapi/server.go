@@ -72,6 +72,9 @@ func (s *Server) routes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/delivery/areas", s.wrap(s.handleDeliveryAreas))
 	mux.HandleFunc("GET /api/settings/public", s.wrap(s.handlePublicSettings))
 
+	// Checkout and orders (Cash on Delivery only)
+	mux.HandleFunc("POST /api/checkout/quote", s.wrap(s.handleQuote))
+
 	// Any other /api path: a JSON 404 instead of Go's plain text one.
 	mux.HandleFunc("/api/", s.wrap(func(w http.ResponseWriter, r *http.Request) error {
 		return notFound("There is no such API endpoint.")
