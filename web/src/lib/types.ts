@@ -128,3 +128,32 @@ export type Quote = {
   totalPaisa: number | null
   currency: string
 }
+
+// POST /api/orders and POST /api/orders/track. No name, phone or address:
+// the track answer only describes the order itself.
+export type OrderStatus = 'PENDING' | 'CONFIRMED' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED'
+
+export type OrderView = {
+  orderNumber: string
+  status: OrderStatus
+  placedAt: string
+  items: { productName: string; variantName: string; qty: number; unitPricePaisa: number; lineTotalPaisa: number }[]
+  subtotalPaisa: number
+  deliveryPaisa: number
+  totalPaisa: number
+  currency: string
+  paymentMethod: 'COD'
+  zoneCode: string
+  isGift: boolean
+  timeline: { status: OrderStatus; at: string; by: 'CUSTOMER' | 'ADMIN' | 'SYSTEM'; note: string }[]
+  canCancel: boolean
+  cancelReason: string | null
+  codConfirmHours: number
+  confirmBy: string | null
+}
+
+export type PlacedOrder = {
+  orderNumber: string
+  trackToken: string // secret, shown once; this browser keeps it to find the order again
+  order: OrderView
+}

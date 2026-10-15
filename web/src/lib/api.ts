@@ -1,6 +1,6 @@
 // Small typed helpers for calling the Go API. Every call goes to /api/...
 // on the same site (Vite forwards it to Go in dev, the Worker in production).
-import type { Category, DeliveryInfo, Product, PublicSettings, Quote } from './types'
+import type { Category, DeliveryInfo, OrderView, PlacedOrder, Product, PublicSettings, Quote } from './types'
 
 // The API's error shape: {"error":{"code":"UPPER_SNAKE","message":"...","fields":{...}}}
 export class ApiError extends Error {
@@ -86,3 +86,33 @@ export type QuoteRequest = {
 
 export const postQuote = (body: QuoteRequest, signal?: AbortSignal) =>
   apiFetch<Quote>('/api/checkout/quote', { method: 'POST', body, signal })
+
+// ---------- Orders (Cash on Delivery) ----------
+
+export type OrderRequest = {
+  items: { variantId: number; qty: number }[]
+  deliveryAreaId: number
+  name: string
+  phone: string
+  email: string
+  area: string
+  address: string
+  courierNote: string
+  isGift: boolean
+  giftName: string
+  giftPhone: string
+  giftNote: string
+  hidePrices: boolean
+}
+
+export const placeOrder = (body: OrderRequest) => apiFetch<PlacedOrder>('/api/orders', { method: 'POST', body })
+
+// Find an order with its number and the phone it was placed with, or with
+// the secret token this browser saved when the order was placed.
+export type OrderLookup = { orderNumber: string; phone?: string; token?: string }
+
+export const trackOrder = (lookup: OrderLookup) =>
+  apiFetch<{ order: OrderView }>('/api/orders/track', { method: 'POST', body: lookup }).then((d) => d.order)
+
+export const cancelOrder = (lookup: OrderLookup & { reason?: string }) =>
+  apiFetch<{ order: OrderView }>('/api/orders/cancel', { method: 'POST', body: lookup }).then((d) => d.order)

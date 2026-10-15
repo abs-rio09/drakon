@@ -4,11 +4,15 @@ import type { Quote, QuoteItem } from '../../lib/types'
 import type { CartLine } from './cartStorage'
 import { useCart } from './useCart'
 
-export type CartQuoteState =
+export type CartQuoteState = (
   | { status: 'empty' }
   | { status: 'loading'; quote?: Quote }
   | { status: 'error'; error: Error; retry: () => void; quote?: Quote }
   | { status: 'ready'; quote: Quote }
+) & {
+  // Ask the server again (for example after an order was refused).
+  refresh: () => void
+}
 
 // Prices the cart on the server (POST /api/checkout/quote) every time the
 // cart or the delivery area changes. The browser never decides a price.
@@ -53,13 +57,17 @@ export function useCartQuote(deliveryAreaId?: number): CartQuoteState {
   }, [key, attempt])
 
   return useMemo<CartQuoteState>(() => {
-    if (lines.length === 0) return { status: 'empty' }
-    if (result.key === key && result.quote && !result.error) return { status: 'ready', quote: result.quote }
+    const refresh = () => {
+      setResult((prev) => ({ key: '', quote: prev.quote }))
+      setAttempt((n) => n + 1)
+    }
+    if (lines.length === 0) return { status: 'empty', refresh }
+    if (result.key === key && result.quote && !result.error) return { status: 'ready', quote: result.quote, refresh }
     if (result.key === key && result.error) {
-      return { status: 'error', error: result.error, retry: () => setAttempt((n) => n + 1), quote: result.quote }
+      return { status: 'error', error: result.error, retry: refresh, quote: result.quote, refresh }
     }
     // Still loading: keep showing the previous quote (if any) so the page does not jump.
-    return { status: 'loading', quote: result.quote }
+    return { status: 'loading', quote: result.quote, refresh }
   }, [lines.length, key, result])
 }
 

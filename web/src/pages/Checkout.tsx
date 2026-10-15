@@ -1,11 +1,12 @@
 import { useState, type FormEvent, type ReactNode } from 'react'
-import { Link } from 'react-router'
-import { CashIcon, CheckIcon, ChevronDownIcon, LockIcon } from '../components/icons'
+import { Link, useNavigate } from 'react-router'
+import { CashIcon, ChevronDownIcon } from '../components/icons'
 import { describedBy } from '../components/ui/describedBy'
 import { Field, FieldError, inputClass, textareaClass } from '../components/ui/Field'
 import { LoadError, Loading } from '../components/ui/LoadState'
-import { button, container, inlineLink, panel, primaryButton, secondaryButton } from '../components/ui/styles'
+import { button, container, inlineLink, panel, primaryButton } from '../components/ui/styles'
 import { splitItems, useCartQuote } from '../features/cart/cartItems'
+import { useCart } from '../features/cart/useCart'
 import {
   emptyCheckoutForm,
   findDistrict,
@@ -15,14 +16,27 @@ import {
   type CheckoutForm,
   type FieldName,
 } from '../features/checkout/validation'
+import { rememberOrder } from '../features/orders/recentOrders'
 import { useSite } from '../features/site/SiteContext'
+import { ApiError, placeOrder } from '../lib/api'
 import { getZone } from '../lib/delivery'
 import { formatTaka } from '../lib/money'
-import type { Problem, Quote, QuoteItem } from '../lib/types'
+import type { OrderView, Problem, Quote, QuoteItem } from '../lib/types'
+import { clearApiCache } from '../lib/useApi'
 
 // /checkout — the form and the order summary, from Checkout.dc.html.
-// IMPORTANT: there is no backend yet, so this page never places an order.
-// "Place order" stays disabled until the Go API (POST /api/orders) exists.
+// "Place order" sends the form to POST /api/orders. The server checks
+// everything again and decides every price; this page only shows them.
+
+const FORM_ID = 'checkout-form'
+
+// What the confirmation page may show right after ordering. Kept only in
+// memory (router state), never saved in the browser.
+export type JustPlacedState = {
+  justPlaced: true
+  order: OrderView
+  deliverTo: { name: string; phone: string; address: string }
+}
 
 // Field order on the page, used to move focus to the first problem.
 const FIELD_ORDER: FieldName[] = [
@@ -85,7 +99,16 @@ export default function Checkout() {
 
   // The shown quote may be for the previous area while the new one loads.
   const quoteIsCurrent = priced.status === 'ready' && (quote.delivery?.areaId ?? undefined) === area?.id
-  return <CheckoutView form={form} setForm={setForm} quote={quote} items={items} quoteIsCurrent={quoteIsCurrent} />
+  return (
+    <CheckoutView
+      form={form}
+      setForm={setForm}
+      quote={quote}
+      items={items}
+      quoteIsCurrent={quoteIsCurrent}
+      refreshQuote={priced.refresh}
+    />
+  )
 }
 
 type CheckoutViewProps = {
@@ -94,18 +117,26 @@ type CheckoutViewProps = {
   quote: Quote
   items: QuoteItem[]
   quoteIsCurrent: boolean
+  refreshQuote: () => void
 }
 
-function CheckoutView({ form, setForm, quote, items, quoteIsCurrent }: CheckoutViewProps) {
+function CheckoutView({ form, setForm, quote, items, quoteIsCurrent, refreshQuote }: CheckoutViewProps) {
   const { settings, delivery } = useSite()
+  const cart = useCart()
+  const navigate = useNavigate()
+  const [placing, setPlacing] = useState(false)
+  // Problems the server found that the browser could not know about
+  // (sold out a moment ago, purchase limit with earlier orders, blocked phone).
+  const [serverError, setServerError] = useState<string | null>(null)
+  const [serverFields, setServerFields] = useState<Partial<Record<FieldName, string>>>({})
   // Fields the buyer has left at least once. We only show errors for these,
   // so nobody sees red messages before they have even started typing.
   const [touched, setTouched] = useState<Set<FieldName>>(new Set())
   const [submitted, setSubmitted] = useState(false)
 
   const errors = validateCheckout(form, delivery, settings)
-  const errorFor = (name: FieldName) => (submitted || touched.has(name) ? errors[name] : undefined)
-  const isComplete = Object.keys(errors).length === 0
+  const errorFor = (name: FieldName) =>
+    (submitted || touched.has(name) ? errors[name] : undefined) ?? serverFields[name]
 
   // Every amount comes from the server's quote.
   const subtotal = quote.subtotalPaisa
@@ -118,6 +149,13 @@ function CheckoutView({ form, setForm, quote, items, quoteIsCurrent }: CheckoutV
   // One function updates any field: update('name', 'Nusrat')
   function update<K extends FieldName>(name: K, value: CheckoutForm[K]) {
     setForm((prev) => ({ ...prev, [name]: value }))
+    // The buyer is fixing it: drop the server's old message for this field.
+    setServerFields((prev) => {
+      if (!(name in prev)) return prev
+      const next = { ...prev }
+      delete next[name]
+      return next
+    })
   }
 
   function touch(name: FieldName) {
@@ -138,10 +176,61 @@ function CheckoutView({ form, setForm, quote, items, quoteIsCurrent }: CheckoutV
     }
   }
 
-  function onSubmit(e: FormEvent<HTMLFormElement>) {
+  const area = selectedArea(delivery, form)
+  const canOrder = problems.length === 0 && quoteIsCurrent && !placing
+
+  async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
+    if (placing) return // a second tap while the first order is being sent
     setSubmitted(true)
+    setServerError(null)
     const first = FIELD_ORDER.find((name) => errors[name])
+    if (!first && area && canOrder) {
+      setPlacing(true)
+      try {
+        const placed = await placeOrder({
+          items: cart.lines,
+          deliveryAreaId: area.id,
+          name: form.name,
+          phone: form.phone,
+          email: form.email,
+          area: form.area,
+          address: form.address,
+          courierNote: form.courierNote,
+          isGift: form.isGift,
+          giftName: form.giftName,
+          giftPhone: form.giftPhone,
+          giftNote: form.giftNote,
+          hidePrices: form.hidePrices,
+        })
+        rememberOrder({ orderNumber: placed.orderNumber, token: placed.trackToken, placedAt: placed.order.placedAt })
+        cart.clear()
+        clearApiCache() // stock changed; pages load fresh numbers
+        const state: JustPlacedState = {
+          justPlaced: true,
+          order: placed.order,
+          deliverTo: {
+            name: form.isGift ? form.giftName : form.name,
+            phone: form.phone,
+            address: [form.address, form.area, form.district].filter(Boolean).join(', '),
+          },
+        }
+        navigate(`/order/${placed.orderNumber}`, { state, replace: true })
+      } catch (err) {
+        setPlacing(false)
+        if (err instanceof ApiError && err.code === 'VALIDATION') {
+          setServerFields(err.fields as Partial<Record<FieldName, string>>)
+          setServerError('Some details need fixing.')
+        } else if (err instanceof ApiError) {
+          setServerError(err.message)
+          // Stock or limits changed: show the fresh state of the cart.
+          if (err.status === 409) refreshQuote()
+        } else {
+          setServerError('Something went wrong. Please try again.')
+        }
+      }
+      return
+    }
     if (first) {
       // For the district area choice, focus the first radio button.
       const el =
@@ -193,7 +282,14 @@ function CheckoutView({ form, setForm, quote, items, quoteIsCurrent }: CheckoutV
       </a>
 
       <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-10 lg:grid-cols-[minmax(0,1fr)_420px] lg:gap-20">
-        <form noValidate onSubmit={onSubmit} aria-label="Checkout details" className={panel + ' px-6 py-2 sm:px-10'}>
+        <form
+          id={FORM_ID}
+          noValidate
+          onSubmit={onSubmit}
+          aria-label="Checkout details"
+          aria-busy={placing}
+          className={panel + ' px-6 py-2 sm:px-10'}
+        >
           {/* 1 Contact */}
           <FormSection number={1} title="Contact" id="s-contact">
             <div className="grid gap-6 sm:grid-cols-2">
@@ -481,24 +577,18 @@ function CheckoutView({ form, setForm, quote, items, quoteIsCurrent }: CheckoutV
             </ChoiceCard>
           </FormSection>
 
-          {/* Lets the buyer check the form while ordering is still closed */}
-          <div className="flex flex-col gap-4 border-t border-line py-8">
-            <button type="submit" className={secondaryButton + ' self-start'}>
-              Check my details
-            </button>
-            <div role="status" aria-live="polite">
-              {submitted &&
-                (isComplete ? (
-                  <p className="flex items-start gap-2 text-label font-normal text-ink">
-                    <CheckIcon size={16} className="mt-0.5 shrink-0 text-ink-strong" />
-                    Your details look complete. Ordering opens soon, so nothing has been ordered yet.
-                  </p>
-                ) : (
-                  <p className="text-label font-normal text-danger-text">
-                    Some details need fixing. The first one is selected for you.
-                  </p>
-                ))}
-            </div>
+          {/* Messages after "Place order" */}
+          <div role="status" aria-live="polite" className="empty:hidden border-t border-line py-6">
+            {serverError ? (
+              <p className="text-label font-normal text-danger-text">{serverError}</p>
+            ) : (
+              submitted &&
+              FIELD_ORDER.some((name) => errors[name]) && (
+                <p className="text-label font-normal text-danger-text">
+                  Some details need fixing. The first one is selected for you.
+                </p>
+              )
+            )}
           </div>
         </form>
 
@@ -511,6 +601,8 @@ function CheckoutView({ form, setForm, quote, items, quoteIsCurrent }: CheckoutV
           deliveryPaisa={quoteDelivery?.chargePaisa}
           isGift={form.isGift}
           codConfirmHours={settings.codConfirmHours}
+          canOrder={canOrder}
+          placing={placing}
         />
       </div>
 
@@ -521,7 +613,7 @@ function CheckoutView({ form, setForm, quote, items, quoteIsCurrent }: CheckoutV
             <span className="text-caption text-ink-muted">{quoteDelivery ? 'Pay on delivery' : 'Delivery not added yet'}</span>
             <span className="text-price text-ink-strong tabular-nums">{formatTaka(total)}</span>
           </span>
-          <PlaceOrderButton />
+          <PlaceOrderButton disabled={!canOrder} placing={placing} />
         </div>
       </div>
     </div>
@@ -583,17 +675,17 @@ function ChoiceCard({ checked, children }: { checked: boolean; children: ReactNo
   )
 }
 
-// There is no backend yet, so ordering is switched off. No fake orders.
-function PlaceOrderButton({ block = false }: { block?: boolean }) {
+// The one main action of the page. It sits outside the <form> (in the
+// summary and the phone bar), so form={FORM_ID} connects it to the form.
+function PlaceOrderButton({ block = false, disabled, placing }: { block?: boolean; disabled: boolean; placing: boolean }) {
   return (
     <button
-      type="button"
-      disabled
-      aria-describedby="ordering-soon"
+      type="submit"
+      form={FORM_ID}
+      disabled={disabled}
       className={button('primary', 'lg') + (block ? ' w-full' : '')}
     >
-      <LockIcon size={16} />
-      Ordering opens soon
+      {placing ? 'Placing your order…' : 'Place order (Cash on Delivery)'}
     </button>
   )
 }
@@ -607,9 +699,12 @@ type OrderSummaryProps = {
   deliveryPaisa?: number
   isGift: boolean
   codConfirmHours: number
+  canOrder: boolean
+  placing: boolean
 }
 
-function OrderSummary({ items, problems, subtotal, total, zoneLabel, deliveryPaisa, isGift, codConfirmHours }: OrderSummaryProps) {
+function OrderSummary(props: OrderSummaryProps) {
+  const { items, problems, subtotal, total, zoneLabel, deliveryPaisa, isGift, codConfirmHours, canOrder, placing } = props
   return (
     <aside
       id="summary"
@@ -673,11 +768,8 @@ function OrderSummary({ items, problems, subtotal, total, zoneLabel, deliveryPai
       )}
 
       <div className="hidden flex-col gap-3 lg:flex">
-        <PlaceOrderButton block />
+        <PlaceOrderButton block disabled={!canOrder} placing={placing} />
       </div>
-      <p id="ordering-soon" className="text-label font-normal text-ink">
-        Ordering opens soon. You can fill in your details now, but no order is placed yet.
-      </p>
 
       <div className="flex flex-col gap-3 border-t border-line pt-6 text-caption text-ink-subtle">
         <p>
