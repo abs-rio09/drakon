@@ -13,7 +13,7 @@ Written in simple English for Abu Bakkar Siddik. Nothing was pushed to GitHub. E
 - [x] Phase 6: real checkout (step 7)
 - [x] Phase 7: track and cancel (step 8)
 - [x] Phase 8: background sweep
-- [ ] Phase 9: final quality pass
+- [x] Phase 9: final quality pass
 
 ---
 
@@ -421,3 +421,144 @@ Tests (`api/internal/jobs/sweep_test.go`): 49 h → cancelled, 47 h → stays, C
 - No email is sent on auto-cancel (email is not built yet, as instructed). The blueprint wants one later.
 - The blueprint also wants a sweep "before the admin order list opens"; that comes with the admin panel.
 
+---
+
+## Phase 9: final quality pass
+
+### What I did
+- Ran every check again: `make check` in `api/` (gofmt clean, go vet clean, **57 tests pass**, also with `-race` for the order tests), `npm run build` and `npm run lint` in `web/` (0 errors, 0 warnings).
+- Small fix found while reviewing: the **product page now applies the purchase limit per product** (all variants together), the same way the server does. Before, it allowed 2 paper + 2 metal for a limit of 2 and only the cart complained.
+- Two more edge-case tests: free delivery on a real order (order and payment rows agree), and a DRAFT product cannot be ordered.
+- `README.md`: how to run db, migrate, seed, api and web, plus all checks.
+- `CLAUDE.md` "Commands": the new make targets, the test database rule, where the Go tools are.
+- `docs/api.md`: every endpoint with a curl example, the error codes, and the JSON shapes. I ran the quote, track, cancel and wrong-content-type examples against the real server.
+- `docs/open-questions.md`: questions 6–11 added (in simple English).
+
+---
+
+# Summary
+
+| Phase | Status | Commits |
+|---|---|---|
+| 0 Start | ✅ done | (log only) |
+| 1 Catalog schema | ✅ done | `d3d19c9` |
+| 2 Rest of schema + seed | ✅ done | `f2f3693`, `ea014e3`, `3f81d4f` |
+| 3 Go API skeleton | ✅ done | `6210100`, `2930c63` (log) |
+| 4 Public catalog API | ✅ done | `d89d595`, `bb744f1` (log) |
+| 5 Website ↔ API | ✅ done | `787c9b0` (quote, moved forward), `eda1ba6` (limit fix + mock deletions), `26c8b7e`, `9bdc051` (log) |
+| 6 Real checkout | ✅ done | `fc02d16`, `469a432`, `df8e2d1` (log) |
+| 7 Track and cancel | ✅ done | `9de6718`, `3124211`, `12d0636` (log) |
+| 8 Background sweep | ✅ done | `e2a9654`, `849b3f2` (log) |
+| 9 Quality pass | ✅ done | `3efcca1`, `bb185d8`, `263d4b6`, and the final log commit |
+
+Nothing was pushed. No `sudo`, no `docker compose down -v`, the dev database `drakon` was never wiped (only the migrations and seed ran on it), tests used only `drakon_test`. New Go dependencies: only `pgx/v5` and `goose/v3` (plus their own small helper packages). No new npm packages.
+
+**What is in your dev database now:** the sample catalogue, one test order `DRK-PBLMQQ` (phone 01700000001, **CANCELLED** by me while testing, stock already returned), and Founders Deck + Mini Goal moved to ARCHIVED by the sweep.
+
+## Questions for Abu Bakkar Siddik
+
+1. **Purchase limit per product or per variant?** I built "per product, all variants together" (blueprint rule 1). (open question 6)
+2. **Search**: only products on sale (as the prompt said), or include sold-out runs like the old mock search? (7)
+3. **Cancelled orders and payments**: keep the COD payment row as PENDING, or add a VOID status? (8)
+4. **Dev reset script** (`make reset-dev`) that wipes test orders and reloads the sample catalogue? I did not build it, because wiping the dev DB was not allowed tonight. (9)
+5. **405 vs 404** for a wrong method on a known path: OK as 404? (10)
+6. **Hero product** is a setting; should the admin choose it later in Settings? (11)
+7. **If the API is down**, the whole site shows "Opening the shop…" and then an error with Try again (even About and policies). OK, or should content pages work without the API?
+8. **"Deliver to"** (name + address) shows on the confirmation page only right after ordering (kept in memory, never saved). After a reload it is hidden, because the API never sends personal data back. OK?
+9. **Still open from before**: rate limiting (open question 4) and customer accounts (3). Checkout now works, so rate limiting is the next safety step before going live.
+
+## Morning practice (type these yourself)
+
+Open psql first:
+```zsh
+cd ~/Desktop/projects/Drakon/drakon
+docker compose exec db psql -U drakon -d drakon
+```
+
+**1. List the categories**
+```sql
+SELECT id, slug, name FROM categories ORDER BY sort_order;
+```
+Expected: 4 rows: playcards, sports-toys, tech-toys, clothes.
+
+**2. JOIN products with their category name**
+```sql
+SELECT p.name, c.name AS category, p.status
+FROM products p
+JOIN categories c ON c.id = p.category_id
+ORDER BY c.name, p.name;
+```
+Expected: 10 rows; e.g. "Ember Logo Tee · Black | Clothes | ACTIVE", and the archived ones show ARCHIVED. `JOIN … ON` glues each product row to the category row whose `id` matches `category_id`.
+
+**3. Try to set a stock below 0 and read the CHECK error**
+```sql
+UPDATE product_variants SET stock = -5 WHERE sku = 'BALL-5';
+```
+Expected: `ERROR:  new row for relation "product_variants" violates check constraint "product_variants_stock_check"`. The row is unchanged: `SELECT stock FROM product_variants WHERE sku = 'BALL-5';`
+
+**4. Insert a product inside BEGIN … ROLLBACK and see it disappear**
+```sql
+BEGIN;
+INSERT INTO products (category_id, slug, name, kind)
+  SELECT id, 'practice-product', 'Practice product', 'Test' FROM categories WHERE slug = 'playcards';
+SELECT slug, status FROM products WHERE slug = 'practice-product';   -- 1 row, status DRAFT
+ROLLBACK;
+SELECT slug FROM products WHERE slug = 'practice-product';           -- 0 rows
+```
+Expected: the product exists inside the transaction and is gone after `ROLLBACK`. This is exactly how a failed checkout undoes itself.
+
+**5. Count orders by status**
+```sql
+SELECT status, count(*) FROM orders GROUP BY status ORDER BY status;
+```
+Expected right now: `CANCELLED | 1` (my test order). After exercise 7 you will also see `PENDING`.
+
+Type `\q` to leave psql. With the API running (`cd api && make run`):
+
+**6. curl: the product page data**
+```zsh
+curl -s localhost:8080/api/products/night-striker-football
+```
+Expected: JSON with `"name":"Night Striker Football"`, one variant `"pricePaisa":180000` (= ৳1,800) and `"related": [...]`.
+
+**7. curl: a quote that the server refuses to trust**
+```zsh
+curl -s -X POST localhost:8080/api/checkout/quote -H 'Content-Type: application/json' \
+  -d '{"items":[{"variantId":13,"qty":1,"pricePaisa":1}]}'
+```
+Expected: `{"error":{"code":"UNKNOWN_FIELD","message":"The field \"pricePaisa\" is not allowed."}}`. Remove `,"pricePaisa":1` and try again: you get the real price (35000).
+
+**8. Browser: place an order, find it, cancel it, watch the stock come back**
+1. Start the web too (`cd web && npm run dev`), open http://localhost:5173, add **Card Sleeves · Ember 100** to the cart, check out (any name, phone like 01711111111, any district) and place the order. Copy the order number.
+2. In psql:
+   ```sql
+   SELECT order_number, status, total_paisa FROM orders ORDER BY id DESC LIMIT 1;
+   SELECT stock FROM product_variants WHERE sku = 'SLV-100';           -- 47
+   SELECT change, reason FROM inventory_movements ORDER BY id DESC LIMIT 1;  -- -1 | ORDER
+   ```
+3. On the confirmation page click **Track or cancel** → **Cancel this order** → **Yes, cancel the order**.
+4. In psql again: status `CANCELLED`, stock back to 48, and a new `+1 | CANCEL` row.
+
+## Start everything in the morning
+
+```zsh
+cd ~/Desktop/projects/Drakon/drakon
+git log --oneline | head -25          # tonight's work (not pushed)
+
+# one time: put goose and sqlc on your PATH
+echo 'export PATH="$PATH:$(go env GOPATH)/bin"' >> ~/.zshrc && source ~/.zshrc
+
+cd api
+make db-up        # database (Docker)
+make migrate      # nothing new to apply, but safe
+make check        # gofmt + vet + 57 tests (uses drakon_test)
+make run          # API on :8080, keep this terminal open
+```
+Second terminal:
+```zsh
+cd ~/Desktop/projects/Drakon/drakon/web
+npm run dev       # http://localhost:5173
+```
+When you are happy: `git push` (I did not push).
+
+OVERNIGHT STATUS: ALL PHASES DONE
