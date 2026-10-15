@@ -9,8 +9,8 @@ Written in simple English for Abu Bakkar Siddik. Nothing was pushed to GitHub. E
 - [x] Phase 2: the rest of the schema + dev seed (step 4c)
 - [x] Phase 3: Go API skeleton (step 5)
 - [x] Phase 4: public catalog API
-- [ ] Phase 5: connect the website to the API (step 6)
-- [ ] Phase 6: real checkout (step 7)
+- [x] Phase 5: connect the website to the API (step 6)
+- [x] Phase 6: real checkout (step 7)
 - [ ] Phase 7: track and cancel (step 8)
 - [ ] Phase 8: background sweep
 - [ ] Phase 9: final quality pass
@@ -277,4 +277,68 @@ Stop the Go server (Ctrl+C) and reload: you see "We could not reach the shop…"
 - If the API is down, the whole site shows the "Opening the shop…" screen and then an error with **Try again** (even About and policies, because they show settings numbers). Honest, and simple. On Render's free plan the first visit after a sleep can take 30–60 s, so the loading text says "Opening the shop…".
 - The header cart bubble counts all lines in the cart (no request on every page). A sold-out line counts until you remove it on the cart page.
 - Git note: the deletion of the three mock files landed in commit `eda1ba6` (the api limit fix) instead of the web commit, because I had staged it early. I did not rewrite history (not allowed); the code is correct either way.
+
+---
+
+## Phase 6: real checkout (the most important phase)
+
+### What I built
+**`POST /api/checkout/quote`** (built in Phase 5, see there): cart + area → items, problems, subtotal, delivery, total. Prices only from the database.
+
+**`POST /api/orders`** (`api/internal/orders/place.go`), Cash on Delivery only:
+1. Validate every field with the same rules and messages as `validation.ts` (`api/internal/orders/validate.go`): name, phone (+880 / 880 / spaces / dashes cleaned), optional email, delivery area must exist, area, address, courier note and gift note lengths (counted in letters, so Bangla works), gift receiver name and phone when it is a gift. Gift fields are thrown away if "This is a gift" is not ticked. Bad fields → `422 VALIDATION` with `fields`.
+2. Then **one transaction**:
+   - lock this phone number (`pg_advisory_xact_lock`), so two orders from the same phone at the same moment are checked one after the other
+   - blocked phone → `403 PHONE_BLOCKED`
+   - price everything from the database, counting this phone's earlier non-cancelled orders towards `purchase_limit` (or `default_purchase_limit`) → `409 PURCHASE_LIMIT` / `OUT_OF_STOCK` / `UNAVAILABLE`, with `problems`
+   - for each item, in variant-id order: `UPDATE product_variants SET stock = stock - $qty WHERE id = $id AND stock >= $qty`. 0 rows → roll back, `409 OUT_OF_STOCK` naming the item
+   - order row with a random `DRK-XXXXXX` number (retry if taken), the SHA-256 of a 32-byte track token, all form fields, and the money snapshots
+   - `order_items` (snapshots of name, variant label, unit price), `inventory_movements` (ORDER, −qty)
+   - `order_status_history` (→ PENDING, by CUSTOMER) and `payments` (COD, PENDING, total)
+   - a limited product with every variant at 0 becomes SOLD_OUT (`sold_out_at` + `product_events` row). A non-limited product stays ACTIVE ("Out of stock").
+3. Answer `201` with `orderNumber`, `trackToken` (raw, **only this once**) and the order view (no name, phone or address in it).
+
+Delivery charge: from the zone; if `free_delivery_enabled` is true **and** the zone has `free_over_paisa` **and** the subtotal reaches it, the charge is 0.
+
+**Frontend**
+- "Place order (Cash on Delivery)" works (button in the summary and in the phone bar, both connected to the form). A second tap while sending is ignored. Server field errors show under the fields; a refused order shows the server's message and refreshes the cart quote.
+- `/order/:number`: "Thank you. Your order is placed.", the number with a **Copy** button, "What happens next" (call within 48 h, ship, pay ৳X in cash), the items and total. Right after ordering it also shows "Deliver to" (kept only in memory, never saved).
+- The browser remembers only `{orderNumber, token, placedAt}` in localStorage (`drakon.orders.v1`), never personal data.
+
+### Tests (all pass, also with `go test -race`)
+| Test | What it proves |
+|---|---|
+| `TestPlaceOrderHappyPath` | order row (normalized phone, trimmed email, Dhaka city, gift fields), snapshots, stock −1/−2, stock book, history, COD payment, raw token not stored |
+| `TestPlaceOrderOutOfStock` | 4 drones with 3 in stock → 409 naming the drone; **nothing** changed (the ball in the same cart kept its stock) |
+| `TestPlaceOrderRaceForLastItem` | **10 goroutines** order the last drone at the same moment: exactly 1 wins, stock ends at 0, 1 order, drone becomes SOLD_OUT |
+| `TestDecrementStockGuardWithTwoTransactions` | step by step: transaction 2 waits for transaction 1's row lock, then changes 0 rows |
+| `TestPlaceOrderPurchaseLimitAcrossOrders` | card limit 2: 1 + 2 refused, 1 + 1 fine; another phone has its own limit; default limit 5 |
+| `TestPlaceOrderCancelledOrdersDoNotCountTowardsLimit` | cancelled orders free the limit again |
+| `TestPlaceOrderLimitRaceSamePhone` | same phone, two orders at once for the full limit → one 201, one 409 |
+| `TestPlaceOrderBlockedPhone` | 403, stock unchanged (also when typed as +880…) |
+| `TestPlaceOrderIgnoresClientPrices` | a `pricePaisa`/`totalPaisa` sent by the browser is refused (`UNKNOWN_FIELD`); a normal order pays the database price |
+| `TestPlaceOrderSetsSoldOut` | limited hoodie → SOLD_OUT + event + moves to the archive; non-limited football at 0 stays ACTIVE; card with stock left stays ACTIVE |
+| `TestPlaceOrderValidation` | every field error; 150 Bangla letters OK, 151 refused; unknown area |
+| `api/internal/orders/orders_test.go` | order number pattern (2000 numbers), token/hash, phone cleaning, line merging |
+
+### Key concepts
+- **Transaction** (`BEGIN … COMMIT`): a group of SQL statements that happens completely or not at all. If anything fails in the middle (the 3rd item is out of stock), `ROLLBACK` undoes the stock already taken for items 1 and 2. In Go: `pgx.BeginFunc(ctx, pool, func(tx pgx.Tx) error { … })`; returning an error rolls back.
+- **Row lock**: an `UPDATE` locks the row until the transaction ends. A second buyer's `UPDATE` on the same row waits, then sees the new stock. Together with `AND stock >= $qty` this makes overselling impossible.
+- **Advisory lock**: a lock on a made-up number (here: the hash of the phone). Used where there is no single row to lock (the purchase limit is a sum over many orders).
+- **Deadlock** and why we sort: if order A locks variant 1 then 2, and order B locks 2 then 1, both wait forever. Always locking in id order prevents that.
+- **Hashing the token**: SHA-256 is one-way. The database keeps the hash; to check a token we hash it again and compare. A leaked database cannot be used to cancel orders.
+- **crypto/rand vs math/rand**: crypto/rand cannot be predicted, so order numbers cannot be guessed.
+
+### How to test it yourself
+```zsh
+cd ~/Desktop/projects/Drakon/drakon/api && make test
+# browser: add something to the cart, check out with any test name and phone 017XXXXXXXX, place the order
+docker compose exec db psql -U drakon -d drakon -c "SELECT order_number, status, total_paisa FROM orders"
+```
+**How I checked in the browser:** cart with 1 hard paper card + 2 sleeve boxes, Sylhet → subtotal ৳1,150 + delivery ৳100 = ৳1,250. Clicked Place order → `/order/DRK-PBLMQQ` with Copy button. In the database: 1 PENDING order, total 125000, paper stock 22→21, sleeves 48→46, two ORDER rows in the stock book; localStorage held only the number + token; the cart was empty. (Earlier, a cart with an out-of-stock tee kept the button disabled with "Some items need a change".) This test order is still in your dev database: `DRK-PBLMQQ`, phone 01700000001.
+
+### Decisions and questions
+- **Purchase limit is per product** (all variants together), as the blueprint says. The product page still caps each variant separately, so a buyer can put 2 paper + 2 metal (limit 2) in the cart; the cart then shows "The limit is 2 per customer" and checkout is blocked until they lower it. Tell me if the limit should be per variant instead.
+- The order view (track/confirmation) never contains name, phone, email or address.
+- A wrong `deliveryAreaId` gives `422 UNKNOWN_AREA` with a `district` field error.
 
