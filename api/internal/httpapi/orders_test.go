@@ -452,3 +452,33 @@ func TestDecrementStockGuardWithTwoTransactions(t *testing.T) {
 		t.Fatalf("stock = %d", n)
 	}
 }
+
+func TestPlaceOrderAppliesFreeDelivery(t *testing.T) {
+	s := newTestServer(t, true)
+	exec(t, "UPDATE delivery_zones SET free_over_paisa = 300000 WHERE code = 'INSIDE_DHAKA'")
+	exec(t, "UPDATE settings SET value = 'true' WHERE key = 'free_delivery_enabled'")
+	ball := variantID(t, "BALL-5") // ৳1,800
+	// ৳1,800 < ৳3,000: still charged.
+	_, res := do(t, s, http.MethodPost, "/api/orders", orderBody(t, "01712345678", line(ball, 1)))
+	if num(orderOf(res)["deliveryPaisa"]) != 6000 {
+		t.Fatalf("below the line: %v", orderOf(res))
+	}
+	// ৳3,600 >= ৳3,000: free, and the order and payment rows agree.
+	_, res = do(t, s, http.MethodPost, "/api/orders", orderBody(t, "01812345678", line(ball, 2)))
+	o := orderOf(res)
+	if num(o["deliveryPaisa"]) != 0 || num(o["totalPaisa"]) != 360000 {
+		t.Fatalf("free delivery: %v", o)
+	}
+	if n := queryInt(t, "SELECT count(*) FROM payments WHERE amount_paisa = 360000"); n != 1 {
+		t.Error("payment amount should match the free-delivery total")
+	}
+}
+
+func TestPlaceOrderRefusesDraftProduct(t *testing.T) {
+	s := newTestServer(t, true)
+	exec(t, "UPDATE products SET status = 'DRAFT' WHERE slug = 'night-striker-football'")
+	status, res := do(t, s, http.MethodPost, "/api/orders", orderBody(t, "01712345678", line(variantID(t, "BALL-5"), 1)))
+	if status != http.StatusConflict || errorCode(res) != "UNAVAILABLE" {
+		t.Fatalf("got %d %v", status, res)
+	}
+}
