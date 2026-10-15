@@ -12,7 +12,7 @@ Written in simple English for Abu Bakkar Siddik. Nothing was pushed to GitHub. E
 - [x] Phase 5: connect the website to the API (step 6)
 - [x] Phase 6: real checkout (step 7)
 - [x] Phase 7: track and cancel (step 8)
-- [ ] Phase 8: background sweep
+- [x] Phase 8: background sweep
 - [ ] Phase 9: final quality pass
 
 ---
@@ -382,4 +382,42 @@ Tests (`api/internal/httpapi/track_test.go`): track by phone (also +880 form), b
 ### Decisions and questions
 - Cancelling does not change the `payments` row (it stays PENDING, money was never collected). Later, the admin panel may want a separate "VOID" payment status. Tell me if you want that now.
 - The buyer's cancel reason is optional.
+
+---
+
+## Phase 8: background sweep
+
+### What I built
+`api/internal/jobs/sweep.go`, started from `main.go`:
+- **Auto-cancel**: PENDING orders older than `cod_confirm_hours` (48) are cancelled by SYSTEM with the reason "Not confirmed by phone within 48 hours". The stock goes back (CANCEL movements) and a SOLD_OUT product with stock again becomes ACTIVE — exactly the same code as the buyer's cancel (`orders.CancelLocked`). Each order gets its own small transaction.
+- **Auto-archive**: SOLD_OUT products whose `sold_out_at` is older than `archive_after_days` (7) become ARCHIVED (`archived_at` + a `product_events` ARCHIVE row).
+- Runs **when the server starts and then every 10 minutes**. On Ctrl+C the server waits for a running sweep to finish before closing the database pool.
+- Both numbers come from the settings table, so the admin can change them later.
+
+### Why
+Blueprint rule 4 (48-hour COD call) and rule 9 (archive after 7 days). Render's free server sleeps, so a "run at 3 AM" cron would be unreliable; "at start + every 10 minutes while awake" gives the same result (blueprint part 4).
+
+### Key concepts
+- **Idempotent**: running it twice gives the same result as once. The second run finds no PENDING orders older than 48 h (they are CANCELLED now) and no old SOLD_OUT products, so it does nothing.
+- **Re-check after locking**: the sweep lists old PENDING orders, but by the time it gets to one, the admin may have confirmed it. `CancelLocked` locks the row and checks the status again, so a CONFIRMED order is never cancelled by mistake.
+- **Fake clock**: the sweeper has a `Now func() time.Time` field. Tests set it to a fixed moment (16 Oct 2026, 12:00) and move it "a day later" without waiting a day.
+- **Ticker + context**: `time.NewTicker(10 * time.Minute)` fires every 10 minutes; when the context is cancelled (Ctrl+C), the loop returns.
+
+### How to test it yourself
+```zsh
+cd ~/Desktop/projects/Drakon/drakon/api
+go test ./internal/jobs -v
+make run      # the log shows a "sweep" line when it changed something
+```
+Make an order "old" by hand and watch it get cancelled at the next start:
+```sql
+UPDATE orders SET created_at = now() - interval '49 hours' WHERE order_number = 'DRK-XXXXXX';
+```
+**What happened on your dev database:** at the first start the sweep printed `auto_cancelled=0 archived=2`: Founders Playcard Deck (sold out 21 Sep) and Glow Arena Mini Goal (2 Sep) moved from SOLD_OUT to ARCHIVED, with two ARCHIVE events. The archive page shows both statuses, so the website looks the same.
+
+Tests (`api/internal/jobs/sweep_test.go`): 49 h → cancelled, 47 h → stays, CONFIRMED → stays; stock back once; second run changes nothing; setting 24 h works; auto-cancel brings a SOLD_OUT drone back to ACTIVE; archive after 7 days but not 6, and "a day later" the 6-day one moves; **two sweeps at the same time** cancel each of 5 orders exactly once (stock back exactly once); `Start` runs immediately and stops on cancel.
+
+### Decisions and questions
+- No email is sent on auto-cancel (email is not built yet, as instructed). The blueprint wants one later.
+- The blueprint also wants a sweep "before the admin order list opens"; that comes with the admin panel.
 
