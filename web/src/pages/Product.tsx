@@ -13,7 +13,6 @@ import { useSite } from '../features/site/SiteContext'
 import { ApiError, getCategories, getProduct } from '../lib/api'
 import {
   isArchived,
-  maxQuantity,
   metaLine,
   priceLabel,
   purchaseLimit,
@@ -64,7 +63,10 @@ function ProductView({ product, related }: { product: ProductType; related: Prod
   const limit = purchaseLimit(product, settings)
   const inCart = cart.qtyOf(variant.id)
   // How many more of this variant may still go in the cart.
-  const remaining = Math.max(0, maxQuantity(product, variant, settings) - inCart)
+  // The purchase limit counts every variant of this product together (the
+  // server checks it the same way); stock counts only this variant.
+  const inCartForProduct = product.variants.reduce((sum, v) => sum + cart.qtyOf(v.id), 0)
+  const remaining = Math.max(0, Math.min(limit - inCartForProduct, variant.stock - inCart))
   const canBuy = !archived && variant.stock > 0
   const canAdd = canBuy && remaining > 0
   const category = cats.data?.find((c) => c.slug === product.categorySlug)
