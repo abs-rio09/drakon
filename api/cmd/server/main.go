@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 	"time"
 
@@ -17,6 +18,7 @@ import (
 
 	"github.com/abs-rio09/drakon/api/internal/config"
 	"github.com/abs-rio09/drakon/api/internal/httpapi"
+	"github.com/abs-rio09/drakon/api/internal/jobs"
 )
 
 func main() {
@@ -60,6 +62,11 @@ func run(logger *slog.Logger) error {
 
 	api := httpapi.NewServer(pool, logger)
 
+	// Background sweep: auto-cancel unconfirmed COD orders, auto-archive old
+	// sold-out runs. Runs now and every 10 minutes until shutdown.
+	var jobsDone sync.WaitGroup
+	jobs.NewSweeper(pool, logger).Start(ctx, jobs.Interval, &jobsDone)
+
 	srv := &http.Server{
 		Addr:    net.JoinHostPort("", cfg.Port),
 		Handler: api.Handler(),
@@ -93,6 +100,7 @@ func run(logger *slog.Logger) error {
 	if err := <-serveErr; !errors.Is(err, http.ErrServerClosed) {
 		return err
 	}
+	jobsDone.Wait() // let a running sweep finish before the pool closes
 	logger.Info("bye")
 	return nil
 }
