@@ -11,7 +11,7 @@ Written in simple English for Abu Bakkar Siddik. Nothing was pushed to GitHub. E
 - [x] Phase 4: public catalog API
 - [x] Phase 5: connect the website to the API (step 6)
 - [x] Phase 6: real checkout (step 7)
-- [ ] Phase 7: track and cancel (step 8)
+- [x] Phase 7: track and cancel (step 8)
 - [ ] Phase 8: background sweep
 - [ ] Phase 9: final quality pass
 
@@ -341,4 +341,45 @@ docker compose exec db psql -U drakon -d drakon -c "SELECT order_number, status,
 - **Purchase limit is per product** (all variants together), as the blueprint says. The product page still caps each variant separately, so a buyer can put 2 paper + 2 metal (limit 2) in the cart; the cart then shows "The limit is 2 per customer" and checkout is blocked until they lower it. Tell me if the limit should be per variant instead.
 - The order view (track/confirmation) never contains name, phone, email or address.
 - A wrong `deliveryAreaId` gives `422 UNKNOWN_AREA` with a `district` field error.
+
+---
+
+## Phase 7: track and cancel
+
+### What I built
+- **`POST /api/orders/track`** with `{orderNumber, phone}` or `{orderNumber, token}` → `{order}`: status, timeline, items, totals, `canCancel`, `confirmBy`. No name, phone, email or address. A wrong number, a wrong phone, a wrong token and a badly shaped number **all get the same** `404 ORDER_NOT_FOUND` message. The number can be typed in lower case and with spaces.
+- **`POST /api/orders/cancel`** with the same lookup (+ optional `reason`, max 200 letters): only while PENDING or CONFIRMED (otherwise `409 CANNOT_CANCEL`). In one transaction:
+  - lock the order row (`SELECT … FOR UPDATE`) and check the status again
+  - CANCELLED, `cancelled_at`, `cancel_reason` ("Cancelled by the buyer: …"), a history row (by CUSTOMER)
+  - stock back for every item + `inventory_movements` (CANCEL, +qty)
+  - a SOLD_OUT product with stock again → ACTIVE (`sold_out_at` cleared, `product_events` REACTIVATE). ARCHIVED stays archived (only the owner may bring it back, blueprint rule 9).
+- `orders.CancelLocked`: the cancel steps above, shared with the Phase 8 auto-cancel.
+- **Track page**: "Recent on this device" chips (one tap, uses the saved token), the lookup form, the result panel (status, "we call you before …", timeline, items, total) and a two-step **Cancel this order** → optional reason → **Yes, cancel the order** (no browser pop-ups). Coming from the confirmation page opens the order straight away.
+- **Confirmation page after a reload** now finds the order with the saved token and also shows the order history.
+
+### Why
+Blueprint rule 2: the buyer cancels alone while the order has not shipped, and the stock goes back. Rule 7: tracking without an account, and the browser remembers only the number and a secret key.
+
+### Key concepts
+- **Same answer for every wrong input**: if "wrong phone" and "no such order" had different messages, someone could test random numbers to find real ones.
+- **Constant-time compare** (`crypto/subtle`): comparing secrets byte by byte and stopping at the first difference leaks timing; `ConstantTimeCompare` always takes the same time.
+- **`SELECT … FOR UPDATE`**: locks the order row. If the buyer cancels while the 48-hour sweep runs, one waits for the other, then sees "already CANCELLED" and does nothing. The stock can never come back twice.
+- **Status machine**: only some moves are allowed (PENDING/CONFIRMED → CANCELLED). The code checks the current status before every change.
+
+### How to test it yourself
+```zsh
+cd ~/Desktop/projects/Drakon/drakon/api && make test
+# curl (use the number and phone of an order you placed):
+curl -s -X POST localhost:8080/api/orders/track -H 'Content-Type: application/json' \
+  -d '{"orderNumber":"DRK-XXXXXX","phone":"01700000001"}'
+```
+In the browser: place an order → on the confirmation page click **Track or cancel** → **Cancel this order** → **Yes, cancel the order**. Then check the stock in psql.
+
+**How I checked:** reloaded `/order/DRK-PBLMQQ` (the Phase 6 test order): it loaded with the saved token and showed the history. "Track or cancel" opened it on `/track`; I cancelled with the reason "Testing the cancel flow". The database showed CANCELLED with that reason, paper stock back 21→22, sleeves 46→48, and two CANCEL rows in the stock book.
+
+Tests (`api/internal/httpapi/track_test.go`): track by phone (also +880 form), by token, lower-case number; wrong number / phone / token / shape all identical 404; no phone → 422; cancel puts stock back and writes movements; cancelling twice is refused and does not add stock twice; wrong phone cannot cancel; token can; only PENDING/CONFIRMED can be cancelled; SOLD_OUT → ACTIVE with a REACTIVATE event; ARCHIVED stays ARCHIVED; reason too long.
+
+### Decisions and questions
+- Cancelling does not change the `payments` row (it stays PENDING, money was never collected). Later, the admin panel may want a separate "VOID" payment status. Tell me if you want that now.
+- The buyer's cancel reason is optional.
 
