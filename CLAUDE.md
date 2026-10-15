@@ -2,7 +2,7 @@
 
 ## Who you are working with
 - Abu Bakkar Siddik, CSE student. Knows C, C++, Go basics, HTML, CSS. **New to** JavaScript, TypeScript, React, Tailwind, SQL, PostgreSQL.
-- **Explain in Bengali (বাংলা)**, beginner-friendly. Code, commands and comments stay in English.
+- **Explain in simple English**, beginner-friendly (not Bangla: it renders broken in his terminal). Code, commands and comments stay in English.
 - Work in **small steps, one at a time**. After each step: say what to run, what he should see, then stop and wait.
 - Every implementation step covers: what we build → why → files → code → how to run → how to test → common errors.
 - Teach only the minimum concept needed for the current step, then apply it to DRAKON immediately.
