@@ -7,7 +7,168 @@ package db
 
 import (
 	"context"
+	"time"
 )
+
+const archiveOldSoldOut = `-- name: ArchiveOldSoldOut :many
+UPDATE products
+SET status = 'ARCHIVED', archived_at = $1, updated_at = $1
+WHERE status = 'SOLD_OUT' AND sold_out_at < $2
+RETURNING id
+`
+
+type ArchiveOldSoldOutParams struct {
+	At     *time.Time
+	Cutoff *time.Time
+}
+
+// SOLD_OUT products that sold out before the cutoff move to ARCHIVED.
+func (q *Queries) ArchiveOldSoldOut(ctx context.Context, arg ArchiveOldSoldOutParams) ([]int64, error) {
+	rows, err := q.db.Query(ctx, archiveOldSoldOut, arg.At, arg.Cutoff)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int64
+	for rows.Next() {
+		var id int64
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		items = append(items, id)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const decrementStock = `-- name: DecrementStock :execrows
+UPDATE product_variants
+SET stock = stock - $1
+WHERE id = $2 AND is_active AND stock >= $1
+`
+
+type DecrementStockParams struct {
+	Qty int32
+	ID  int64
+}
+
+// The overselling guard: 0 rows changed = not enough stock left.
+func (q *Queries) DecrementStock(ctx context.Context, arg DecrementStockParams) (int64, error) {
+	result, err := q.db.Exec(ctx, decrementStock, arg.Qty, arg.ID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
+const earlierQtyByProduct = `-- name: EarlierQtyByProduct :many
+SELECT oi.product_id, sum(oi.qty)::int AS qty
+FROM order_items oi
+JOIN orders o ON o.id = oi.order_id
+WHERE o.phone = $1 AND o.status <> 'CANCELLED'
+GROUP BY oi.product_id
+`
+
+type EarlierQtyByProductRow struct {
+	ProductID int64
+	Qty       int32
+}
+
+// Pieces of each product this phone already has in orders that are not
+// cancelled (for the purchase limit).
+func (q *Queries) EarlierQtyByProduct(ctx context.Context, phone string) ([]EarlierQtyByProductRow, error) {
+	rows, err := q.db.Query(ctx, earlierQtyByProduct, phone)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []EarlierQtyByProductRow
+	for rows.Next() {
+		var i EarlierQtyByProductRow
+		if err := rows.Scan(&i.ProductID, &i.Qty); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getOrderByNumber = `-- name: GetOrderByNumber :one
+SELECT id, order_number, track_token_hash, phone, status, district, district_area,
+       zone_code, delivery_paisa, subtotal_paisa, total_paisa, currency, payment_method,
+       is_gift, created_at, cancelled_at, cancel_reason
+FROM orders
+WHERE order_number = $1
+`
+
+type GetOrderByNumberRow struct {
+	ID             int64
+	OrderNumber    string
+	TrackTokenHash []byte
+	Phone          string
+	Status         OrderStatus
+	District       string
+	DistrictArea   *string
+	ZoneCode       string
+	DeliveryPaisa  int64
+	SubtotalPaisa  int64
+	TotalPaisa     int64
+	Currency       string
+	PaymentMethod  PaymentMethod
+	IsGift         bool
+	CreatedAt      time.Time
+	CancelledAt    *time.Time
+	CancelReason   *string
+}
+
+func (q *Queries) GetOrderByNumber(ctx context.Context, orderNumber string) (GetOrderByNumberRow, error) {
+	row := q.db.QueryRow(ctx, getOrderByNumber, orderNumber)
+	var i GetOrderByNumberRow
+	err := row.Scan(
+		&i.ID,
+		&i.OrderNumber,
+		&i.TrackTokenHash,
+		&i.Phone,
+		&i.Status,
+		&i.District,
+		&i.DistrictArea,
+		&i.ZoneCode,
+		&i.DeliveryPaisa,
+		&i.SubtotalPaisa,
+		&i.TotalPaisa,
+		&i.Currency,
+		&i.PaymentMethod,
+		&i.IsGift,
+		&i.CreatedAt,
+		&i.CancelledAt,
+		&i.CancelReason,
+	)
+	return i, err
+}
+
+const getOrderForUpdate = `-- name: GetOrderForUpdate :one
+SELECT id, status, created_at FROM orders WHERE id = $1 FOR UPDATE
+`
+
+type GetOrderForUpdateRow struct {
+	ID        int64
+	Status    OrderStatus
+	CreatedAt time.Time
+}
+
+// FOR UPDATE locks the order row until the transaction ends, so a buyer's
+// cancel and the auto-cancel sweep can never both cancel the same order.
+func (q *Queries) GetOrderForUpdate(ctx context.Context, id int64) (GetOrderForUpdateRow, error) {
+	row := q.db.QueryRow(ctx, getOrderForUpdate, id)
+	var i GetOrderForUpdateRow
+	err := row.Scan(&i.ID, &i.Status, &i.CreatedAt)
+	return i, err
+}
 
 const getVariantsForCheckout = `-- name: GetVariantsForCheckout :many
 
@@ -78,4 +239,413 @@ func (q *Queries) GetVariantsForCheckout(ctx context.Context, ids []int64) ([]Ge
 		return nil, err
 	}
 	return items, nil
+}
+
+const incrementStock = `-- name: IncrementStock :exec
+UPDATE product_variants SET stock = stock + $1 WHERE id = $2
+`
+
+type IncrementStockParams struct {
+	Qty int32
+	ID  int64
+}
+
+func (q *Queries) IncrementStock(ctx context.Context, arg IncrementStockParams) error {
+	_, err := q.db.Exec(ctx, incrementStock, arg.Qty, arg.ID)
+	return err
+}
+
+const insertInventoryMovement = `-- name: InsertInventoryMovement :exec
+INSERT INTO inventory_movements (variant_id, change, reason, order_id, note)
+VALUES ($1, $2, $3, $4, $5)
+`
+
+type InsertInventoryMovementParams struct {
+	VariantID int64
+	Change    int32
+	Reason    InventoryReason
+	OrderID   *int64
+	Note      string
+}
+
+func (q *Queries) InsertInventoryMovement(ctx context.Context, arg InsertInventoryMovementParams) error {
+	_, err := q.db.Exec(ctx, insertInventoryMovement,
+		arg.VariantID,
+		arg.Change,
+		arg.Reason,
+		arg.OrderID,
+		arg.Note,
+	)
+	return err
+}
+
+const insertOrder = `-- name: InsertOrder :one
+INSERT INTO orders (
+    order_number, track_token_hash, name, phone, email,
+    delivery_area_id, district, district_area, area, address, courier_note,
+    is_gift, gift_receiver_name, gift_receiver_phone, gift_note, gift_hide_prices,
+    zone_code, delivery_paisa, subtotal_paisa, total_paisa, currency, payment_method, status
+) VALUES (
+    $1, $2, $3, $4, $5,
+    $6, $7, $8, $9, $10, $11,
+    $12, $13, $14, $15, $16,
+    $17, $18, $19, $20, $21, 'COD', 'PENDING'
+)
+ON CONFLICT (order_number) DO NOTHING
+RETURNING id
+`
+
+type InsertOrderParams struct {
+	OrderNumber       string
+	TrackTokenHash    []byte
+	Name              string
+	Phone             string
+	Email             *string
+	DeliveryAreaID    int64
+	District          string
+	DistrictArea      *string
+	Area              string
+	Address           string
+	CourierNote       string
+	IsGift            bool
+	GiftReceiverName  *string
+	GiftReceiverPhone *string
+	GiftNote          string
+	GiftHidePrices    bool
+	ZoneCode          string
+	DeliveryPaisa     int64
+	SubtotalPaisa     int64
+	TotalPaisa        int64
+	Currency          string
+}
+
+// ON CONFLICT DO NOTHING: if the random order number already exists, no row
+// comes back and the Go code tries another number.
+func (q *Queries) InsertOrder(ctx context.Context, arg InsertOrderParams) (int64, error) {
+	row := q.db.QueryRow(ctx, insertOrder,
+		arg.OrderNumber,
+		arg.TrackTokenHash,
+		arg.Name,
+		arg.Phone,
+		arg.Email,
+		arg.DeliveryAreaID,
+		arg.District,
+		arg.DistrictArea,
+		arg.Area,
+		arg.Address,
+		arg.CourierNote,
+		arg.IsGift,
+		arg.GiftReceiverName,
+		arg.GiftReceiverPhone,
+		arg.GiftNote,
+		arg.GiftHidePrices,
+		arg.ZoneCode,
+		arg.DeliveryPaisa,
+		arg.SubtotalPaisa,
+		arg.TotalPaisa,
+		arg.Currency,
+	)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
+}
+
+const insertOrderItem = `-- name: InsertOrderItem :exec
+INSERT INTO order_items (order_id, variant_id, product_id, product_name, variant_label,
+                         unit_price_paisa, qty, line_total_paisa, currency)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+`
+
+type InsertOrderItemParams struct {
+	OrderID        int64
+	VariantID      int64
+	ProductID      int64
+	ProductName    string
+	VariantLabel   string
+	UnitPricePaisa int64
+	Qty            int32
+	LineTotalPaisa int64
+	Currency       string
+}
+
+func (q *Queries) InsertOrderItem(ctx context.Context, arg InsertOrderItemParams) error {
+	_, err := q.db.Exec(ctx, insertOrderItem,
+		arg.OrderID,
+		arg.VariantID,
+		arg.ProductID,
+		arg.ProductName,
+		arg.VariantLabel,
+		arg.UnitPricePaisa,
+		arg.Qty,
+		arg.LineTotalPaisa,
+		arg.Currency,
+	)
+	return err
+}
+
+const insertPayment = `-- name: InsertPayment :exec
+INSERT INTO payments (order_id, method, amount_paisa, currency, status)
+VALUES ($1, 'COD', $2, $3, 'PENDING')
+`
+
+type InsertPaymentParams struct {
+	OrderID     int64
+	AmountPaisa int64
+	Currency    string
+}
+
+func (q *Queries) InsertPayment(ctx context.Context, arg InsertPaymentParams) error {
+	_, err := q.db.Exec(ctx, insertPayment, arg.OrderID, arg.AmountPaisa, arg.Currency)
+	return err
+}
+
+const insertProductEvent = `-- name: InsertProductEvent :exec
+INSERT INTO product_events (product_id, type, actor, reason, old_value, new_value, created_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
+`
+
+type InsertProductEventParams struct {
+	ProductID int64
+	Type      ProductEventType
+	Actor     ActorType
+	Reason    string
+	OldValue  *string
+	NewValue  *string
+	At        time.Time
+}
+
+func (q *Queries) InsertProductEvent(ctx context.Context, arg InsertProductEventParams) error {
+	_, err := q.db.Exec(ctx, insertProductEvent,
+		arg.ProductID,
+		arg.Type,
+		arg.Actor,
+		arg.Reason,
+		arg.OldValue,
+		arg.NewValue,
+		arg.At,
+	)
+	return err
+}
+
+const insertStatusHistory = `-- name: InsertStatusHistory :exec
+INSERT INTO order_status_history (order_id, from_status, to_status, actor, note, created_at)
+VALUES ($1, $2, $3, $4, $5, $6)
+`
+
+type InsertStatusHistoryParams struct {
+	OrderID    int64
+	FromStatus *OrderStatus
+	ToStatus   OrderStatus
+	Actor      ActorType
+	Note       string
+	At         time.Time
+}
+
+func (q *Queries) InsertStatusHistory(ctx context.Context, arg InsertStatusHistoryParams) error {
+	_, err := q.db.Exec(ctx, insertStatusHistory,
+		arg.OrderID,
+		arg.FromStatus,
+		arg.ToStatus,
+		arg.Actor,
+		arg.Note,
+		arg.At,
+	)
+	return err
+}
+
+const isPhoneBlocked = `-- name: IsPhoneBlocked :one
+SELECT EXISTS (SELECT 1 FROM blocked_phones WHERE phone = $1)
+`
+
+func (q *Queries) IsPhoneBlocked(ctx context.Context, phone string) (bool, error) {
+	row := q.db.QueryRow(ctx, isPhoneBlocked, phone)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
+const listExpiredPendingOrders = `-- name: ListExpiredPendingOrders :many
+SELECT id FROM orders
+WHERE status = 'PENDING' AND created_at < $1
+ORDER BY created_at
+`
+
+// PENDING orders placed before the cutoff (cod_confirm_hours ago).
+func (q *Queries) ListExpiredPendingOrders(ctx context.Context, cutoff time.Time) ([]int64, error) {
+	rows, err := q.db.Query(ctx, listExpiredPendingOrders, cutoff)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int64
+	for rows.Next() {
+		var id int64
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		items = append(items, id)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listOrderItems = `-- name: ListOrderItems :many
+SELECT variant_id, product_id, product_name, variant_label, unit_price_paisa, qty, line_total_paisa
+FROM order_items
+WHERE order_id = $1
+ORDER BY id
+`
+
+type ListOrderItemsRow struct {
+	VariantID      int64
+	ProductID      int64
+	ProductName    string
+	VariantLabel   string
+	UnitPricePaisa int64
+	Qty            int32
+	LineTotalPaisa int64
+}
+
+func (q *Queries) ListOrderItems(ctx context.Context, orderID int64) ([]ListOrderItemsRow, error) {
+	rows, err := q.db.Query(ctx, listOrderItems, orderID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListOrderItemsRow
+	for rows.Next() {
+		var i ListOrderItemsRow
+		if err := rows.Scan(
+			&i.VariantID,
+			&i.ProductID,
+			&i.ProductName,
+			&i.VariantLabel,
+			&i.UnitPricePaisa,
+			&i.Qty,
+			&i.LineTotalPaisa,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listStatusHistory = `-- name: ListStatusHistory :many
+SELECT from_status, to_status, actor, note, created_at
+FROM order_status_history
+WHERE order_id = $1
+ORDER BY created_at, id
+`
+
+type ListStatusHistoryRow struct {
+	FromStatus *OrderStatus
+	ToStatus   OrderStatus
+	Actor      ActorType
+	Note       string
+	CreatedAt  time.Time
+}
+
+func (q *Queries) ListStatusHistory(ctx context.Context, orderID int64) ([]ListStatusHistoryRow, error) {
+	rows, err := q.db.Query(ctx, listStatusHistory, orderID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListStatusHistoryRow
+	for rows.Next() {
+		var i ListStatusHistoryRow
+		if err := rows.Scan(
+			&i.FromStatus,
+			&i.ToStatus,
+			&i.Actor,
+			&i.Note,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const lockPhone = `-- name: LockPhone :exec
+SELECT pg_advisory_xact_lock(hashtextextended($1::text, 0))
+`
+
+// Holds a lock on this phone number until the transaction ends, so two
+// orders from the same phone at the same moment are checked one after the
+// other (otherwise both could slip past the purchase limit).
+func (q *Queries) LockPhone(ctx context.Context, phone string) error {
+	_, err := q.db.Exec(ctx, lockPhone, phone)
+	return err
+}
+
+const markSoldOutIfEmpty = `-- name: MarkSoldOutIfEmpty :one
+UPDATE products p
+SET status = 'SOLD_OUT', sold_out_at = $1, updated_at = $1
+WHERE p.id = $2 AND p.status = 'ACTIVE' AND p.is_limited
+  AND NOT EXISTS (SELECT 1 FROM product_variants v WHERE v.product_id = p.id AND v.is_active AND v.stock > 0)
+RETURNING p.id
+`
+
+type MarkSoldOutIfEmptyParams struct {
+	At *time.Time
+	ID int64
+}
+
+// A limited product whose variants are all at stock 0 becomes SOLD_OUT.
+// No row back = it still has stock (or is not limited / not ACTIVE).
+func (q *Queries) MarkSoldOutIfEmpty(ctx context.Context, arg MarkSoldOutIfEmptyParams) (int64, error) {
+	row := q.db.QueryRow(ctx, markSoldOutIfEmpty, arg.At, arg.ID)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
+}
+
+const reactivateIfStocked = `-- name: ReactivateIfStocked :one
+UPDATE products p
+SET status = 'ACTIVE', sold_out_at = NULL, updated_at = $1
+WHERE p.id = $2 AND p.status = 'SOLD_OUT'
+  AND EXISTS (SELECT 1 FROM product_variants v WHERE v.product_id = p.id AND v.is_active AND v.stock > 0)
+RETURNING p.id
+`
+
+type ReactivateIfStockedParams struct {
+	At time.Time
+	ID int64
+}
+
+// A SOLD_OUT product that has stock again (after a cancel) becomes ACTIVE.
+// ARCHIVED products stay archived: only the owner may bring them back.
+func (q *Queries) ReactivateIfStocked(ctx context.Context, arg ReactivateIfStockedParams) (int64, error) {
+	row := q.db.QueryRow(ctx, reactivateIfStocked, arg.At, arg.ID)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
+}
+
+const setOrderCancelled = `-- name: SetOrderCancelled :exec
+UPDATE orders
+SET status = 'CANCELLED', cancelled_at = $1, cancel_reason = $2, updated_at = $1
+WHERE id = $3
+`
+
+type SetOrderCancelledParams struct {
+	At     *time.Time
+	Reason *string
+	ID     int64
+}
+
+func (q *Queries) SetOrderCancelled(ctx context.Context, arg SetOrderCancelledParams) error {
+	_, err := q.db.Exec(ctx, setOrderCancelled, arg.At, arg.Reason, arg.ID)
+	return err
 }

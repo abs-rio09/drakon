@@ -19,6 +19,18 @@ func asAPIError(err error) error {
 		}
 		return &apiError{Status: status, Code: in.Code, Message: in.Message, Fields: in.Fields}
 	}
+	var refused *orders.RefusedError
+	if errors.As(err, &refused) {
+		status := http.StatusConflict
+		if refused.Code == "PHONE_BLOCKED" {
+			status = http.StatusForbidden
+		}
+		e := &apiError{Status: status, Code: refused.Code, Message: refused.Message}
+		if len(refused.Problems) > 0 {
+			e.Problems = refused.Problems
+		}
+		return e
+	}
 	return err
 }
 
@@ -44,5 +56,21 @@ func (s *Server) handleQuote(w http.ResponseWriter, r *http.Request) error {
 		return asAPIError(err)
 	}
 	writeJSON(w, http.StatusOK, quote)
+	return nil
+}
+
+// POST /api/orders: places a Cash on Delivery order. Everything is checked
+// again on the server; prices, delivery and totals come from the database.
+// Answers 201 with the order number and a secret track token (shown once).
+func (s *Server) handlePlaceOrder(w http.ResponseWriter, r *http.Request) error {
+	var in orders.Checkout
+	if err := decodeJSON(w, r, &in); err != nil {
+		return err
+	}
+	placed, err := orders.Place(r.Context(), s.pool, in, s.now())
+	if err != nil {
+		return asAPIError(err)
+	}
+	writeJSON(w, http.StatusCreated, placed)
 	return nil
 }

@@ -20,6 +20,8 @@ type apiError struct {
 	Code    string            `json:"code"`
 	Message string            `json:"message"`
 	Fields  map[string]string `json:"fields,omitempty"`
+	// Problems lists the cart items that stop an order (409 answers).
+	Problems any `json:"problems,omitempty"`
 }
 
 func (e *apiError) Error() string { return e.Code + ": " + e.Message }
