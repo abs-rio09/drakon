@@ -17,7 +17,7 @@ import {
 } from '../features/checkout/validation'
 import { variantName } from '../lib/catalog'
 import { formatTaka } from '../lib/money'
-import { dhakaAreas, dhakaDistrict, districts } from '../mocks/delivery'
+import { dhakaAreas, dhakaDistrict, districts, type DeliveryZone } from '../mocks/delivery'
 import { settings } from '../mocks/settings'
 
 // /checkout — the form and the order summary, from Checkout.dc.html.
@@ -205,86 +205,104 @@ function CheckoutView({ items }: { items: CartItem[] }) {
             </Field>
           </FormSection>
 
-          {/* 2 Delivery */}
+          {/* 2 Delivery: district, then (Dhaka only) city or outside, then area */}
           <FormSection number={2} title="Delivery" id="s-delivery">
-            <div className="grid gap-6 sm:grid-cols-2">
-              <Field id={fieldId('district')} label="District" required error={errorFor('district')}>
-                <div className="relative">
-                  <select
-                    {...textProps('district')}
-                    onChange={(e) => {
-                      update('district', e.target.value)
-                      update('dhakaArea', '')
-                      touch('district')
-                    }}
-                    required
-                    autoComplete="address-level1"
-                    className={inputClass + ' appearance-none pr-12'}
-                  >
-                    <option value="">Select your district</option>
-                    {districts.map((d) => (
-                      <option key={d} value={d}>
-                        {d}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDownIcon className="pointer-events-none absolute top-1/2 right-4 -translate-y-1/2 text-ink-muted" />
-                </div>
-              </Field>
-              <Field id={fieldId('area')} label="Area / Thana" required error={errorFor('area')}>
-                <input
-                  {...textProps('area')}
-                  type="text"
+            <Field
+              id={fieldId('district')}
+              label="District"
+              required
+              hint={<DeliveryStatus district={form.district} zone={zone} />}
+              error={errorFor('district')}
+            >
+              <div className="relative">
+                <select
+                  {...textProps('district', true)}
+                  onChange={(e) => {
+                    // Keep the Dhaka choice: if the buyer switches away and back,
+                    // their answer and the charge come back instead of a blank.
+                    update('district', e.target.value)
+                    touch('district')
+                  }}
                   required
-                  autoComplete="address-level2"
-                  placeholder="e.g. Mirpur 10"
-                  className={inputClass}
-                />
-              </Field>
+                  autoComplete="address-level1"
+                  className={inputClass + ' appearance-none pr-12'}
+                >
+                  <option value="">Select your district</option>
+                  {districts.map((d) => (
+                    <option key={d} value={d}>
+                      {d}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDownIcon className="pointer-events-none absolute top-1/2 right-4 -translate-y-1/2 text-ink-muted" />
+              </div>
+            </Field>
+
+            {/* Always in the page, so it can slide open instead of popping in.
+                While closed it is inert: no focus, hidden from screen readers.
+                The 4px padding (p-1, cancelled by -mx-1 / -my-1) keeps the
+                focus ring from being cut off by overflow-hidden. */}
+            <div
+              className={
+                '-mx-1 grid transition-[grid-template-rows,opacity,margin] duration-200 ease-out motion-reduce:transition-none ' +
+                (isDhaka ? '-my-1 grid-rows-[1fr] opacity-100' : '-mt-6 mb-0 grid-rows-[0fr] opacity-0')
+              }
+              inert={!isDhaka}
+            >
+              <div className="min-h-0 overflow-hidden">
+                <fieldset
+                  className="flex flex-col gap-3 p-1"
+                  aria-describedby={errorFor('dhakaArea') ? `${fieldId('dhakaArea')}-error` : undefined}
+                >
+                  <legend className="mb-3 text-label text-ink-muted">
+                    Where in Dhaka district?
+                    <span aria-hidden="true" className="ml-1 text-accent-text">
+                      *
+                    </span>
+                  </legend>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {dhakaAreas.map((a) => {
+                      const z = zoneFor(dhakaDistrict, a.id)
+                      return (
+                        <ChoiceCard key={a.id} checked={form.dhakaArea === a.id}>
+                          <input
+                            type="radio"
+                            name="dhakaArea"
+                            value={a.id}
+                            checked={form.dhakaArea === a.id}
+                            onChange={() => {
+                              update('dhakaArea', a.id)
+                              touch('dhakaArea')
+                            }}
+                            className="mt-0.5 size-4.5 shrink-0 accent-ink-strong"
+                          />
+                          <span className="flex flex-col">
+                            <span className="text-body font-medium text-ink-strong">{a.label}</span>
+                            <span className="text-caption text-ink-subtle tabular-nums">
+                              {a.hint}, {z ? formatTaka(z.chargePaisa) : ''}
+                            </span>
+                          </span>
+                        </ChoiceCard>
+                      )
+                    })}
+                  </div>
+                  {errorFor('dhakaArea') && (
+                    <FieldError id={`${fieldId('dhakaArea')}-error`}>{errorFor('dhakaArea')}</FieldError>
+                  )}
+                </fieldset>
+              </div>
             </div>
 
-            {isDhaka && (
-              <fieldset
-                className="flex flex-col gap-3"
-                aria-describedby={errorFor('dhakaArea') ? `${fieldId('dhakaArea')}-error` : undefined}
-              >
-                <legend className="mb-3 text-label text-ink-muted">
-                  Where in Dhaka?
-                  <span aria-hidden="true" className="ml-1 text-accent-text">
-                    *
-                  </span>
-                </legend>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  {dhakaAreas.map((a) => {
-                    const z = zoneFor(dhakaDistrict, a.id)
-                    return (
-                      <ChoiceCard key={a.id} checked={form.dhakaArea === a.id}>
-                        <input
-                          type="radio"
-                          name="dhakaArea"
-                          value={a.id}
-                          checked={form.dhakaArea === a.id}
-                          onChange={() => {
-                            update('dhakaArea', a.id)
-                            touch('dhakaArea')
-                          }}
-                          className="mt-0.5 size-4.5 shrink-0 accent-ink-strong"
-                        />
-                        <span className="flex flex-col">
-                          <span className="text-body font-medium text-ink-strong">{a.label}</span>
-                          <span className="text-caption text-ink-subtle tabular-nums">
-                            {a.hint}, {z ? formatTaka(z.chargePaisa) : ''}
-                          </span>
-                        </span>
-                      </ChoiceCard>
-                    )
-                  })}
-                </div>
-                {errorFor('dhakaArea') && (
-                  <FieldError id={`${fieldId('dhakaArea')}-error`}>{errorFor('dhakaArea')}</FieldError>
-                )}
-              </fieldset>
-            )}
+            <Field id={fieldId('area')} label="Area / Thana" required error={errorFor('area')}>
+              <input
+                {...textProps('area')}
+                type="text"
+                required
+                autoComplete="address-level2"
+                placeholder="e.g. Mirpur 10"
+                className={inputClass}
+              />
+            </Field>
 
             <Field id={fieldId('address')} label="Full address" required error={errorFor('address')}>
               <textarea
@@ -442,7 +460,7 @@ function CheckoutView({ items }: { items: CartItem[] }) {
           items={items}
           subtotal={subtotal}
           total={total}
-          zoneLabel={zone?.label}
+          zoneLabel={zone?.label ?? (isDhaka ? 'Choose Dhaka city or outside' : 'Choose your district')}
           deliveryPaisa={zone?.chargePaisa}
           isGift={form.isGift}
         />
@@ -452,13 +470,28 @@ function CheckoutView({ items }: { items: CartItem[] }) {
       <div className="sticky bottom-0 z-20 -mx-4 border-t border-line bg-surface-raised px-4 py-3 sm:-mx-6 sm:px-6 lg:hidden">
         <div className="flex items-center justify-between gap-4">
           <span className="flex flex-col">
-            <span className="text-caption text-ink-muted">Pay on delivery</span>
+            <span className="text-caption text-ink-muted">{zone ? 'Pay on delivery' : 'Delivery not added yet'}</span>
             <span className="text-price text-ink-strong tabular-nums">{formatTaka(total)}</span>
           </span>
           <PlaceOrderButton />
         </div>
       </div>
     </div>
+  )
+}
+
+// The delivery charge, shown right under the district so the buyer sees it
+// change as they choose. Screen readers hear the new charge too (aria-live).
+function DeliveryStatus({ district, zone }: { district: string; zone: DeliveryZone | undefined }) {
+  // Keep every message to one line on a 375px phone, so the form below
+  // does not jump when the message changes.
+  let text = 'Pick a district to see the delivery charge.'
+  if (zone) text = `Delivery charge: ${formatTaka(zone.chargePaisa)}, ${zone.label}.`
+  else if (district === dhakaDistrict) text = 'Pick Dhaka city or outside to see the charge.'
+  return (
+    <span aria-live="polite" className="tabular-nums">
+      {text}
+    </span>
   )
 }
 
@@ -512,7 +545,7 @@ type OrderSummaryProps = {
   items: CartItem[]
   subtotal: number
   total: number
-  zoneLabel?: string
+  zoneLabel: string
   deliveryPaisa?: number
   isGift: boolean
 }
@@ -552,7 +585,7 @@ function OrderSummary({ items, subtotal, total, zoneLabel, deliveryPaisa, isGift
         <div className="flex justify-between gap-4">
           <dt className="flex flex-col">
             <span className="text-body text-ink-muted">Delivery</span>
-            <span className="text-caption text-ink-subtle">{zoneLabel ?? 'Choose your district'}</span>
+            <span className="text-caption text-ink-subtle">{zoneLabel}</span>
           </dt>
           <dd className="text-body text-ink-strong tabular-nums">
             {deliveryPaisa !== undefined ? formatTaka(deliveryPaisa) : <span aria-label="not set yet">—</span>}
@@ -561,7 +594,10 @@ function OrderSummary({ items, subtotal, total, zoneLabel, deliveryPaisa, isGift
       </dl>
 
       <div className="flex items-baseline justify-between gap-4 border-t border-line pt-6">
-        <span className="text-body font-medium text-ink-strong">Pay on delivery</span>
+        <span className="flex flex-col">
+          <span className="text-body font-medium text-ink-strong">Pay on delivery</span>
+          {deliveryPaisa === undefined && <span className="text-caption text-ink-subtle">Delivery not added yet</span>}
+        </span>
         <span className="text-price-lg text-ink-strong tabular-nums">{formatTaka(total)}</span>
       </div>
 
