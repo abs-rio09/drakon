@@ -388,3 +388,22 @@ cd ~/Desktop/projects/Drakon/drakon/web && npm run dev
 6. **Track:** বাটন input-এর সমান উঁচু; খালি রেখে চাপলে লাল বার্তা।
 7. **Checkout:** "This is a gift" চাপো → আলাদা বাক্স; phone মাপে নিচে "Ordering opens soon" bar।
 8. **v8 নিয়ে সিদ্ধান্ত:** উপরের সুপারিশ পড়ে বলো — এখন v7-এ থাকব, পরে upgrade করব, ঠিক আছে?
+
+---
+---
+
+# Abu Bakkar Siddik-এর উত্তর (2026-10-15)
+
+Browser-এ test করে দেখেছেন, সব কাজ করছে। রাতের প্রশ্নগুলোর সিদ্ধান্ত:
+
+| # | প্রশ্ন | সিদ্ধান্ত |
+|---|---|---|
+| 1 | react-router v8 | **এখন v7-এই থাকব।** Frontend MVP শেষ হলে v8-এ upgrade। CLAUDE.md-তে লেখা হয়েছে। |
+| 2 | Dhaka city / outside আগে থেকে বাছাই ছাড়া | **রাখো।** Buyer নিজে বাছবে। |
+| 3 | bKash/Nagad "Coming soon" | **বাদই থাকবে।** শুধু Cash on Delivery। |
+| 4 | Contact তথ্য | **পরে।** এখন "Coming soon" থাকবে। |
+| 5 | Policy page-এর `[ ]` জায়গা | **পরে।** |
+| 6 | Home-এ transparent header | **হয়ে গেছে** (second pass)। ভালো। |
+| 7 | Product বর্ণনা | **পরে**, admin panel থেকে আসবে। |
+
+এর মধ্যে checkout-এর delivery অংশও মসৃণ করা হয়েছে: commit `web: smooth checkout delivery flow`।

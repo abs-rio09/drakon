@@ -57,6 +57,7 @@ Open decisions: `docs/open-questions.md` — **do not build anything marked 🟡
 - **Before writing setup or config code for any library, look up current docs with the Context7 MCP.** Don't rely on memory.
 - Tailwind v4: `npm install tailwindcss @tailwindcss/vite`; add `tailwindcss()` to `vite.config.ts` plugins; CSS starts with `@import "tailwindcss";`; design tokens go in `@theme { --color-…; --font-… }`. No `tailwind.config.js`.
 - React Router v7: `npm i react-router`; import `BrowserRouter, Routes, Route, Link` from `"react-router"` (not `react-router-dom`).
+- **Stay on React Router v7** (decided 2026-10-15). Upgrade to v8 only after the frontend MVP is done; then update this line.
 - Vite: `npm create vite@latest web -- --template react-ts`; dev proxy `server.proxy: { '/api': { target: 'http://localhost:8080', changeOrigin: true } }` (keep the `/api` prefix — the Go router expects it).
 - sqlc: `version: "2"`, `engine: postgresql`, `schema: db/migrations` (goose files; sqlc ignores `-- +goose Down`), `sql_package: "pgx/v5"`. Zero-pad migration names (`00001_catalog.sql`).
 - Hosting (decided 2026-10-15): Cloudflare **Workers Static Assets** (not Pages) with `not_found_handling: "single-page-application"` and `run_worker_first: ["/api/*"]` proxying to Render.
