@@ -162,3 +162,18 @@ func TestQuoteRejectsBadInput(t *testing.T) {
 		}
 	}
 }
+
+func TestQuoteOutOfStockLineDoesNotCountTowardsLimit(t *testing.T) {
+	s := newTestServer(t, true)
+	// Card limit is 2: 2 hard paper + 1 plastic key-ring (stock 0).
+	_, body := do(t, s, http.MethodPost, "/api/checkout/quote", map[string]any{"items": []map[string]any{
+		{"variantId": variantID(t, "DF01-PAPER"), "qty": 2},
+		{"variantId": variantID(t, "DF01-PKEY"), "qty": 1},
+	}})
+	if got := problemCodes(body); !equalStrings(got, []string{"OUT_OF_STOCK"}) {
+		t.Fatalf("problems = %v", got)
+	}
+	if num(body["subtotalPaisa"]) != 90000 {
+		t.Fatalf("subtotal = %v", body["subtotalPaisa"])
+	}
+}

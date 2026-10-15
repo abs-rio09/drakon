@@ -137,10 +137,11 @@ func buildQuote(lines []Line, rows []db.GetVariantsForCheckoutRow, set settings.
 	}
 
 	quote := Quote{Items: []Item{}, Problems: []Problem{}, Currency: "BDT"}
-	// Pieces of each product in this cart, for the purchase limit.
+	// Pieces of each product in this cart, for the purchase limit. Lines
+	// that cannot be bought anyway (sold out, stock 0) do not count.
 	perProduct := map[int64]int{}
 	for _, l := range lines {
-		if r, ok := byID[l.VariantID]; ok {
+		if r, ok := byID[l.VariantID]; ok && r.IsActive && r.ProductStatus == db.ProductStatusACTIVE && r.Stock > 0 {
 			perProduct[r.ProductID] += l.Qty
 		}
 	}
