@@ -4,11 +4,11 @@ Written in simple English for Abu Bakkar Siddik. Nothing was pushed to GitHub. E
 
 ## Plan
 
-- [ ] Phase 0: start (read docs, check tools, start the database)
-- [ ] Phase 1: catalog schema that matches the real UI (step 4b)
-- [ ] Phase 2: the rest of the schema + dev seed (step 4c)
-- [ ] Phase 3: Go API skeleton (step 5)
-- [ ] Phase 4: public catalog API
+- [x] Phase 0: start (read docs, check tools, start the database)
+- [x] Phase 1: catalog schema that matches the real UI (step 4b)
+- [x] Phase 2: the rest of the schema + dev seed (step 4c)
+- [x] Phase 3: Go API skeleton (step 5)
+- [x] Phase 4: public catalog API
 - [ ] Phase 5: connect the website to the API (step 6)
 - [ ] Phase 6: real checkout (step 7)
 - [ ] Phase 7: track and cancel (step 8)
@@ -225,4 +225,56 @@ I ran these against the dev database: 4 categories, featured = card, hoodie 02, 
 - `GET /api/products` returns full products (with variants and images), because the product cards need price and stock. With 10 products that is small. Later, with hundreds, we can add a lighter "card" shape.
 - Search covers ACTIVE products only (as the prompt says). The old mock search also showed sold-out runs. Tell me if the search page should include the archive.
 - `related` (4 products under the product page) is now computed on the server: same category first, then others.
+
+---
+
+## Phase 5: connect the website to the API
+
+### What I built
+- `web/vite.config.ts`: dev proxy `/api` → `http://localhost:8080` (the `/api` prefix is kept).
+- `web/src/lib/types.ts`: the TypeScript shapes of the API answers (moved out of the old mock file). Ids are now **numbers** (database ids) instead of text like `"v-df-paper"`.
+- `web/src/lib/api.ts`: small typed helpers (`getProducts`, `getProduct`, `postQuote` ...). Every error answer becomes an `ApiError` with `status`, `code`, `message` and `fields`. A network failure becomes code `NETWORK` with a friendly message.
+- `web/src/lib/useApi.ts`: a tiny hook that gives a page `loading` / `error` / `ready`, remembers the last answer (coming back to a page is instant) and fetches a fresh one.
+- `web/src/components/ui/LoadState.tsx`: the quiet loading line, grey skeleton tiles for product grids, and an error message with a "Try again" button.
+- `web/src/features/site/SiteProvider.tsx`: loads `/api/settings/public` and `/api/delivery/areas` once when the site opens ("Opening the shop…"). Every page reads business numbers from there (`useSite()`), never from code.
+- Cart and checkout: `useCartQuote()` asks `POST /api/checkout/quote` for prices every time the cart or the delivery area changes. **The browser never adds up prices any more**; the subtotal, delivery and total on screen are the server's numbers.
+- Old carts: lines with old text ids are dropped when the cart loads; ids the server does not know are removed quietly; a quantity above stock/limit is lowered.
+- Checkout: districts and the "Dhaka city / outside" choice come from `delivery_areas`. Any district with more than one area asks the question (no `if district === 'Dhaka'` in code).
+- Deleted `web/src/mocks/catalog.ts`, `delivery.ts`, `settings.ts` and `features/checkout/deliveryQuote.ts`. `mocks/contact.ts` stays (site content).
+
+**Moved forward:** `POST /api/checkout/quote` (planned for Phase 6) was built at the start of this phase, because the cart page needs server prices to show anything.
+
+### Why
+Hard rule 1: the server decides money. Now the site shows exactly what is in PostgreSQL, and the numbers on the checkout page are the same ones the order will use.
+
+### Key concepts
+- **Proxy**: the browser asks Vite (`localhost:5173/api/products`), Vite asks Go (`localhost:8080/api/products`) and passes the answer back. The browser sees one site, so no CORS problems and (later) cookies work.
+- **`fetch` + `async/await`**: `await fetch(url)` waits for the answer without freezing the page.
+- **Loading / error / ready states**: every request can be slow or fail, so every page that loads data shows one of three things.
+- **React context** (`SiteProvider` + `useSite()`): data that many components need, given once at the top instead of passed through every component.
+- **AbortController**: when the cart changes quickly, the older quote request is cancelled, so an old answer can never overwrite a newer one.
+
+### How to test it yourself
+```zsh
+# terminal 1
+cd ~/Desktop/projects/Drakon/drakon/api && make run
+# terminal 2
+cd ~/Desktop/projects/Drakon/drakon/web && npm run dev
+```
+Then open http://localhost:5173 and walk: Home → Shop → Clothes → a product → Add to cart → Cart → Checkout → pick Dhaka → pick Dhaka city: delivery shows ৳60 and the total changes.
+Stop the Go server (Ctrl+C) and reload: you see "We could not reach the shop…" / "The shop is not answering…" with **Try again**. Start it again and press Try again.
+
+**How I checked (exactly):**
+1. `curl` through the Vite proxy: `/api/health`, `/api/categories`, `/api/products`, `/api/products/featured`, `/api/products/ember-night-hoodie-edition-02`, `/api/sold-out`, `/api/delivery/areas`, `/api/settings/public` → 200; `/api/products/nope` → 404.
+2. In Chrome I visited all 17 routes (`/`, `/shop`, `/shop/clothes`, `/shop/nope`, two products, `/product/nope`, two searches, `/sold-out`, `/cart`, `/checkout`, `/track`, `/about`, `/contact`, two policies) and read the page text: real data everywhere; unknown collection/product show "Page not found".
+3. Cart test: I saved a cart with an old text id, an unknown id (9999), a sold-out variant, 2 hard paper cards and 9 drones. Result: the old and unknown ids were removed, the drone went down to 3 (stock), the sold-out key-ring was listed as "sold out", and the summary showed the server subtotal.
+4. Checkout: choosing Dhaka showed the city/outside choice; choosing Dhaka city made delivery ৳60 and the total ৳11,160 (from the server).
+5. `npm run build` and `npm run lint`: 0 errors, 0 warnings.
+
+**A real bug that test 3 found:** the out-of-stock key-ring was counted towards the card's purchase limit of 2, so "2 hard paper" was wrongly refused. Fixed in the API (only buyable lines count) with a regression test.
+
+### Decisions and questions
+- If the API is down, the whole site shows the "Opening the shop…" screen and then an error with **Try again** (even About and policies, because they show settings numbers). Honest, and simple. On Render's free plan the first visit after a sleep can take 30–60 s, so the loading text says "Opening the shop…".
+- The header cart bubble counts all lines in the cart (no request on every page). A sold-out line counts until you remove it on the cart page.
+- Git note: the deletion of the three mock files landed in commit `eda1ba6` (the api limit fix) instead of the web commit, because I had staged it early. I did not rewrite history (not allowed); the code is correct either way.
 
