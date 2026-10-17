@@ -13,6 +13,7 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	"github.com/abs-rio09/drakon/api/internal/auth"
 	"github.com/abs-rio09/drakon/api/internal/db"
 )
 
@@ -20,12 +21,20 @@ type Server struct {
 	pool *pgxpool.Pool
 	q    *db.Queries
 	log  *slog.Logger
+	opts Options
 	// now returns the current time. Tests can replace it.
 	now func() time.Time
 }
 
-func NewServer(pool *pgxpool.Pool, logger *slog.Logger) *Server {
-	return &Server{pool: pool, q: db.New(pool), log: logger, now: time.Now}
+// Options are the security settings from the config (internal/config).
+type Options struct {
+	CookieSecure   bool     // "Secure" flag on the admin cookie
+	AllowedOrigins []string // sites allowed to send admin changes
+}
+
+func NewServer(pool *pgxpool.Pool, logger *slog.Logger, opts Options) *Server {
+	auth.WarmUp()
+	return &Server{pool: pool, q: db.New(pool), log: logger, opts: opts, now: time.Now}
 }
 
 // handlerFunc is like http.HandlerFunc but may return an error. An *apiError
@@ -57,7 +66,7 @@ func (s *Server) wrap(h handlerFunc) http.HandlerFunc {
 func (s *Server) Handler() http.Handler {
 	mux := http.NewServeMux()
 	s.routes(mux)
-	return s.recoverPanics(s.logRequests(mux))
+	return s.recoverPanics(s.logRequests(s.guardAdmin(mux)))
 }
 
 func (s *Server) routes(mux *http.ServeMux) {
@@ -77,6 +86,12 @@ func (s *Server) routes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/orders", s.wrap(s.handlePlaceOrder))
 	mux.HandleFunc("POST /api/orders/track", s.wrap(s.handleTrackOrder))
 	mux.HandleFunc("POST /api/orders/cancel", s.wrap(s.handleCancelOrder))
+
+	// Admin (admin_routes.go). Every route except login needs a session.
+	mux.HandleFunc("POST /api/admin/login", s.wrap(s.handleAdminLogin))
+	for _, rt := range s.adminRoutes() {
+		mux.HandleFunc(rt.Method+" "+rt.Path, s.adminOnly(rt.Handler))
+	}
 
 	// Any other /api path: a JSON 404 instead of Go's plain text one.
 	mux.HandleFunc("/api/", s.wrap(func(w http.ResponseWriter, r *http.Request) error {

@@ -30,6 +30,9 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
+// testOrigin is the admin site the test server trusts (the Vite dev server).
+const testOrigin = "http://localhost:5173"
+
 // newTestServer empties the test database, loads the sample catalogue
 // (when withSeed is true) and returns a Server that uses it.
 func newTestServer(t *testing.T, withSeed bool) *Server {
@@ -38,7 +41,7 @@ func newTestServer(t *testing.T, withSeed bool) *Server {
 		t.Fatal(err)
 	}
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	return NewServer(testDB.Pool, logger)
+	return NewServer(testDB.Pool, logger, Options{CookieSecure: true, AllowedOrigins: []string{testOrigin}})
 }
 
 // do sends one request through the full handler (routes + middleware) and

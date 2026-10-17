@@ -2,6 +2,7 @@
 //   - PENDING orders not confirmed within cod_confirm_hours are cancelled
 //     and their stock goes back
 //   - SOLD_OUT products older than archive_after_days move to ARCHIVED
+//   - dead admin sessions (expired or idle too long) are deleted
 //
 // The free Render server sleeps when nobody visits, so instead of a fixed
 // clock time the sweep runs when the server starts and then every 10
@@ -19,6 +20,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	"github.com/abs-rio09/drakon/api/internal/auth"
 	"github.com/abs-rio09/drakon/api/internal/db"
 	"github.com/abs-rio09/drakon/api/internal/orders"
 	"github.com/abs-rio09/drakon/api/internal/settings"
@@ -40,8 +42,9 @@ func NewSweeper(pool *pgxpool.Pool, logger *slog.Logger) *Sweeper {
 
 // Result says what one sweep changed.
 type Result struct {
-	Cancelled int // orders auto-cancelled
-	Archived  int // products moved to ARCHIVED
+	Cancelled       int // orders auto-cancelled
+	Archived        int // products moved to ARCHIVED
+	SessionsRemoved int // dead admin sessions deleted
 }
 
 // RunOnce does one full sweep.
@@ -101,6 +104,15 @@ func (s *Sweeper) RunOnce(ctx context.Context) (Result, error) {
 		res.Archived = len(archived)
 		return nil
 	})
+	if err != nil {
+		return res, err
+	}
+
+	// 3. Housekeeping: admin sessions that can never be used again.
+	removed, err := q.DeleteDeadAdminSessions(ctx, db.DeleteDeadAdminSessionsParams{
+		Now: now, IdleCutoff: now.Add(-auth.SessionIdle),
+	})
+	res.SessionsRemoved = int(removed)
 	return res, err
 }
 
@@ -131,7 +143,7 @@ func (s *Sweeper) runAndLog(ctx context.Context) {
 		}
 		return
 	}
-	if res.Cancelled > 0 || res.Archived > 0 {
-		s.log.Info("sweep", "auto_cancelled", res.Cancelled, "archived", res.Archived)
+	if res.Cancelled > 0 || res.Archived > 0 || res.SessionsRemoved > 0 {
+		s.log.Info("sweep", "auto_cancelled", res.Cancelled, "archived", res.Archived, "sessions_removed", res.SessionsRemoved)
 	}
 }

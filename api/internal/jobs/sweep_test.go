@@ -260,3 +260,26 @@ func TestStartRunsImmediatelyAndStops(t *testing.T) {
 	cancel()
 	wg.Wait() // returns: the loop stopped
 }
+
+func TestSweepRemovesDeadAdminSessions(t *testing.T) {
+	s := setup(t)
+	exec(t, "INSERT INTO admins (email, password_hash) VALUES ('owner@drakon.test', 'x')")
+	add := func(name string, lastSeen, expires time.Time) {
+		exec(t, `INSERT INTO admin_sessions (id_hash, admin_id, created_at, last_seen_at, expires_at)
+		         SELECT convert_to($1, 'UTF8'), id, $2, $2, $3 FROM admins`, name, lastSeen, expires)
+	}
+	add("alive", now.Add(-time.Hour), now.Add(24*time.Hour))
+	add("idle", now.Add(-13*time.Hour), now.Add(24*time.Hour))
+	add("expired", now.Add(-time.Hour), now.Add(-time.Second))
+
+	res, err := s.RunOnce(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res.SessionsRemoved != 2 {
+		t.Fatalf("removed = %d, want 2", res.SessionsRemoved)
+	}
+	if got := queryString(t, "SELECT convert_from(id_hash, 'UTF8') FROM admin_sessions"); got != "alive" {
+		t.Fatalf("left = %q", got)
+	}
+}

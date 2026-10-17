@@ -60,7 +60,12 @@ func run(logger *slog.Logger) error {
 		return errors.New("cannot reach the database (is it running? docker compose up -d db): " + err.Error())
 	}
 
-	api := httpapi.NewServer(pool, logger)
+	api := httpapi.NewServer(pool, logger, httpapi.Options{
+		CookieSecure: cfg.CookieSecure, AllowedOrigins: cfg.AllowedOrigins,
+	})
+	if !cfg.CookieSecure {
+		logger.Warn("COOKIE_SECURE=false: the admin cookie also travels over plain http. Use this only for local testing.")
+	}
 
 	// Background sweep: auto-cancel unconfirmed COD orders, auto-archive old
 	// sold-out runs. Runs now and every 10 minutes until shutdown.
