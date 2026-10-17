@@ -61,6 +61,7 @@ export type CallListRow = {
 }
 
 export type AdminOrderItem = {
+  id: number // the order line (returns point to it)
   variantId: number
   productId: number
   productSlug: string
@@ -71,6 +72,7 @@ export type AdminOrderItem = {
   qty: number
   unitPricePaisa: number
   lineTotalPaisa: number
+  returnedQty: number
 }
 
 export type AdminStep = {
@@ -123,12 +125,40 @@ export type AdminOrder = {
   adminNote: string
   phoneHistory: Partial<Record<OrderStatus, number>>
   phoneBlocked: boolean
+  returnUntil: string | null // DELIVERED only: the last moment for a return
+  refundedPaisa: number
 }
 
 export type BlockedPhone = { phone: string; reason: string; blockedAt: string; blockedBy: string | null }
 
-// A return recorded on a delivered order (Phase 6).
-export type OrderReturn = { id: number }
+export type RefundMethod = 'BKASH' | 'NAGAD' | 'CASH'
+
+// A return recorded on a delivered order (blueprint rule 3).
+export type OrderReturn = {
+  id: number
+  reasonType: 'COMPANY_FAULT' | 'OTHER'
+  note: string
+  deliveryPaidBy: 'COMPANY' | 'CUSTOMER'
+  refundPaisa: number
+  currency: string
+  refundMethod: RefundMethod | null
+  refundRef: string
+  status: 'COMPLETED'
+  at: string
+  adminEmail: string
+  items: { orderItemId: number; productName: string; variantLabel: string; qty: number; resellable: boolean }[]
+}
+
+export type ReturnInput = {
+  reasonType: 'COMPANY_FAULT' | 'OTHER'
+  note: string
+  deliveryPaidBy: 'COMPANY' | 'CUSTOMER'
+  conditionChecked: boolean
+  refundPaisa: number
+  refundMethod: RefundMethod | ''
+  refundRef: string
+  items: { orderItemId: number; qty: number; resellable: boolean }[]
+}
 
 export type ProductStatus = 'DRAFT' | 'ACTIVE' | 'SOLD_OUT' | 'ARCHIVED'
 

@@ -12,6 +12,7 @@ import type {
   ImageInput,
   ProductInput,
   ProductStatus,
+  ReturnInput,
   SettingRow,
   VariantInput,
   BlockedPhone,
@@ -75,6 +76,9 @@ export type MoveRequest = { to: OrderStatus; reason?: string; courierName?: stri
 
 export const moveOrder = (number: string, body: MoveRequest) =>
   adminPost<AdminOrderAnswer>(`/orders/${encodeURIComponent(number)}/status`, body)
+
+export const recordReturn = (number: string, body: ReturnInput) =>
+  adminPost<AdminOrderAnswer>(`/orders/${encodeURIComponent(number)}/returns`, body)
 
 export const saveOrderNote = (number: string, note: string) =>
   adminFetch<AdminOrderAnswer>(`/orders/${encodeURIComponent(number)}/note`, { method: 'PUT', body: { note } })
