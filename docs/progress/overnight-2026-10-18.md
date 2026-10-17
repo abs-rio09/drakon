@@ -6,7 +6,7 @@ Written for Abu Bakkar Siddik, in simple English. Nothing in this run was pushed
 
 - [x] 0. Start: read the docs, clean git, database up, all checks pass
 - [x] 1. Admin accounts and login (API)
-- [ ] 2. Admin shell (web)
+- [x] 2. Admin shell (web)
 - [ ] 3. Orders admin (API + web)
 - [ ] 4. Products admin (API + web)
 - [ ] 5. Categories, settings and delivery admin
@@ -95,3 +95,42 @@ curl -s -b /tmp/jar -c /tmp/jar -X POST -H 'Origin: http://localhost:5173' local
 - One Owner only, enforced by the database. A Staff role later = add a value to the `admin_role` enum.
 - `dev-owner` run again = a new random password for the same dev owner (handy if you lose it).
 - Your `.env` file can be read by other users on your PC (`-rw-rw-r--`). Optional: `chmod 600 ~/Desktop/projects/Drakon/drakon/.env`.
+
+---
+
+## Phase 2: admin shell (web)
+
+### What I built
+- **`/admin/*` routes** in `web/src/pages/admin/AdminApp.tsx`, loaded as a **separate file** (`React.lazy`): a shopper never downloads admin code. The shop's providers (settings, delivery, cart) now wrap only the shop routes, so the admin does not wait for them.
+- **`/admin/login`** (`AdminLogin.tsx`), styled like the customer Sign in screen: form on the left, the hoodie-tag photo on the right (desktop only), Show/Hide password button, one error line, one orange button.
+- **Auth guard** (`RequireAdmin`): asks `GET /api/admin/me`. Not logged in → `/admin/login`, and after login you go back to the page you wanted.
+- **Admin layout** (`components/admin/AdminLayout.tsx`) following AdminNav.dc.html: menu on the left on desktop (logo "Drakon Admin", menu items, "Owner" + your email, Log out). On a phone: a bar on top with a **Menu** button that opens the same menu.
+- **Logout**: deletes the session on the server, forgets all loaded admin data in the tab, goes to the login page.
+- **Any 401 later** (session ended while you work) sends you back to the login page.
+- `<meta name="robots" content="noindex, nofollow">` on every admin page (and the API sends `X-Robots-Tag: noindex`).
+- No link to `/admin` anywhere in the shop (I checked the home page: 0 links containing "admin").
+
+### Why
+You need a safe door to the admin, and a frame that works on your phone, before the order screens go in.
+
+### Key concepts (for a beginner)
+- **The browser cannot see the cookie** (HttpOnly). So the web app cannot know by itself if you are logged in; it asks the server (`/api/admin/me`) when the admin opens.
+- **Auth guard**: a component that sits in front of the admin pages. Not logged in → it renders `<Navigate to="/admin/login">` instead of the page.
+- **Code splitting** (`lazy(() => import(...))`): Vite puts the admin into its own JavaScript file, downloaded only when someone opens `/admin`. The security is still on the server: hiding code is not protection, the session check is.
+
+### How to test it yourself
+```zsh
+cd ~/Desktop/projects/Drakon/drakon/api && make run        # terminal 1
+cd ~/Desktop/projects/Drakon/drakon/web && npm run dev     # terminal 2
+```
+1. Open http://localhost:5173/admin → you land on **/admin/login**.
+2. Type a wrong password → "Wrong email or password. After 5 wrong tries in a row, login pauses for 15 minutes."
+3. Log in with `owner@drakon.local` and the password from `.env` (`DEV_ADMIN_PASSWORD`) → the Dashboard.
+4. Make the window narrow (or use your phone): the menu moves into the top bar.
+5. **Log out** → back to the login page. Press the browser's Back button: still the login page.
+
+### Decisions and questions
+- I checked the login page in Chrome through page scripts: the guard redirect, the error message, `aria-invalid` and the `noindex` tag work. **Screenshots failed** (Chrome did not answer screenshot requests, probably because the window was not visible), so I could not look at the design with my own eyes.
+- **I did not test the logged-in pages in the browser.** To do that I would have had to copy a session token into the browser, and the safety system blocked reading the token (correct: it is a credential). I ended that test session and deleted the files. Please click through the logged-in pages in the morning (checklist at the end).
+- No `robots.txt` entry for `/admin`: a robots.txt line would *tell* everyone where the admin is. The `noindex` tag and header are enough.
+- No "Forgot password?" email link (no email yet). The login page says to run `make reset-password` on the server.
