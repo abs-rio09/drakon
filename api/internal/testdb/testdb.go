@@ -34,7 +34,7 @@ const lockKey = 7_336_001
 
 // tables that tests fill. Reset empties them.
 var appTables = []string{
-	"admin_sessions", "admins",
+	"return_items", "returns", "admin_sessions", "admins",
 	"product_events", "inventory_movements", "blocked_phones", "payments",
 	"order_status_history", "order_items", "orders",
 	"product_variants", "product_images", "product_details", "products", "categories",

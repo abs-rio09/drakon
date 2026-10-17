@@ -333,6 +333,7 @@ func TestEveryAdminRouteNeedsASession(t *testing.T) {
 		{"GET", "/api/admin/orders/DRK-AAAAAA"},
 		{"POST", "/api/admin/orders/DRK-AAAAAA/status"},
 		{"PUT", "/api/admin/orders/DRK-AAAAAA/note"},
+		{"POST", "/api/admin/orders/DRK-AAAAAA/returns"},
 		{"GET", "/api/admin/blocked-phones"},
 		{"POST", "/api/admin/blocked-phones"},
 		{"POST", "/api/admin/blocked-phones/unblock"},

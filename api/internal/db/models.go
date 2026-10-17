@@ -94,6 +94,48 @@ func (ns NullAdminRole) Value() (driver.Value, error) {
 	return string(ns.AdminRole), nil
 }
 
+type DeliveryPayer string
+
+const (
+	DeliveryPayerCOMPANY  DeliveryPayer = "COMPANY"
+	DeliveryPayerCUSTOMER DeliveryPayer = "CUSTOMER"
+)
+
+func (e *DeliveryPayer) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = DeliveryPayer(s)
+	case string:
+		*e = DeliveryPayer(s)
+	default:
+		return fmt.Errorf("unsupported scan type for DeliveryPayer: %T", src)
+	}
+	return nil
+}
+
+type NullDeliveryPayer struct {
+	DeliveryPayer DeliveryPayer
+	Valid         bool // Valid is true if DeliveryPayer is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullDeliveryPayer) Scan(value interface{}) error {
+	if value == nil {
+		ns.DeliveryPayer, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.DeliveryPayer.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullDeliveryPayer) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.DeliveryPayer), nil
+}
+
 type InventoryReason string
 
 const (
@@ -357,6 +399,132 @@ func (ns NullProductStatus) Value() (driver.Value, error) {
 	return string(ns.ProductStatus), nil
 }
 
+type RefundMethod string
+
+const (
+	RefundMethodBKASH RefundMethod = "BKASH"
+	RefundMethodNAGAD RefundMethod = "NAGAD"
+	RefundMethodCASH  RefundMethod = "CASH"
+)
+
+func (e *RefundMethod) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = RefundMethod(s)
+	case string:
+		*e = RefundMethod(s)
+	default:
+		return fmt.Errorf("unsupported scan type for RefundMethod: %T", src)
+	}
+	return nil
+}
+
+type NullRefundMethod struct {
+	RefundMethod RefundMethod
+	Valid        bool // Valid is true if RefundMethod is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullRefundMethod) Scan(value interface{}) error {
+	if value == nil {
+		ns.RefundMethod, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.RefundMethod.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullRefundMethod) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.RefundMethod), nil
+}
+
+type ReturnReason string
+
+const (
+	ReturnReasonCOMPANYFAULT ReturnReason = "COMPANY_FAULT"
+	ReturnReasonOTHER        ReturnReason = "OTHER"
+)
+
+func (e *ReturnReason) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = ReturnReason(s)
+	case string:
+		*e = ReturnReason(s)
+	default:
+		return fmt.Errorf("unsupported scan type for ReturnReason: %T", src)
+	}
+	return nil
+}
+
+type NullReturnReason struct {
+	ReturnReason ReturnReason
+	Valid        bool // Valid is true if ReturnReason is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullReturnReason) Scan(value interface{}) error {
+	if value == nil {
+		ns.ReturnReason, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.ReturnReason.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullReturnReason) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.ReturnReason), nil
+}
+
+type ReturnStatus string
+
+const (
+	ReturnStatusCOMPLETED ReturnStatus = "COMPLETED"
+)
+
+func (e *ReturnStatus) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = ReturnStatus(s)
+	case string:
+		*e = ReturnStatus(s)
+	default:
+		return fmt.Errorf("unsupported scan type for ReturnStatus: %T", src)
+	}
+	return nil
+}
+
+type NullReturnStatus struct {
+	ReturnStatus ReturnStatus
+	Valid        bool // Valid is true if ReturnStatus is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullReturnStatus) Scan(value interface{}) error {
+	if value == nil {
+		ns.ReturnStatus, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.ReturnStatus.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullReturnStatus) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.ReturnStatus), nil
+}
+
 type Admin struct {
 	ID             int64
 	Email          string
@@ -560,6 +728,30 @@ type ProductVariant struct {
 	ImageIndex *int32
 	SortOrder  int32
 	IsActive   bool
+}
+
+type Return struct {
+	ID             int64
+	OrderID        int64
+	ReasonType     ReturnReason
+	Note           string
+	DeliveryPaidBy DeliveryPayer
+	RefundPaisa    int64
+	Currency       string
+	RefundMethod   *RefundMethod
+	RefundRef      string
+	Status         ReturnStatus
+	ByAdminID      int64
+	CreatedAt      time.Time
+}
+
+type ReturnItem struct {
+	ID          int64
+	ReturnID    int64
+	OrderItemID int64
+	VariantID   int64
+	Qty         int32
+	Resellable  bool
 }
 
 type Setting struct {

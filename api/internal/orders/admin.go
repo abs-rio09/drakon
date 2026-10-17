@@ -157,6 +157,7 @@ func AdminMove(ctx context.Context, pool *pgxpool.Pool, number string, m Move, a
 // ---------- What the admin sees ----------
 
 type AdminItem struct {
+	ID             int64  `json:"id"` // the order line (returns point to it)
 	VariantID      int64  `json:"variantId"`
 	ProductID      int64  `json:"productId"`
 	ProductSlug    string `json:"productSlug"`
@@ -167,6 +168,7 @@ type AdminItem struct {
 	Qty            int    `json:"qty"`
 	UnitPricePaisa int64  `json:"unitPricePaisa"`
 	LineTotalPaisa int64  `json:"lineTotalPaisa"`
+	ReturnedQty    int32  `json:"returnedQty"` // pieces of this line already returned
 }
 
 type AdminStep struct {
@@ -235,6 +237,9 @@ type AdminOrder struct {
 	// The same phone's other orders: {"DELIVERED": 1, "CANCELLED": 2}.
 	PhoneHistory map[string]int64 `json:"phoneHistory"`
 	PhoneBlocked bool             `json:"phoneBlocked"`
+	// DELIVERED only: the last moment a return can be recorded (return_days).
+	ReturnUntil   *time.Time `json:"returnUntil"`
+	RefundedPaisa int64      `json:"refundedPaisa"`
 }
 
 // cancelsAt: when the sweep cancels a PENDING order.
@@ -278,9 +283,17 @@ func LoadAdminOrder(ctx context.Context, q *db.Queries, number string, set setti
 	if err != nil {
 		return nil, err
 	}
+	returnedRows, err := q.ReturnedQtyByOrderItem(ctx, o.ID)
+	if err != nil {
+		return nil, err
+	}
+	returned := map[int64]int32{}
+	for _, r := range returnedRows {
+		returned[r.OrderItemID] = r.Qty
+	}
 	for _, it := range items {
 		a.Items = append(a.Items, AdminItem{
-			VariantID: it.VariantID, ProductID: it.ProductID, ProductSlug: it.ProductSlug,
+			ID: it.ID, ReturnedQty: returned[it.ID], VariantID: it.VariantID, ProductID: it.ProductID, ProductSlug: it.ProductSlug,
 			ProductName: it.ProductName, VariantLabel: it.VariantLabel, SKU: it.Sku, Thumb: it.Thumb,
 			Qty: int(it.Qty), UnitPricePaisa: it.UnitPricePaisa, LineTotalPaisa: it.LineTotalPaisa,
 		})
@@ -315,6 +328,13 @@ func LoadAdminOrder(ctx context.Context, q *db.Queries, number string, set setti
 		a.PhoneHistory[string(c.Status)] = c.N
 	}
 	if a.PhoneBlocked, err = q.IsPhoneBlocked(ctx, o.Phone); err != nil {
+		return nil, err
+	}
+	if o.Status == db.OrderStatusDELIVERED && o.DeliveredAt != nil {
+		until := o.DeliveredAt.Add(time.Duration(set.ReturnDays) * 24 * time.Hour)
+		a.ReturnUntil = &until
+	}
+	if a.RefundedPaisa, err = q.RefundedSoFar(ctx, o.ID); err != nil {
 		return nil, err
 	}
 	return a, nil
