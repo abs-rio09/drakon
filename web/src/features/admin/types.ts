@@ -129,3 +129,117 @@ export type BlockedPhone = { phone: string; reason: string; blockedAt: string; b
 
 // A return recorded on a delivered order (Phase 6).
 export type OrderReturn = { id: number }
+
+export type ProductStatus = 'DRAFT' | 'ACTIVE' | 'SOLD_OUT' | 'ARCHIVED'
+
+// One row of GET /api/admin/products
+export type AdminProductRow = {
+  id: number
+  slug: string
+  name: string
+  status: ProductStatus
+  isLimited: boolean
+  categorySlug: string
+  categoryName: string
+  thumb: string
+  variantCount: number
+  emptyVariants: number
+  totalStock: number
+  minPricePaisa: number
+  maxPricePaisa: number
+  featuredOrder: number | null
+  soldOutAt: string | null
+  archivedAt: string | null
+}
+
+export type AdminImage = { id: number; url: string; thumbUrl: string; shortName: string; alt: string; sortOrder: number }
+
+export type AdminVariant = {
+  id: number
+  sku: string
+  label: string
+  note: string
+  pricePaisa: number
+  currency: string
+  stock: number
+  imageIndex: number | null
+  sortOrder: number
+  isActive: boolean
+}
+
+export type ProductEvent = {
+  type: 'PUBLISH' | 'SOLD_OUT' | 'ARCHIVE' | 'REACTIVATE' | 'PRICE_FIX'
+  actor: 'CUSTOMER' | 'ADMIN' | 'SYSTEM'
+  reason: string
+  oldValue: string | null
+  newValue: string | null
+  adminEmail: string | null
+  at: string
+}
+
+export type StockMovement = {
+  variantId: number
+  sku: string
+  change: number
+  reason: 'ORDER' | 'CANCEL' | 'RETURN' | 'RESTOCK' | 'ADJUST'
+  note: string
+  orderNumber: string | null
+  adminEmail: string | null
+  at: string
+}
+
+// The form part of a product (POST / PUT /api/admin/products).
+export type ProductInput = {
+  name: string
+  slug: string
+  categorySlug: string
+  kind: string
+  variantKind: string
+  isLimited: boolean
+  editionSize: number | null
+  purchaseLimit: number | null
+  summary: string
+  story: string[]
+  details: { term: string; text: string }[]
+  successorSlug: string | null
+  featuredOrder: number | null
+}
+
+// GET /api/admin/products/{id}
+export type AdminProduct = ProductInput & {
+  id: number
+  categoryName: string
+  status: ProductStatus
+  soldOutAt: string | null
+  archivedAt: string | null
+  createdAt: string
+  updatedAt: string
+  images: AdminImage[]
+  variants: AdminVariant[]
+  totalStock: number
+  events: ProductEvent[]
+  movements: StockMovement[]
+  publishProblems: string[]
+}
+
+export type AdminCategory = {
+  id: number
+  slug: string
+  name: string
+  image: string
+  sortOrder: number
+  isActive: boolean
+  productCount: number
+}
+
+export type VariantInput = {
+  sku: string
+  label: string
+  note: string
+  pricePaisa: number
+  imageIndex: number | null
+  sortOrder: number
+  isActive?: boolean
+}
+
+export type ImageInput = { url: string; thumbUrl: string; shortName: string; alt: string }

@@ -3,7 +3,7 @@ import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router'
 import { useAdmin } from '../../features/admin/AdminContext'
 import { getDashboard } from '../../features/admin/adminApi'
 import { useApi } from '../../lib/useApi'
-import { BanIcon, ClipboardIcon, CloseIcon, DashboardIcon, LogOutIcon, MenuIcon } from '../icons'
+import { BanIcon, ClipboardIcon, CloseIcon, DashboardIcon, LogOutIcon, MenuIcon, TagIcon } from '../icons'
 import { ScrollManager } from '../layout/ScrollManager'
 
 // One row per admin page, in menu order (docs/design/screens/AdminNav.dc.html).
@@ -17,6 +17,7 @@ type NavItem = {
 const navItems: NavItem[] = [
   { to: '/admin', label: 'Dashboard', icon: DashboardIcon, end: true },
   { to: '/admin/orders', label: 'Orders', icon: ClipboardIcon },
+  { to: '/admin/products', label: 'Products', icon: TagIcon },
   { to: '/admin/blocked-phones', label: 'Blocked phones', icon: BanIcon },
 ]
 

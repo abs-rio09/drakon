@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
-import { statusNames } from '../../features/admin/format'
-import type { OrderStatus } from '../../features/admin/types'
+import { productStatusNames, statusNames } from '../../features/admin/format'
+import type { OrderStatus, ProductStatus } from '../../features/admin/types'
 
 // Small pieces shared by the admin order pages
 // (docs/design/screens/AdminOrders.dc.html and AdminOrder.dc.html).
@@ -43,5 +43,41 @@ export function AdminPanel({
       </div>
       {children}
     </section>
+  )
+}
+
+const productLook: Record<ProductStatus, string> = {
+  DRAFT: 'border-line bg-field text-ink-muted',
+  ACTIVE: 'border-line-strong text-ink-strong',
+  SOLD_OUT: 'border-line text-ink-muted',
+  ARCHIVED: 'border-line text-ink-subtle',
+}
+
+export function ProductStatusBadge({ status }: { status: ProductStatus }) {
+  return (
+    <span className={'inline-flex min-h-6 items-center rounded-full border px-3 text-micro whitespace-nowrap ' + productLook[status]}>
+      {productStatusNames[status]}
+    </span>
+  )
+}
+
+// "Limited" with a dot, or "Restockable" (AdminProducts.dc.html).
+export function LimitedTag({ limited }: { limited: boolean }) {
+  return limited ? (
+    <span className="inline-flex items-center gap-2 text-caption text-ink-strong">
+      <span aria-hidden="true" className="size-1.5 rounded-full bg-ink-strong" />
+      Limited
+    </span>
+  ) : (
+    <span className="text-caption text-ink-muted">Restockable</span>
+  )
+}
+
+// A small text message under a form: role=alert for errors.
+export function FormMessage({ error, children }: { error?: boolean; children: ReactNode }) {
+  return (
+    <p role={error ? 'alert' : 'status'} className={'text-label font-normal ' + (error ? 'text-danger-text' : 'text-ink-muted')}>
+      {children}
+    </p>
   )
 }

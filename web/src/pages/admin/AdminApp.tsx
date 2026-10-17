@@ -8,6 +8,8 @@ import AdminDashboard from './AdminDashboard'
 import AdminLogin from './AdminLogin'
 import AdminOrder from './AdminOrder'
 import AdminOrders from './AdminOrders'
+import AdminProductEdit from './AdminProductEdit'
+import AdminProducts from './AdminProducts'
 
 // Everything under /admin. Loaded only when someone opens /admin (a separate
 // file in the build), and never linked from the shop.
@@ -23,6 +25,9 @@ export default function AdminApp() {
             <Route index element={<AdminDashboard />} />
             <Route path="orders" element={<AdminOrders />} />
             <Route path="orders/:number" element={<AdminOrder />} />
+            <Route path="products" element={<AdminProducts />} />
+            <Route path="products/new" element={<AdminProductEdit />} />
+            <Route path="products/:id" element={<AdminProductEdit />} />
             <Route path="blocked-phones" element={<AdminBlockedPhones />} />
             <Route path="*" element={<AdminNotFound />} />
           </Route>
