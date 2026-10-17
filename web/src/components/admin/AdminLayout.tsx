@@ -1,7 +1,9 @@
 import { useState, type ComponentType, type ReactNode } from 'react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router'
 import { useAdmin } from '../../features/admin/AdminContext'
-import { CloseIcon, DashboardIcon, LogOutIcon, MenuIcon } from '../icons'
+import { getDashboard } from '../../features/admin/adminApi'
+import { useApi } from '../../lib/useApi'
+import { BanIcon, ClipboardIcon, CloseIcon, DashboardIcon, LogOutIcon, MenuIcon } from '../icons'
 import { ScrollManager } from '../layout/ScrollManager'
 
 // One row per admin page, in menu order (docs/design/screens/AdminNav.dc.html).
@@ -12,7 +14,24 @@ type NavItem = {
   end?: boolean // only active on exactly this URL (the dashboard)
 }
 
-const navItems: NavItem[] = [{ to: '/admin', label: 'Dashboard', icon: DashboardIcon, end: true }]
+const navItems: NavItem[] = [
+  { to: '/admin', label: 'Dashboard', icon: DashboardIcon, end: true },
+  { to: '/admin/orders', label: 'Orders', icon: ClipboardIcon },
+  { to: '/admin/blocked-phones', label: 'Blocked phones', icon: BanIcon },
+]
+
+// The orange bubble on Orders: how many wait for the confirmation call.
+function PendingBubble({ count }: { count: number }) {
+  if (count === 0) return null
+  return (
+    <span
+      aria-label={`${count} ${count === 1 ? 'order' : 'orders'} waiting for phone confirmation`}
+      className="grid h-5.5 min-w-5.5 place-items-center rounded-full bg-accent px-2 text-micro font-semibold text-on-accent tabular-nums"
+    >
+      {count}
+    </span>
+  )
+}
 
 // The small admin logo: ember "D" + "Drakon Admin".
 function AdminLogo() {
@@ -76,9 +95,13 @@ function AccountBox() {
 
 // The frame around every admin page. Desktop: a menu on the left.
 // Phone: a bar on top with a Menu button (you confirm orders from your phone).
-export function AdminLayout({ badges = {} }: { badges?: Record<string, ReactNode> }) {
+export function AdminLayout() {
   const [menuOpen, setMenuOpen] = useState(false)
   const { pathname } = useLocation()
+  // Counted again on every page change, so the bubble follows your work.
+  const counts = useApi(`admin:nav:${pathname}`, getDashboard)
+  const pending = counts.data?.counts.PENDING ?? 0
+  const badges: Record<string, ReactNode> = { '/admin/orders': <PendingBubble count={pending} /> }
   // Close the phone menu whenever the page changes.
   const [menuPath, setMenuPath] = useState(pathname)
   if (menuPath !== pathname) {
