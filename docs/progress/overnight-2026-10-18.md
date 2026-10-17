@@ -7,7 +7,7 @@ Written for Abu Bakkar Siddik, in simple English. Nothing in this run was pushed
 - [x] 0. Start: read the docs, clean git, database up, all checks pass
 - [x] 1. Admin accounts and login (API)
 - [x] 2. Admin shell (web)
-- [ ] 3. Orders admin (API + web)
+- [x] 3. Orders admin (API + web)
 - [ ] 4. Products admin (API + web)
 - [ ] 5. Categories, settings and delivery admin
 - [ ] 6. Returns
@@ -134,3 +134,66 @@ cd ~/Desktop/projects/Drakon/drakon/web && npm run dev     # terminal 2
 - **I did not test the logged-in pages in the browser.** To do that I would have had to copy a session token into the browser, and the safety system blocked reading the token (correct: it is a credential). I ended that test session and deleted the files. Please click through the logged-in pages in the morning (checklist at the end).
 - No `robots.txt` entry for `/admin`: a robots.txt line would *tell* everyone where the admin is. The `noindex` tag and header are enough.
 - No "Forgot password?" email link (no email yet). The login page says to run `make reset-password` on the server.
+
+---
+
+## Phase 3: orders admin (the daily work)
+
+### What I built
+**Migration `00005_order_admin.sql`**: `orders.admin_note` (the "Internal note" box in the design), `blocked_phones.blocked_by_admin_id`, an index for "newest orders first".
+
+**API** (`api/internal/orders/admin.go` = the rules, `api/internal/httpapi/admin_orders.go` = the endpoints):
+- `GET /api/admin/dashboard`: orders per status, orders placed today, cash collected (DELIVERED) today and in the last 7 days. "Today" = Bangladesh time.
+- `GET /api/admin/orders?status=&q=&limit=&offset=`: newest first. `q` finds the order number, the phone (typed in any format, `+880 1712-345678` works) or the buyer's name.
+- `GET /api/admin/orders/call-list`: PENDING orders, oldest first, with `cancelsAt` and `minutesLeft` (from `cod_confirm_hours`).
+- `GET /api/admin/orders/{number}`: everything: customer, delivery, gift, items (with SKU and photo), payments, the timeline with the admin's email, the internal note, the phone's other orders ("2 other orders: 1 delivered, 1 cancelled") and whether the phone is blocked.
+- `POST /api/admin/orders/{number}/status` `{to, reason, courierName, trackingCode}`. Only these moves:
+  - PENDING → CONFIRMED or CANCELLED
+  - CONFIRMED → SHIPPED (courier + tracking code required) or CANCELLED
+  - SHIPPED → DELIVERED (the COD payment becomes COLLECTED) or CANCELLED
+  - anything else → `409 BAD_TRANSITION`; a missing reason/courier/tracking → `422`.
+  - Every move is ONE transaction: the order row is locked (`FOR UPDATE`), the status changes, and a history row with `actor = ADMIN` and **your admin id** is written.
+  - Every cancel reuses `CancelLocked` (the same code as the buyer's cancel and the auto-cancel): stock back with `inventory_movements` CANCEL (now with your admin id), and a SOLD_OUT product with stock again becomes ACTIVE (REACTIVATE event with your id). The buyer sees "Cancelled by DRAKON: <your reason>".
+- `PUT /api/admin/orders/{number}/note` `{note}`: the internal note (never shown to the buyer).
+- Blocked phones: `GET /api/admin/blocked-phones`, `POST /api/admin/blocked-phones` `{phone, reason}`, `POST /api/admin/blocked-phones/unblock` `{phone}`.
+- **The sweep runs before** the dashboard, the lists, the order page and every status change (blueprint part 4). So you never see, or confirm, an order that should already be auto-cancelled.
+
+**Web**:
+- **Dashboard**: "To call today" (oldest first, time left, a `tel:` button per order), then the numbers.
+- **Orders** (AdminOrders.dc.html): search, the orange attention banner ("3 orders need a call. The oldest … has 47h left." + "Call DRK-…"), status tabs with counts, a table on desktop and stacked cards on a phone.
+- **Order page** (AdminOrder.dc.html): one "next step" panel per status:
+  - PENDING: the phone number as a `tel:` button, **Mark as confirmed**, Cancel order.
+  - CONFIRMED: courier (Steadfast / Pathao / RedX / Other) + tracking code → **Mark as shipped** (disabled until both are filled).
+  - SHIPPED: **Delivered, cash collected** → a second question "Did you receive ৳410 in cash?" → Yes / Not yet.
+  - Cancel always opens a form: the reason is required, and it says the pieces go back into stock and that it cannot be undone.
+  - Items with "Collect in cash" and the payment state, customer and delivery (phone is a `tel:` link), gift details, history (who and when), internal note, **Block this phone number** (with a reason).
+- **Blocked phones** page: list, unblock (asks once more), block a number.
+- The orange bubble on **Orders** in the menu = orders waiting for a call.
+
+### Tests (all pass, also with `go test -race`)
+- Every one of the 25 from → to pairs: the 6 allowed moves work, every other one is refused and changes nothing.
+- Confirm → ship → deliver: 3 history rows with the admin id, payment COLLECTED with `collected_at`, courier saved, the buyer's tracking page shows "Shipped with Steadfast, tracking code …" but **not** the admin email.
+- Admin cancel from SHIPPED: stock back, CANCEL movements with the admin id, SOLD_OUT drone becomes ACTIVE with a REACTIVATE event by the admin, a second cancel is refused and adds no stock.
+- Validation (no tracking code, `to: PENDING`, unknown fields, bad order numbers), an expired PENDING order cannot be confirmed (the sweep cancels it first), dashboard numbers, call list order and time left, list filters and search, internal note (hidden from the buyer), phone history, block → the order is refused → unblock → ordering works again.
+- **Personal data stays out of the server log**: a test runs admin actions with a capturing logger and checks that no phone, name, address or password appears.
+- The "every admin route needs a session" table now has 11 routes.
+
+### Browser check (real clicks, Chrome)
+I made a **throwaway database `drakon_ui`** (same migrations + sample catalogue) with a throwaway test owner `ui-test@drakon.test`, so your dev database and your password were never touched. Then, through the real buttons: login → dashboard (3 calls, bubble "3") → Orders (banner, tabs, table) → order page: confirm, ship (button disabled until the tracking code is filled), deliver (with the extra question), cancel another order (stock 45 → 46), save a note, block the phone, see it on Blocked phones, log out (then `/api/admin/me` = 401). At **390 px** (phone width, tested in a 390-px frame): the side menu becomes the Menu bar, the table becomes cards, nothing scrolls sideways. The server log of that run has no errors and no personal data.
+
+### Key concepts (for a beginner)
+- **State machine**: an order can only move along the arrows above. The server keeps a small table of allowed moves (`nextMoves` in `orders/admin.go`) and refuses everything else, whatever the browser sends.
+- **Row lock (`SELECT … FOR UPDATE`)**: while one request changes an order, any other request that wants the same order waits. So the buyer's cancel, the auto-cancel and your click can never both happen.
+- **Reuse instead of copy**: cancelling (by buyer, by the server, by you) is one function. A bug fixed there is fixed for all three.
+- **`tel:` link**: on a phone, tapping it opens the dialer with the number filled in.
+
+### How to test it yourself
+See "Morning review checklist" at the end (confirm → ship → deliver, cancel and watch the stock).
+
+### Decisions and questions
+- Search also matches the **buyer's name** (the design's search box says "Order number, name or phone").
+- Unblocking is `POST …/blocked-phones/unblock` with the phone in the body, not `DELETE …/{phone}`: a phone number in the URL would be written to the server log.
+- A cancel by the shop shows the buyer "Cancelled by DRAKON: <reason>". Write reasons you are happy for the buyer to read.
+- SHIPPED → CANCELLED also puts the stock back (the parcel comes back to you). If a parcel is **lost**, you would need a stock ADJUST afterwards (Phase 4).
+- The payment row of a cancelled order stays PENDING (open question 8, VOID, is not built).
+- Courier list: Steadfast, Pathao, RedX, Other (free text). Tell me if you use others.
