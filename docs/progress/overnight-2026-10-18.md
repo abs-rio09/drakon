@@ -11,7 +11,7 @@ Written for Abu Bakkar Siddik, in simple English. Nothing in this run was pushed
 - [x] 4. Products admin (API + web)
 - [x] 5. Categories, settings and delivery admin
 - [x] 6. Returns
-- [ ] 7. Deploy-ready files (prepare only, deploy nothing)
+- [x] 7. Deploy-ready files (prepare only, deploy nothing)
 - [ ] 8. Final review pass
 
 ---
@@ -336,3 +336,31 @@ Deliver a test order (checklist), open it: the Returns panel is at the bottom of
 - For "Other reason" you may still choose "We pay the delivery" (goodwill). For "Our mistake" the customer paying is refused (policy).
 - A return does not change the order's status (still DELIVERED); the payment shows REFUNDED only when everything was refunded.
 - No separate `/admin/returns` list page yet (the sitemap has one). Returns are on each order's page.
+
+---
+
+## Phase 7: deploy-ready files (prepared, nothing deployed)
+
+### What I built
+- **`api/Dockerfile`**: two stages. Stage 1 builds a static Go binary (`CGO_ENABLED=0`, `-trimpath`, `-ldflags="-s -w"`) with the Go version from `go.mod`. Stage 2 is `gcr.io/distroless/static-debian12:nonroot`: only the binary and CA certificates (needed for Neon's TLS), no shell, **runs as a non-root user**, listens on **`$PORT`** (Render sets it). `api/.dockerignore` keeps `.env` and build output out of the image.
+- **`web/wrangler.jsonc`**: static assets from `./dist`, `not_found_handling: "single-page-application"`, `run_worker_first: ["/api/*"]`, `main: worker/index.ts`, and `API_ORIGIN` in `vars`.
+- **`web/worker/index.ts`** (~30 lines): `/api/*` goes to `API_ORIGIN` with the same path, query, method, body, **cookies and Origin header**, plus the visitor's IP from `CF-Connecting-IP` as `X-Real-IP` / `X-Forwarded-For`. The answer (with `Set-Cookie`) goes back unchanged. Redirects are passed on, not followed. No extra npm package: two small type definitions are enough. It type-checks with `tsc --strict`.
+- **`docs/deploy.md`**: the beginner guide: Neon (Singapore region, direct connection string), `goose up` against Neon (with `read -s` so the password is neither shown nor saved in zsh history), `cmd/admin create-owner` against Neon, Render (root `api`, Docker, free, health check `/api/health`, env vars), Cloudflare (`wrangler login`, `wrangler deploy`), the order to set `ALLOWED_ORIGINS`, a check list, a table of every environment variable, and photo handling until R2. Steps that need your accounts are marked 🔑.
+
+### Why
+So going live is a checklist, not a project. The code already expects this setup (one origin through the Worker, `COOKIE_SECURE`, `ALLOWED_ORIGINS`, `$PORT`).
+
+### Key concepts (for a beginner)
+- **Multi-stage build**: the first stage has the whole Go toolchain (~1 GB); the final image only has our binary (~15 MB). Smaller = faster to start and less to attack.
+- **Non-root**: if someone broke into the program, they would not be the administrator of the container.
+- **Why the Worker forwards `/api`**: the browser sees one site (`drakon.<you>.workers.dev`). The admin cookie is then a normal "first-party" cookie, which phone browsers (Safari!) do not block.
+
+### How to test it yourself
+Read `docs/deploy.md`. Optional: build the image on your PC (last section of the guide).
+
+### Decisions and questions
+- Context7 checked the Cloudflare Workers static-assets docs (`run_worker_first`, `not_found_handling`) and Docker's Go multi-stage guide.
+- **I did not build the Docker image tonight**: that downloads about 1 GB of base images, and the prompt said prepare only. The command is in the guide. I did not run `wrangler` or any login/deploy command.
+- Use Neon's **direct** connection string (not pooled): one small server needs few connections, and it avoids pooler surprises with prepared statements.
+- `compatibility_date` is `2026-10-15`. Wrangler may suggest a newer one when you deploy; that is fine.
+- The production database starts **without** categories and products (no seed there). Settings, delivery zones and the 64 districts come from the migrations.
