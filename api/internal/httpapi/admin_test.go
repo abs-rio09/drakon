@@ -354,6 +354,16 @@ func TestEveryAdminRouteNeedsASession(t *testing.T) {
 		{"DELETE", "/api/admin/images/1"},
 
 		{"GET", "/api/admin/categories"},
+		{"POST", "/api/admin/categories"},
+		{"PUT", "/api/admin/categories/order"},
+		{"PUT", "/api/admin/categories/1"},
+		{"GET", "/api/admin/settings"},
+		{"PUT", "/api/admin/settings"},
+		{"GET", "/api/admin/delivery"},
+		{"POST", "/api/admin/delivery/zones"},
+		{"PUT", "/api/admin/delivery/zones/1"},
+		{"POST", "/api/admin/delivery/areas"},
+		{"PUT", "/api/admin/delivery/areas/1"},
 	}
 
 	c := newAdminClient(t, s)

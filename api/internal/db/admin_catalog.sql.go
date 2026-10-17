@@ -7,7 +7,140 @@ package db
 
 import (
 	"context"
+	"time"
 )
+
+const countActiveAreasInZone = `-- name: CountActiveAreasInZone :one
+SELECT count(*)::int FROM delivery_areas WHERE zone_id = $1 AND is_active
+`
+
+func (q *Queries) CountActiveAreasInZone(ctx context.Context, zoneID int64) (int32, error) {
+	row := q.db.QueryRow(ctx, countActiveAreasInZone, zoneID)
+	var column_1 int32
+	err := row.Scan(&column_1)
+	return column_1, err
+}
+
+const districtExists = `-- name: DistrictExists :one
+SELECT EXISTS (SELECT 1 FROM delivery_areas WHERE district = $1)
+`
+
+func (q *Queries) DistrictExists(ctx context.Context, district string) (bool, error) {
+	row := q.db.QueryRow(ctx, districtExists, district)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
+const insertArea = `-- name: InsertArea :one
+INSERT INTO delivery_areas (district, area_label, hint, zone_id, sort_order, is_active)
+VALUES ($1, $2, $3, $4,
+        (SELECT COALESCE(max(sort_order) + 1, 0) FROM delivery_areas WHERE district = $1), true)
+RETURNING id
+`
+
+type InsertAreaParams struct {
+	District  string
+	AreaLabel string
+	Hint      string
+	ZoneID    int64
+}
+
+func (q *Queries) InsertArea(ctx context.Context, arg InsertAreaParams) (int64, error) {
+	row := q.db.QueryRow(ctx, insertArea,
+		arg.District,
+		arg.AreaLabel,
+		arg.Hint,
+		arg.ZoneID,
+	)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
+}
+
+const insertCategory = `-- name: InsertCategory :one
+INSERT INTO categories (slug, name, image_url, sort_order, is_active)
+VALUES ($1, $2, $3, (SELECT COALESCE(max(sort_order) + 1, 1) FROM categories), $4)
+RETURNING id
+`
+
+type InsertCategoryParams struct {
+	Slug     string
+	Name     string
+	ImageUrl string
+	IsActive bool
+}
+
+func (q *Queries) InsertCategory(ctx context.Context, arg InsertCategoryParams) (int64, error) {
+	row := q.db.QueryRow(ctx, insertCategory,
+		arg.Slug,
+		arg.Name,
+		arg.ImageUrl,
+		arg.IsActive,
+	)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
+}
+
+const insertZone = `-- name: InsertZone :one
+INSERT INTO delivery_zones (code, name, charge_paisa, free_over_paisa, sort_order, is_active)
+VALUES ($1, $2, $3, $4, (SELECT COALESCE(max(sort_order) + 1, 1) FROM delivery_zones), true)
+RETURNING id
+`
+
+type InsertZoneParams struct {
+	Code          string
+	Name          string
+	ChargePaisa   int64
+	FreeOverPaisa *int64
+}
+
+func (q *Queries) InsertZone(ctx context.Context, arg InsertZoneParams) (int64, error) {
+	row := q.db.QueryRow(ctx, insertZone,
+		arg.Code,
+		arg.Name,
+		arg.ChargePaisa,
+		arg.FreeOverPaisa,
+	)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
+}
+
+const listAdminAreas = `-- name: ListAdminAreas :many
+SELECT a.id, a.district, a.area_label, a.hint, a.zone_id, a.sort_order, a.is_active
+FROM delivery_areas a
+ORDER BY a.district, a.sort_order, a.id
+`
+
+func (q *Queries) ListAdminAreas(ctx context.Context) ([]DeliveryArea, error) {
+	rows, err := q.db.Query(ctx, listAdminAreas)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []DeliveryArea
+	for rows.Next() {
+		var i DeliveryArea
+		if err := rows.Scan(
+			&i.ID,
+			&i.District,
+			&i.AreaLabel,
+			&i.Hint,
+			&i.ZoneID,
+			&i.SortOrder,
+			&i.IsActive,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
 
 const listAdminCategories = `-- name: ListAdminCategories :many
 
@@ -55,4 +188,213 @@ func (q *Queries) ListAdminCategories(ctx context.Context) ([]ListAdminCategorie
 		return nil, err
 	}
 	return items, nil
+}
+
+const listAdminZones = `-- name: ListAdminZones :many
+SELECT z.id, z.code, z.name, z.charge_paisa, z.free_over_paisa, z.currency, z.sort_order, z.is_active,
+       (SELECT count(*) FROM delivery_areas a WHERE a.zone_id = z.id AND a.is_active)::int AS active_areas
+FROM delivery_zones z
+ORDER BY z.sort_order, z.id
+`
+
+type ListAdminZonesRow struct {
+	ID            int64
+	Code          string
+	Name          string
+	ChargePaisa   int64
+	FreeOverPaisa *int64
+	Currency      string
+	SortOrder     int32
+	IsActive      bool
+	ActiveAreas   int32
+}
+
+func (q *Queries) ListAdminZones(ctx context.Context) ([]ListAdminZonesRow, error) {
+	rows, err := q.db.Query(ctx, listAdminZones)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListAdminZonesRow
+	for rows.Next() {
+		var i ListAdminZonesRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Code,
+			&i.Name,
+			&i.ChargePaisa,
+			&i.FreeOverPaisa,
+			&i.Currency,
+			&i.SortOrder,
+			&i.IsActive,
+			&i.ActiveAreas,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listAllSettings = `-- name: ListAllSettings :many
+SELECT key, value, description, updated_at FROM settings ORDER BY key
+`
+
+func (q *Queries) ListAllSettings(ctx context.Context) ([]Setting, error) {
+	rows, err := q.db.Query(ctx, listAllSettings)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Setting
+	for rows.Next() {
+		var i Setting
+		if err := rows.Scan(
+			&i.Key,
+			&i.Value,
+			&i.Description,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const productSlugOnSale = `-- name: ProductSlugOnSale :one
+SELECT EXISTS (SELECT 1 FROM products WHERE slug = $1 AND status <> 'DRAFT')
+`
+
+// For the home hero: a product the shop can show (not a draft).
+func (q *Queries) ProductSlugOnSale(ctx context.Context, slug string) (bool, error) {
+	row := q.db.QueryRow(ctx, productSlugOnSale, slug)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
+const setCategoryOrder = `-- name: SetCategoryOrder :exec
+UPDATE categories SET sort_order = $2 WHERE id = $1
+`
+
+type SetCategoryOrderParams struct {
+	ID        int64
+	SortOrder int32
+}
+
+func (q *Queries) SetCategoryOrder(ctx context.Context, arg SetCategoryOrderParams) error {
+	_, err := q.db.Exec(ctx, setCategoryOrder, arg.ID, arg.SortOrder)
+	return err
+}
+
+const updateArea = `-- name: UpdateArea :execrows
+UPDATE delivery_areas SET area_label = $2, hint = $3, zone_id = $4, is_active = $5 WHERE id = $1
+`
+
+type UpdateAreaParams struct {
+	ID        int64
+	AreaLabel string
+	Hint      string
+	ZoneID    int64
+	IsActive  bool
+}
+
+func (q *Queries) UpdateArea(ctx context.Context, arg UpdateAreaParams) (int64, error) {
+	result, err := q.db.Exec(ctx, updateArea,
+		arg.ID,
+		arg.AreaLabel,
+		arg.Hint,
+		arg.ZoneID,
+		arg.IsActive,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
+const updateCategory = `-- name: UpdateCategory :execrows
+UPDATE categories SET name = $2, image_url = $3, is_active = $4 WHERE id = $1
+`
+
+type UpdateCategoryParams struct {
+	ID       int64
+	Name     string
+	ImageUrl string
+	IsActive bool
+}
+
+func (q *Queries) UpdateCategory(ctx context.Context, arg UpdateCategoryParams) (int64, error) {
+	result, err := q.db.Exec(ctx, updateCategory,
+		arg.ID,
+		arg.Name,
+		arg.ImageUrl,
+		arg.IsActive,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
+const updateSetting = `-- name: UpdateSetting :execrows
+UPDATE settings SET value = $2, updated_at = $3 WHERE key = $1
+`
+
+type UpdateSettingParams struct {
+	Key   string
+	Value []byte
+	At    time.Time
+}
+
+func (q *Queries) UpdateSetting(ctx context.Context, arg UpdateSettingParams) (int64, error) {
+	result, err := q.db.Exec(ctx, updateSetting, arg.Key, arg.Value, arg.At)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
+const updateZone = `-- name: UpdateZone :execrows
+UPDATE delivery_zones SET name = $2, charge_paisa = $3, free_over_paisa = $4, is_active = $5 WHERE id = $1
+`
+
+type UpdateZoneParams struct {
+	ID            int64
+	Name          string
+	ChargePaisa   int64
+	FreeOverPaisa *int64
+	IsActive      bool
+}
+
+func (q *Queries) UpdateZone(ctx context.Context, arg UpdateZoneParams) (int64, error) {
+	result, err := q.db.Exec(ctx, updateZone,
+		arg.ID,
+		arg.Name,
+		arg.ChargePaisa,
+		arg.FreeOverPaisa,
+		arg.IsActive,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
+const zoneExists = `-- name: ZoneExists :one
+SELECT EXISTS (SELECT 1 FROM delivery_zones WHERE id = $1)
+`
+
+func (q *Queries) ZoneExists(ctx context.Context, id int64) (bool, error) {
+	row := q.db.QueryRow(ctx, zoneExists, id)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
 }

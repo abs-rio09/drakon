@@ -39,5 +39,15 @@ func (s *Server) adminRoutes() []adminRoute {
 
 		// Categories, settings, delivery (admin_catalog.go)
 		{"GET", "/api/admin/categories", s.handleAdminCategories},
+		{"POST", "/api/admin/categories", s.handleAdminCreateCategory},
+		{"PUT", "/api/admin/categories/order", s.handleAdminCategoryOrder},
+		{"PUT", "/api/admin/categories/{id}", s.handleAdminUpdateCategory},
+		{"GET", "/api/admin/settings", s.handleAdminSettings},
+		{"PUT", "/api/admin/settings", s.handleAdminUpdateSettings},
+		{"GET", "/api/admin/delivery", s.handleAdminDelivery},
+		{"POST", "/api/admin/delivery/zones", s.handleAdminCreateZone},
+		{"PUT", "/api/admin/delivery/zones/{id}", s.handleAdminUpdateZone},
+		{"POST", "/api/admin/delivery/areas", s.handleAdminCreateArea},
+		{"PUT", "/api/admin/delivery/areas/{id}", s.handleAdminUpdateArea},
 	}
 }
