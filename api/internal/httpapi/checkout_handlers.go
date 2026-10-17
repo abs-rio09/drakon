@@ -5,10 +5,11 @@ import (
 	"net/http"
 
 	"github.com/abs-rio09/drakon/api/internal/orders"
+	"github.com/abs-rio09/drakon/api/internal/products"
 	"github.com/abs-rio09/drakon/api/internal/settings"
 )
 
-// asAPIError turns an orders.InputError into the shared error shape.
+// asAPIError turns a refusal from orders or products into the shared error shape.
 // Anything else is returned unchanged (and becomes a 500).
 func asAPIError(err error) error {
 	var in *orders.InputError
@@ -24,6 +25,10 @@ func asAPIError(err error) error {
 	}
 	if errors.Is(err, orders.ErrCannotCancel) {
 		return errorf(http.StatusConflict, "CANNOT_CANCEL", "This order can no longer be cancelled online (it has shipped or is closed). Please contact us.")
+	}
+	var prod *products.Error
+	if errors.As(err, &prod) {
+		return &apiError{Status: prod.Status, Code: prod.Code, Message: prod.Message, Fields: prod.Fields}
 	}
 	var refused *orders.RefusedError
 	if errors.As(err, &refused) {

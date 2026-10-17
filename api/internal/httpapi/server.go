@@ -15,6 +15,7 @@ import (
 
 	"github.com/abs-rio09/drakon/api/internal/auth"
 	"github.com/abs-rio09/drakon/api/internal/db"
+	"github.com/abs-rio09/drakon/api/internal/images"
 )
 
 type Server struct {
@@ -22,6 +23,9 @@ type Server struct {
 	q    *db.Queries
 	log  *slog.Logger
 	opts Options
+	// images checks (and later uploads) product photos. Links for now;
+	// Cloudflare R2 later (internal/images).
+	images images.Store
 	// now returns the current time. Tests can replace it.
 	now func() time.Time
 }
@@ -34,7 +38,7 @@ type Options struct {
 
 func NewServer(pool *pgxpool.Pool, logger *slog.Logger, opts Options) *Server {
 	auth.WarmUp()
-	return &Server{pool: pool, q: db.New(pool), log: logger, opts: opts, now: time.Now}
+	return &Server{pool: pool, q: db.New(pool), log: logger, opts: opts, images: images.Links{}, now: time.Now}
 }
 
 // handlerFunc is like http.HandlerFunc but may return an error. An *apiError
