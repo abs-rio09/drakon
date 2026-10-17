@@ -9,7 +9,7 @@ Written for Abu Bakkar Siddik, in simple English. Nothing in this run was pushed
 - [x] 2. Admin shell (web)
 - [x] 3. Orders admin (API + web)
 - [x] 4. Products admin (API + web)
-- [ ] 5. Categories, settings and delivery admin
+- [x] 5. Categories, settings and delivery admin
 - [ ] 6. Returns
 - [ ] 7. Deploy-ready files (prepare only, deploy nothing)
 - [ ] 8. Final review pass
@@ -252,3 +252,51 @@ See the morning checklist ("publish a product, then try the price-fix").
 - Removing a photo from a DRAFT is fine even if it is the last one; a live product keeps at least one.
 - There is no separate "Stock" page yet (the design menu has one). Stock is changed on each product's page. A "low stock across all products" page would be a small addition later.
 - Photo upload waits for Cloudflare R2. For now: copy the file into `web/public/img/` and type `/img/the-file.webp`.
+
+---
+
+## Phase 5: categories, settings and delivery admin
+
+### What I built
+**API** (`api/internal/httpapi/admin_catalog.go`, limits in `api/internal/settings/rules.go`):
+- Categories: `GET /api/admin/categories`, `POST /api/admin/categories` `{name, slug?, image}`, `PUT /api/admin/categories/{id}` `{name, image, isActive}`, `PUT /api/admin/categories/order` `{ids}`. **Never deleted.** The address (`/shop/<slug>`) cannot change after creation, so shared links keep working. A category that still has products can be turned off.
+- Settings: `GET /api/admin/settings` (every key with its value, label, min, max, unit), `PUT /api/admin/settings` `{values: {key: value}}`. **All or nothing**: one bad value and nothing is saved. Limits:
+
+| Setting | Allowed |
+|---|---|
+| cod_confirm_hours | 1–168 hours |
+| default_purchase_limit | 1–50 |
+| return_days | 0–30 days |
+| archive_after_days | 0–90 days |
+| free_delivery_enabled | on / off |
+| low_stock_threshold | 0–100 |
+| gift_note_max_chars, courier_note_max_chars | 20–500 |
+| home_hero_product_slug | a published product, or none |
+| login_max_failures | 3–20 |
+| login_lockout_minutes | 1–1440 |
+
+- Delivery: `GET /api/admin/delivery` (zones, all 65 areas, free delivery on/off), `POST /api/admin/delivery/zones`, `PUT /api/admin/delivery/zones/{id}` `{name, chargePaisa, freeOverPaisa, isActive}`, `POST /api/admin/delivery/areas` `{district, label, hint, zoneId}`, `PUT /api/admin/delivery/areas/{id}` `{label, hint, zoneId, isActive}`. A zone that still has areas cannot be turned off (`409 ZONE_IN_USE`). An area cannot move to another district. A zone's code cannot change (orders keep it).
+- A test checks that **every setting has a rule**, so a new setting can't be forgotten in the admin.
+
+**Web**: **Categories** (add, rename, tile photo, on/off with a note "its products stay", move ↑ ↓), **Settings** (five groups: Orders, Checkout notes, Delivery, Home page with a product picker, Admin login; one "Save N changes" button), **Delivery** (zones with charge and "free over", free delivery on/off, new zone, every district with its areas and zones, a search box, "Split Chattogram: add an area").
+
+**The shop shows new values at once**: the Go API reads the tables on every request (nothing is cached on the server), and the website asks the API when a page opens. No rebuild, no restart. Tested: a new charge of ৳70 is in `/api/delivery/areas` and in the next quote immediately; an order placed before keeps its ৳60.
+
+### Tests
+Categories (create, duplicate address, rename + turn off a category with products → it leaves `/api/categories` but its 3 products stay, slug cannot change, no DELETE, reorder, bad reorder), settings (all limits, unknown key, wrong type, hero must be published, all-or-nothing, the shop sees the change, hero "none", the lockout number is used by the login at once), delivery (new charge in the quote, old order keeps its charge, negative charge refused, free delivery over ৳1,500 on, a used zone cannot be turned off, a new zone + "Chattogram city" area + rename of the old one → the checkout asks city/outside, move "Outside Dhaka city" into the inside zone).
+
+### Browser check (throwaway `drakon_ui`)
+Delivery: Inside Dhaka ৳60 → ৳70, the shop API showed 7000 at once; split Chattogram. Settings: 500 hours was refused with "Use 1 to 168 hours. / Nothing was saved."; 36 hours + Night Striker as the hero were saved and the shop API showed both. Categories list with product counts. All three pages fit a 390-px phone. (I set the values back afterwards.)
+
+### Key concepts (for a beginner)
+- **All or nothing** (a transaction again): the settings are saved in one transaction, so a half-saved form can't happen.
+- **Validation lives on the server**: the web shows the limits, but the Go code checks them again. A changed browser can't save 0 hours.
+
+### How to test it yourself
+See the morning checklist ("change the delivery charge and see it on checkout").
+
+### Decisions and questions
+- **Turning a category off** hides it from the menu and the collection tiles. Its products stay on sale (direct links and search still find them). To take products off sale, archive them. Tell me if "off" should also hide its products.
+- A new area starts in the zone of the district's other area (you can change it in the form).
+- Free delivery on/off is the setting `free_delivery_enabled` (also on the Delivery page); the amount is per zone ("free over").
+- Open question 11 (hero product in Settings): built, as recommended.
