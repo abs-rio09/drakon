@@ -71,4 +71,8 @@ Open decisions: `docs/open-questions.md` — **do not build anything marked 🟡
 - tests use the `drakon_test` database (auto-created, wiped per run). Never point tests at `drakon`.
 - web: `cd web && npm run dev` (http://localhost:5173); checks: `npm run build` and `npm run lint`
 - Go tools live in `$(go env GOPATH)/bin` (goose, sqlc)
+- admin: `cd api && make dev-owner` (local only; password saved in repo-root `.env` as `DEV_ADMIN_PASSWORD`, never print it), `make create-owner EMAIL=…`, `make reset-password EMAIL=…` (`cmd/admin`, password typed hidden)
+- admin web: http://localhost:5173/admin (never link it from the shop). Every new `/api/admin` route goes into `api/internal/httpapi/admin_routes.go` AND the table in `TestEveryAdminRouteNeedsASession`
+- admin curl: changes need `-H 'Origin: http://localhost:5173'` and a cookie jar (`-c`/`-b`); see `docs/api.md`
+- deploy (not done yet): `docs/deploy.md` (`api/Dockerfile`, `web/wrangler.jsonc`, `web/worker/index.ts`)
 - Endpoints: `docs/api.md`
