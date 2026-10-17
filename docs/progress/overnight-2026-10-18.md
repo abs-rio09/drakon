@@ -12,7 +12,7 @@ Written for Abu Bakkar Siddik, in simple English. Nothing in this run was pushed
 - [x] 5. Categories, settings and delivery admin
 - [x] 6. Returns
 - [x] 7. Deploy-ready files (prepare only, deploy nothing)
-- [ ] 8. Final review pass
+- [x] 8. Final review pass
 
 ---
 
@@ -364,3 +364,231 @@ Read `docs/deploy.md`. Optional: build the image on your PC (last section of the
 - Use Neon's **direct** connection string (not pooled): one small server needs few connections, and it avoids pooler surprises with prepared statements.
 - `compatibility_date` is `2026-10-15`. Wrangler may suggest a newer one when you deploy; that is fine.
 - The production database starts **without** categories and products (no seed there). Settings, delivery zones and the 64 districts come from the migrations.
+
+---
+
+## Phase 8: final review pass
+
+### Security self-review (every rule from the prompt)
+| Rule | Status |
+|---|---|
+| Every admin endpoint needs a session, except login | ✅ one route table; `TestEveryAdminRouteNeedsASession` lists all **38** routes (plus login) and fails if a route is added without it |
+| Session: 32 random bytes, only the SHA-256 stored | ✅ (tested: the hash is in the table, the token is not) |
+| Cookie HttpOnly, SameSite=Lax, Path=/api/admin, Secure (configurable) | ✅ |
+| 12 h idle, 7 days max, logout deletes | ✅ tested with a clock the test moves |
+| bcrypt cost 12; same answer and similar time for wrong email / password | ✅ dummy hash; tested that both answers are byte-for-byte equal and both take bcrypt time |
+| Lockout 5 → 15 min, both in `settings` | ✅ |
+| CSRF: Origin must be allowed on every change, else 403 | ✅ also for login; a missing or `null` Origin is refused too |
+| no-store, noindex, no link to /admin | ✅ API headers + `<meta name="robots">` + `web/public/_headers`; the shop has 0 links to /admin |
+| Personal data only for the admin, never in the server log | ✅ the public order view still has none; a test scans the log after admin actions |
+| Admin id on history, product events, stock book | ✅ plus returns and blocked phones |
+| Hard rules (no delete, price lock, stock ≥ 0, allowed moves) | ✅ each has tests |
+
+**Fixed during the review**
+- **Clickjacking**: another site could show the admin inside an invisible frame and trick your clicks. Now every API answer sends `X-Frame-Options: DENY` (+ `nosniff`, `Referrer-Policy: no-referrer`), and on Cloudflare `web/public/_headers` adds `frame-ancestors 'none'` to every page (and `noindex` + `no-store` to `/admin/*`). Test: `TestSecurityHeaders`.
+- Earlier in the night (found by my own checks): nested `<form>` tags on the product page (an inner button would have saved the outer form), the clock read during render (lint), `৳2,100.5` instead of `৳2,100.50` (also on the shop), and one commit that went in before gofmt (fixed in a new commit, `f341661`; history not rewritten).
+
+**Known limits (not bugs, but you should know)**
+- Lockout can be used against you: someone who knows your admin email can keep login paused by typing wrong passwords. Fix: IP rate limiting / Turnstile (open question 4, new question 14). Meanwhile `make reset-password` unlocks at once.
+- Changes to settings, categories and delivery are not recorded with an admin id (question 15).
+- The admin JavaScript contains the route `/admin` (anyone reading the code can find the address). That is fine: the address is hidden, the **session** is the protection.
+
+### Docs updated
+- `README.md`: the admin panel, `make dev-owner`, the admin account commands, status.
+- `CLAUDE.md` Commands: admin tool, admin web, the route-table rule, curl with Origin + cookie jar, deploy files.
+- `docs/api.md`: **every admin endpoint with a curl example** (cookie jar `-c`/`-b`, the Origin header) and all admin error codes. I ran the read examples, login, logout and the bad-Origin example against a real server: they answer as written.
+- `docs/open-questions.md`: questions 12–18 added; 11 marked as built.
+- `docs/deploy.md` (Phase 7).
+
+### Final checks
+- `make check`: gofmt clean, go vet clean, **103 Go tests pass** (57 before tonight). Also `go test -race ./...`: no data races.
+- `npm run build` and `npm run lint`: 0 errors, 0 warnings.
+
+### Clean-up
+- Stopped every server I started (API and Vite); port 8080 and 5173 are free.
+- Dropped my throwaway test database **`drakon_ui`** (with its throwaway test owner). Your **`drakon`** dev database was never wiped: it got migrations 00004–00006 and the dev owner `owner@drakon.local`, nothing else (no test orders, no products changed). `drakon_test` is the tests' own database.
+- Closed the browser tab I used.
+
+---
+
+# Summary
+
+| Phase | Status | Commits |
+|---|---|---|
+| 0 Start | ✅ done | (log) |
+| 1 Admin accounts and login (API) | ✅ done | `9112886`, `ffbe383`, `612a3ea`, `e6233e0` (log) |
+| 2 Admin shell (web) | ✅ done | `a89c1a4`, `c9f98c9` (log) |
+| 3 Orders admin | ✅ done | `096de8f`, `078516e`, `92b53d2` (log) |
+| 4 Products admin | ✅ done | `27aa18b`, `f341661` (gofmt), `849b890`, `7fec7c4` (log) |
+| 5 Categories, settings, delivery | ✅ done | `8ca8860`, `f01648c`, `0a8c829` (log) |
+| 6 Returns | ✅ done | `ee02730`, `5456eee`, `7ce05e6` (log) |
+| 7 Deploy-ready files | ✅ done (nothing deployed) | `3b095d9`, `82100ff`, `fae76b0`, `3ed337e` (log) |
+| 8 Final review | ✅ done | `63b9706`, `2268699`, and the final log commit |
+
+**Nothing was pushed.** `main` is now 52+ commits ahead of GitHub. No `sudo`, no `docker compose down -v`, no `git reset --hard`, no rebase, no force. No password in a commit, the log or the terminal output. New dependencies: only `golang.org/x/crypto` and `golang.org/x/term` (as allowed; `golang.org/x/sys` comes with them). No new npm packages. Migrations added: `00004_admin`, `00005_order_admin`, `00006_returns`.
+
+---
+
+# Decisions for the morning
+
+Answer with the number and yes/no (or your choice). The full table is in `docs/open-questions.md`.
+
+| # | Question | My recommendation |
+|---|---|---|
+| 3 | Customer accounts (Sign in / Sign up / Account) in the MVP? | **Later.** Guest checkout + tracking work; the admin is more urgent and is done. |
+| 4 | Rate limiting on checkout, track and admin login (Turnstile if needed)? | **Yes, before launch.** It is the main missing safety piece, and it also fixes question 14. |
+| 6 | Purchase limit per product (as built) or per variant? | **Per product** (blueprint rule 1). |
+| 7 | Search: only products on sale, or the sold-out archive too? | **Only on sale** (the archive has its own page). |
+| 8 | A cancelled COD order's payment: stays PENDING, or a new VOID status? | **Add VOID** (one small migration). Now the admin shows "Not collected yet" for a cancelled order, which is true but not clear. |
+| 9 | `make reset-dev` (wipe test orders, reload the sample catalogue, with a confirmation)? | **Yes.** Useful now that you will click through the admin a lot. |
+| 10 | Wrong method on a known path answers 404, not 405: OK? | **OK.** |
+| 11 | Hero product chosen in Admin > Settings | **Built tonight.** Just confirm. |
+| 12 | A category turned off: hide its products too? | **No**, archive products one by one. |
+| 13 | Refuse publishing a limited run with 0 stock? | **Yes** (built that way). |
+| 14 | The lockout can be abused to keep you out | **Fix with question 4.** |
+| 15 | Record who changed settings / categories / delivery | **Later** (audit log after the MVP, blueprint). |
+| 16 | Phone numbers in the admin search URL | **OK for now.** |
+| 17 | Separate Stock page and Returns list page | **Later**; both are on the product/order pages. |
+| 18 | Courier list (Steadfast, Pathao, RedX, Other) | Tell me the ones you use. |
+
+---
+
+# Morning review checklist (click through the admin)
+
+Start everything first (see "Start everything" below). The admin is **http://localhost:5173/admin**.
+
+1. **Log in with the dev owner**
+   - Email: `owner@drakon.local`
+   - Password: in `~/Desktop/projects/Drakon/drakon/.env`, the line `DEV_ADMIN_PASSWORD=` (`grep DEV_ADMIN_PASSWORD .env` in the repo folder).
+   - Type a wrong password once first: you see "Wrong email or password. After 5 wrong tries…". Then the right one → Dashboard.
+2. **Place a test order in the shop**: open http://localhost:5173 in another tab, add **Card Sleeves · Ember 100**, check out (any name, phone like `01711111111`, Dhaka → Dhaka city). Back in the admin: the Dashboard's "To call today" shows it and **Orders** has an orange **1**.
+3. **Confirm → ship → deliver**: open the order (Orders → Call and confirm).
+   - The phone number is a `tel:` button. Click **Mark as confirmed**.
+   - Choose Steadfast, type a tracking code (the button stays grey until you do), **Mark as shipped**.
+   - **Delivered, cash collected** → "Did you receive ৳410…?" → **Yes, delivered and paid**.
+   - The History shows three steps with your email; Payment says "Collected". Dashboard → Sales today = ৳410.
+   - In the shop tab, Track order with the number + phone: the timeline shows "Shipped with Steadfast, tracking code …".
+4. **Cancel one and watch the stock return**:
+   - Admin → Products → Card Sleeves: note the stock (for example 47).
+   - Place another sleeves order in the shop → the stock is one less.
+   - Open that order → **Cancel order** → write a reason → **Yes, cancel the order**.
+   - Back on Card Sleeves: the stock is back, and the **Stock book** shows "+1 Cancelled order".
+5. **Publish a product, then try the price fix**:
+   - Products → **New product**: name "Practice Deck", category Playcards, kind "Collectible card" → **Save draft**.
+   - **Publish** shows two problems. Add a photo: `/img/so-founders-deck.webp`, description "Practice deck". Add a variant: SKU `PRACTICE-1`, option "Standard", price `1600`. **Change stock** → Add pieces → 20 → why "First batch".
+   - **Publish** → check the prices → **Yes, publish at these prices**. **View in shop** opens it.
+   - Try to edit the price: it is locked. Click **Owner price fix…** → `1650`, reason "Testing the price fix", tick the box → **Fix the price**. The **Record** shows "৳1,600 → ৳1,650".
+6. **Change the delivery charge and see it on checkout**:
+   - Admin → **Delivery** → Inside Dhaka → Edit → charge `70` → Save zone.
+   - In the shop tab, reload the checkout with Dhaka → Dhaka city: delivery is **৳70**.
+   - Set it back to `60`.
+7. **Return** (optional): open the delivered order from step 3 → Returns → **Record a return**.
+8. **Phone width**: make the browser narrow (or DevTools → phone view): the menu becomes the **Menu** button, the order table becomes cards.
+9. **Log out** (bottom of the menu) → the login page. Back button: still the login page.
+
+Testing from your **real phone** on your Wi-Fi: run Vite with `npm run dev -- --host`, set `COOKIE_SECURE=false` in `.env` (plain http needs it), restart the API, open `http://<your-PC-IP>:5173/admin`. Set `COOKIE_SECURE=true` again afterwards.
+
+---
+
+# Morning practice (type these yourself)
+
+Open psql: `cd ~/Desktop/projects/Drakon/drakon && docker compose exec db psql -U drakon -d drakon`
+
+**1. Who changed what (JOIN three tables)**: after checklist step 3:
+```sql
+SELECT o.order_number, h.from_status, h.to_status, h.actor, a.email AS admin, h.note
+FROM order_status_history h
+JOIN orders o ON o.id = h.order_id
+LEFT JOIN admins a ON a.id = h.by_admin_id
+ORDER BY h.created_at DESC
+LIMIT 10;
+```
+Expected: rows like `SHIPPED → DELIVERED | ADMIN | owner@drakon.local | Delivered, cash collected`. Customer rows have an empty `admin` (that is what `LEFT JOIN` does: keep the row even when nothing matches).
+
+**2. Your session is only a hash**: while logged in:
+```sql
+SELECT encode(id_hash, 'hex') AS id_hash, admin_id, last_seen_at, expires_at FROM admin_sessions;
+```
+Expected: one row, 64 hex characters. Now copy your cookie: Chrome DevTools → Application → Cookies → `http://localhost:5173` → `drakon_admin` → Value. Then:
+```sql
+SELECT encode(sha256(convert_to('PASTE-THE-COOKIE-VALUE', 'UTF8')), 'hex');
+```
+Expected: exactly the same 64 characters. The database knows the hash but could never give you back the cookie. Log out and run the first query again: 0 rows.
+
+**3. Watch `failed_attempts` grow**:
+```sql
+SELECT email, failed_attempts, locked_until FROM admins;
+```
+Type a wrong password on the login page, run it again: `1`. Log in correctly, run it again: `0`.
+
+**4. curl without and with a cookie** (from `api/`, API running):
+```zsh
+curl -s localhost:8080/api/admin/me
+# {"error":{"code":"UNAUTHORIZED","message":"Please log in."}}
+PW=$(grep '^DEV_ADMIN_PASSWORD=' ../.env | cut -d= -f2-)
+curl -s -c /tmp/jar -H 'Origin: http://localhost:5173' -H 'Content-Type: application/json' \
+  -d "{\"email\":\"owner@drakon.local\",\"password\":\"$PW\"}" localhost:8080/api/admin/login
+unset PW
+curl -s -b /tmp/jar localhost:8080/api/admin/me
+# {"admin":{"id":1,"email":"owner@drakon.local","role":"OWNER"}}
+cat /tmp/jar     # the cookie line: #HttpOnly_localhost ... /api/admin TRUE ... drakon_admin <token>
+```
+
+**5. A wrong Origin is refused (CSRF guard)**:
+```zsh
+curl -s -b /tmp/jar -X POST -H 'Origin: https://evil.example' localhost:8080/api/admin/logout
+# {"error":{"code":"BAD_ORIGIN","message":"This change did not come from the DRAKON admin site."}}
+curl -s -b /tmp/jar -X POST localhost:8080/api/admin/logout
+# the same 403: no Origin at all is refused too
+curl -s -b /tmp/jar -c /tmp/jar -X POST -H 'Origin: http://localhost:5173' localhost:8080/api/admin/logout
+# {"ok":true}
+```
+
+**6. The stock book of one variant** (after checklist step 4):
+```sql
+SELECT m.change, m.reason, m.note, o.order_number, a.email AS admin, m.created_at
+FROM inventory_movements m
+JOIN product_variants v ON v.id = m.variant_id
+LEFT JOIN orders o ON o.id = m.order_id
+LEFT JOIN admins a ON a.id = m.by_admin_id
+WHERE v.sku = 'SLV-100'
+ORDER BY m.id;
+```
+Expected: `-1 ORDER` lines from the shop, `+1 CANCEL` with your email from the admin cancel. Add `SELECT stock FROM product_variants WHERE sku = 'SLV-100';` and check that the stock matches 48 plus all the changes.
+
+**7. The database refuses a second Owner**:
+```sql
+INSERT INTO admins (email, password_hash) VALUES ('second@drakon.local', 'x');
+```
+Expected: `ERROR: duplicate key value violates unique constraint "admins_one_owner_idx"`. A unique index on `role` but only `WHERE role = 'OWNER'` (a "partial index") allows exactly one Owner.
+
+**8. The database refuses an ADMIN history row without an admin id**:
+```sql
+INSERT INTO order_status_history (order_id, to_status, actor)
+SELECT id, 'CONFIRMED', 'ADMIN' FROM orders LIMIT 1;
+```
+Expected: `ERROR: ... violates check constraint "order_status_history_admin_check"`. Even buggy code cannot write an anonymous admin change. Type `\q` to leave psql.
+
+---
+
+# Start everything
+
+```zsh
+cd ~/Desktop/projects/Drakon/drakon
+git log --oneline | head -30        # tonight's work (not pushed)
+
+cd api
+make db-up                          # database (Docker)
+make migrate                        # nothing new on your PC (00004–00006 are applied), safe to run
+make check                          # gofmt + vet + 103 tests (uses drakon_test)
+make run                            # API on :8080, keep this terminal open
+```
+Second terminal:
+```zsh
+cd ~/Desktop/projects/Drakon/drakon/web
+npm run dev                         # shop: http://localhost:5173   admin: http://localhost:5173/admin
+```
+Lost the dev password? `cd api && make dev-owner` makes a new one (in `.env`).
+When you are happy: `git push` (I did not push).
+
+OVERNIGHT STATUS: ALL PHASES DONE
