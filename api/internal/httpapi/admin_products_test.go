@@ -22,7 +22,7 @@ func newProductBody(name string) map[string]any {
 	return map[string]any{
 		"name": name, "categorySlug": "playcards", "kind": "Collectible card", "variantKind": "Edition",
 		"isLimited": true, "editionSize": 50, "purchaseLimit": 2, "summary": "A test run.",
-		"story": []string{"First paragraph.", "  ", "Second paragraph."},
+		"story":   []string{"First paragraph.", "  ", "Second paragraph."},
 		"details": []map[string]any{{"term": "Size", "text": "63 × 88 mm"}},
 	}
 }
