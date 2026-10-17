@@ -53,14 +53,14 @@ export function VariantsPanel({ product, onChange }: Props) {
                 </span>
               </div>
               <div className="flex flex-wrap gap-x-4 gap-y-1">
-                <button type="button" className={ghostButton + ' min-h-9'} onClick={() => setOpen({ id: v.id, what: 'stock' })}>
+                <button type="button" className={ghostButton + ' min-h-11'} onClick={() => setOpen({ id: v.id, what: 'stock' })}>
                   Change stock
                 </button>
-                <button type="button" className={ghostButton + ' min-h-9'} onClick={() => setOpen({ id: v.id, what: 'edit' })}>
+                <button type="button" className={ghostButton + ' min-h-11'} onClick={() => setOpen({ id: v.id, what: 'edit' })}>
                   Edit
                 </button>
                 {product.status === 'ACTIVE' && (
-                  <button type="button" className={ghostButton + ' min-h-9'} onClick={() => setOpen({ id: v.id, what: 'price' })}>
+                  <button type="button" className={ghostButton + ' min-h-11'} onClick={() => setOpen({ id: v.id, what: 'price' })}>
                     Owner price fix…
                   </button>
                 )}

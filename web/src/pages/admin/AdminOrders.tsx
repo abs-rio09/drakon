@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { AdminPageHeader } from '../../components/admin/AdminLayout'
-import { StatusBadge } from '../../components/admin/adminUi'
+import { StatusBadge, tapArea } from '../../components/admin/adminUi'
 import { ClockIcon, PhoneIcon, SearchIcon } from '../../components/icons'
 import { inputClass } from '../../components/ui/Field'
 import { Loaded } from '../../components/ui/LoadState'
@@ -220,7 +220,7 @@ function OrdersTable({ orders }: { orders: AdminOrderRow[] }) {
             return (
               <tr key={o.orderNumber} className="border-b border-line last:border-b-0 hover:bg-field">
                 <td className="px-4 py-4 align-top">
-                  <Link to={`/admin/orders/${o.orderNumber}`} className="font-medium text-ink-strong underline-offset-4 hover:underline">
+                  <Link to={`/admin/orders/${o.orderNumber}`} className={tapArea + ' font-medium text-ink-strong underline-offset-4 hover:underline'}>
                     {o.orderNumber}
                   </Link>
                   <div className="text-caption text-ink-subtle">{items(o.itemCount)}</div>
@@ -271,7 +271,7 @@ function OrdersList({ orders }: { orders: AdminOrderRow[] }) {
         return (
           <li key={o.orderNumber} className="flex flex-col gap-2 rounded-2xl border border-line bg-surface-raised p-4">
             <div className="flex items-center justify-between gap-3">
-              <Link to={`/admin/orders/${o.orderNumber}`} className="text-body font-medium text-ink-strong underline-offset-4 hover:underline">
+              <Link to={`/admin/orders/${o.orderNumber}`} className={tapArea + ' text-body font-medium text-ink-strong underline-offset-4 hover:underline'}>
                 {o.orderNumber}
               </Link>
               <StatusBadge status={o.status} />

@@ -1,6 +1,6 @@
 import { useState, type FormEvent, type ReactNode } from 'react'
 import { Link, useParams } from 'react-router'
-import { AdminPanel, StatusBadge } from '../../components/admin/adminUi'
+import { AdminPanel, StatusBadge, tapArea } from '../../components/admin/adminUi'
 import { AlertIcon, BanIcon, ClockIcon, PhoneIcon } from '../../components/icons'
 import { FieldError, inputClass, textareaClass } from '../../components/ui/Field'
 import { Loaded } from '../../components/ui/LoadState'
@@ -45,7 +45,7 @@ function OrderLoader({ number }: { number: string }) {
       <nav aria-label="Breadcrumb" className="mb-4">
         <ol className="flex gap-2 text-label font-normal text-ink-subtle">
           <li>
-            <Link to="/admin/orders" className="text-ink-muted underline decoration-line-strong underline-offset-4 hover:text-ink-strong">
+            <Link to="/admin/orders" className={tapArea + ' text-ink-muted underline decoration-line-strong underline-offset-4 hover:text-ink-strong'}>
               Orders
             </Link>
           </li>
@@ -440,7 +440,7 @@ function CustomerPanel({ order, onChange }: { order: Order; onChange: ChangeHand
       <dl className="flex flex-col gap-4">
         <Row term="Name">{order.customer.name} · guest</Row>
         <Row term="Phone">
-          <a href={telHref(order.customer.phone)} className={inlineLink + ' tabular-nums'}>
+          <a href={telHref(order.customer.phone)} className={inlineLink + ' ' + tapArea + ' tabular-nums'}>
             {formatPhone(order.customer.phone)}
           </a>
           <span className="block text-caption text-ink-subtle">{phoneHistoryText(order)}</span>

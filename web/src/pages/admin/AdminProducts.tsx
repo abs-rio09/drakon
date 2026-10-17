@@ -158,7 +158,7 @@ export default function AdminProducts() {
                         <span className="size-12 rounded-lg bg-field" />
                       )}
                       <span className="flex min-w-0 flex-col">
-                        <Link to={`/admin/products/${p.id}`} className="truncate text-label text-ink-strong underline-offset-4 hover:underline">
+                        <Link to={`/admin/products/${p.id}`} className="relative -my-3 block truncate py-3 text-label text-ink-strong underline-offset-4 hover:underline">
                           {p.name}
                         </Link>
                         <span className="text-caption text-ink-subtle">{variantsText(p)}</span>

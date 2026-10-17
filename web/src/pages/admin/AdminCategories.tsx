@@ -78,7 +78,7 @@ function CategoryList({ categories, onChange }: { categories: AdminCategory[]; o
                 onCancel={() => setEditing(null)}
               />
             ) : (
-              <button type="button" onClick={() => setEditing(c.id)} className={ghostButton + ' min-h-9 self-start'}>
+              <button type="button" onClick={() => setEditing(c.id)} className={ghostButton + ' min-h-11 self-start'}>
                 Edit
               </button>
             )}

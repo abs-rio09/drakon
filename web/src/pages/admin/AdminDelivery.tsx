@@ -76,7 +76,7 @@ function Zones({ data, onChange }: ChangeProps) {
                 setEditing(null)
               }} onCancel={() => setEditing(null)} />
             ) : (
-              <button type="button" onClick={() => setEditing(z.id)} className={ghostButton + ' min-h-9 self-start'}>
+              <button type="button" onClick={() => setEditing(z.id)} className={ghostButton + ' min-h-11 self-start'}>
                 Edit
               </button>
             )}
@@ -238,7 +238,7 @@ function Areas({ data, onChange }: ChangeProps) {
                         <span className="text-caption text-ink-muted">
                           {zoneById[a.zoneId]?.name} · {zoneById[a.zoneId] ? formatTaka(zoneById[a.zoneId].chargePaisa) : ''}
                         </span>
-                        <button type="button" onClick={() => setEditing(a.id)} className={ghostButton + ' min-h-9'}>
+                        <button type="button" onClick={() => setEditing(a.id)} className={ghostButton + ' min-h-11'}>
                           Edit
                         </button>
                       </span>
@@ -258,7 +258,7 @@ function Areas({ data, onChange }: ChangeProps) {
                 setAdding(null)
               }} onCancel={() => setAdding(null)} />
               ) : (
-                <button type="button" onClick={() => setAdding(district)} className={ghostButton + ' min-h-9 self-start text-caption'}>
+                <button type="button" onClick={() => setAdding(district)} className={ghostButton + ' min-h-11 self-start text-caption'}>
                   Split {district}: add an area
                 </button>
               )}

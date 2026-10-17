@@ -1,6 +1,6 @@
 import { Link } from 'react-router'
 import { AdminPageHeader } from '../../components/admin/AdminLayout'
-import { AdminPanel } from '../../components/admin/adminUi'
+import { AdminPanel, tapArea } from '../../components/admin/adminUi'
 import { PhoneIcon } from '../../components/icons'
 import { Loaded } from '../../components/ui/LoadState'
 import { button, inlineLink } from '../../components/ui/styles'
@@ -39,7 +39,7 @@ function CallList({ rows, hours }: { rows: CallListRow[]; hours: number }) {
               <li key={o.orderNumber} className="flex flex-col gap-3 py-4 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex min-w-0 flex-col gap-1">
                   <span className="flex flex-wrap items-baseline gap-x-3">
-                    <Link to={`/admin/orders/${o.orderNumber}`} className="text-body font-medium text-ink-strong underline-offset-4 hover:underline">
+                    <Link to={`/admin/orders/${o.orderNumber}`} className={tapArea + ' text-body font-medium text-ink-strong underline-offset-4 hover:underline'}>
                       {o.orderNumber}
                     </Link>
                     <span className={'text-caption ' + (left.urgent ? 'text-accent-text' : 'text-ink-subtle')}>{left.text}</span>
@@ -73,7 +73,7 @@ function Tile({ label, value, hint, to }: { label: string; value: string; hint?:
       <span className="text-heading-3 text-ink-strong tabular-nums">{value}</span>
       {hint && <span className="text-caption text-ink-subtle">{hint}</span>}
       {to && (
-        <Link to={to} className={inlineLink + ' mt-1 text-caption'}>
+        <Link to={to} className={inlineLink + ' ' + tapArea + ' mt-1 self-start text-caption'}>
           See them
         </Link>
       )}

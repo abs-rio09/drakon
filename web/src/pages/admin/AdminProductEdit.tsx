@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
-import { FormMessage, LimitedTag, ProductStatusBadge } from '../../components/admin/adminUi'
+import { FormMessage, LimitedTag, ProductStatusBadge, tapArea } from '../../components/admin/adminUi'
 import { Loaded } from '../../components/ui/LoadState'
 import { button, ghostButton } from '../../components/ui/styles'
 import { createProduct, getAdminCategories, getAdminProduct, publishProduct, updateProduct } from '../../features/admin/adminApi'
@@ -61,7 +61,7 @@ function Breadcrumb({ name }: { name: string }) {
     <nav aria-label="Breadcrumb" className="mb-4">
       <ol className="flex flex-wrap gap-2 text-label font-normal text-ink-subtle">
         <li>
-          <Link to="/admin/products" className="text-ink-muted underline decoration-line-strong underline-offset-4 hover:text-ink-strong">
+          <Link to="/admin/products" className={tapArea + ' text-ink-muted underline decoration-line-strong underline-offset-4 hover:text-ink-strong'}>
             Products
           </Link>
         </li>

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router'
 import { AdminPageHeader } from '../../components/admin/AdminLayout'
-import { AdminPanel, FormMessage } from '../../components/admin/adminUi'
+import { AdminPanel, FormMessage, tapArea } from '../../components/admin/adminUi'
 import { Field, inputClass } from '../../components/ui/Field'
 import { Loaded } from '../../components/ui/LoadState'
 import { button, inlineLink } from '../../components/ui/styles'
@@ -85,7 +85,7 @@ function SettingsForm({ initial, products }: { initial: SettingRow[]; products: 
                       {row.label}
                       <span className="block text-caption text-ink-subtle">
                         The amount for each zone is on the{' '}
-                        <Link to="/admin/delivery" className={inlineLink}>
+                        <Link to="/admin/delivery" className={inlineLink + ' ' + tapArea}>
                           Delivery
                         </Link>{' '}
                         page.

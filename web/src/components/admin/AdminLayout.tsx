@@ -40,7 +40,7 @@ function PendingBubble({ count }: { count: number }) {
 // The small admin logo: ember "D" + "Drakon Admin".
 function AdminLogo() {
   return (
-    <Link to="/admin" className="inline-flex items-center gap-2 px-2 text-title font-semibold tracking-[-0.02em] text-ink-strong">
+    <Link to="/admin" className="inline-flex min-h-11 items-center gap-2 px-2 text-title font-semibold tracking-[-0.02em] text-ink-strong">
       <span aria-hidden="true" className="grid size-8 place-items-center rounded-xl bg-accent text-body font-bold text-on-accent">
         D
       </span>
