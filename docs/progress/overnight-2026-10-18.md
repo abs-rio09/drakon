@@ -8,7 +8,7 @@ Written for Abu Bakkar Siddik, in simple English. Nothing in this run was pushed
 - [x] 1. Admin accounts and login (API)
 - [x] 2. Admin shell (web)
 - [x] 3. Orders admin (API + web)
-- [ ] 4. Products admin (API + web)
+- [x] 4. Products admin (API + web)
 - [ ] 5. Categories, settings and delivery admin
 - [ ] 6. Returns
 - [ ] 7. Deploy-ready files (prepare only, deploy nothing)
@@ -197,3 +197,58 @@ See "Morning review checklist" at the end (confirm → ship → deliver, cancel 
 - SHIPPED → CANCELLED also puts the stock back (the parcel comes back to you). If a parcel is **lost**, you would need a stock ADJUST afterwards (Phase 4).
 - The payment row of a cancelled order stays PENDING (open question 8, VOID, is not built).
 - Courier list: Steadfast, Pathao, RedX, Other (free text). Tell me if you use others.
+
+---
+
+## Phase 4: products admin
+
+### What I built
+**API** (rules in the new package `api/internal/products`, endpoints in `api/internal/httpapi/admin_products.go`):
+- `GET /api/admin/products?status=&category=&q=`: every product in any status, with total stock, price range, cover photo and counts per status. `q` finds the name or a SKU.
+- `POST /api/admin/products`: a new product, **always DRAFT** (a `status` field is refused).
+- `GET /api/admin/products/{id}`: everything for the edit page, plus its record (product events), the last 30 stock-book lines, and `publishProblems` (why Publish would be refused now).
+- `PUT /api/admin/products/{id}`: every field the product page shows: name, slug, category, kind, variant kind, limited yes/no, edition size, purchase limit, summary, story paragraphs, details, successor, featured order.
+- Variants: `POST /api/admin/products/{id}/variants` (starts at stock 0), `PUT /api/admin/variants/{id}` (label, note, photo, order, on/off; price and SKU only while DRAFT).
+- Stock: `POST /api/admin/variants/{id}/stock` `{change, reason: RESTOCK|ADJUST, note}`.
+- Photos: `POST /api/admin/products/{id}/images`, `PUT /api/admin/images/{id}`, `PUT /api/admin/products/{id}/images/order`, `DELETE /api/admin/images/{id}` (removes the photo row only).
+- Lifecycle: `POST /api/admin/products/{id}/publish` `{prices}`, `.../archive`, `.../reactivate` `{reason}`.
+- Price fix: `POST /api/admin/variants/{id}/price-fix` `{pricePaisa, reason}`.
+- `GET /api/admin/categories` (for the category select; Phase 5 adds editing).
+- **No DELETE for products or variants anywhere.** A variant is turned off instead.
+- Photos go through a tiny interface, `images.Store` (`api/internal/images`): `Check(address)` and `Upload(file)`. Today's `Links` store accepts `/img/<file>.webp|jpg|png|avif` or an `https://` link, and refuses uploads. For Cloudflare R2 later, write an R2 store with a real `Upload` and pass it to the server; nothing else changes.
+
+**The rules** (each one has a test):
+- New product = DRAFT, hidden from the shop (`/api/products/{slug}` answers 404).
+- **Publish** (DRAFT → ACTIVE) needs at least 1 photo and 1 active variant with a price above 0, and a **limited** run also needs stock (otherwise it would be sold out the moment it goes live). The web shows a "Check the prices, then publish" screen; the API then checks that the prices you confirmed are **exactly** the prices now (if anything changed in between → `409 PRICES_CHANGED`). Writes a PUBLISH event with your id and the prices.
+- **Price lock**: once the product leaves DRAFT, a variant's price and SKU cannot change (`409 PRICE_LOCKED` / `LOCKED`). Also locked once published: the web address (slug), "limited" and the edition size, because buyers rely on them.
+- **Owner price fix** (ACTIVE only): needs a reason (5+ characters), writes a PRICE_FIX event with the old and new price. Orders already placed keep their price (tested: the order still says ৳1,700, a new quote says ৳1,800).
+- **Stock**: every change needs a note and writes `inventory_movements` (RESTOCK or ADJUST) with your id. RESTOCK must add. Stock can never go below 0 (`409 STOCK_BELOW_ZERO`, and the database `CHECK` too). A **limited** product that is SOLD_OUT or ARCHIVED can **never** get new pieces (`409 LIMITED_NO_RESTOCK`); the UI explains why. Taking away the last pieces of a limited ACTIVE run makes it SOLD_OUT (event with your id).
+- **Archive** by hand: SOLD_OUT → ARCHIVED only.
+- **Reactivate** (bring back): ARCHIVED → ACTIVE only, with a written reason (10+ characters), recorded as REACTIVATE. The UI warns that a limited run that comes back can be restocked again.
+- **Photos**: an address check (no `..`, no folders, no `javascript:`, https only), a description (alt) is required, the first photo is the cover. Moving or removing photos also moves each variant's "photo that shows it" number, so the Foil variant keeps showing the foil photo. A published product always keeps at least one photo.
+
+**Web**:
+- **Products** list (AdminProducts.dc.html): lifecycle tabs with counts (Active / Draft / Sold out / Archived / All), category filter, search by name or SKU, price range, stock with "Low stock" (from the `low_stock_threshold` setting), Limited / Restockable, status with a short note. Cards on a phone.
+- **New product**: the form, saved as a draft; then the edit page.
+- **Edit product** (AdminProductEdit.dc.html): Basics, Photos, Variants and stock (Change stock with "Add pieces / Take pieces away", why, and a live "After this: 150 in stock"), Details, Drop rules (Limited switch, edition size, purchase limit), Lifecycle (Archive now, Bring back…), Home page and archive (place in the drop, newer edition), Record (events), Stock book. Draft: **Save draft** + **Publish**. Live: **View in shop** + **Save changes**, and **Owner price fix…** per variant (warning + reason + a "I checked: the new price is ৳…" box).
+- Fixed in the shop too: `formatTaka` now shows `৳2,100.50`, not `৳2,100.5`.
+
+### Browser check (throwaway `drakon_ui` database again)
+Created "Founders Playcard Deck · II" → Draft; Publish showed the two problems (no photo, no variant); added a photo, two variants (৳1,600 and ৳2,100.50), 150 pieces of stock (the stock book showed "+150 · 150 decks from the printer"); Publish showed both prices, limited and the limit; after "Yes, publish at these prices" it was Active and in the shop API; the address and the Limited switch were locked; the Owner price fix needed the checkbox, then the record showed "৳1,600 → ৳1,650 · FPD2-STD: Printer raised the paper price". At 390 px, nothing scrolls sideways.
+
+### Key concepts (for a beginner)
+- **Price snapshot**: an order copies the price into `order_items` when it is placed. Changing a product's price later never changes old orders.
+- **Lock order** (to avoid a deadlock): when two transactions each hold one lock and wait for the other's, they wait forever. Postgres notices and kills one. To avoid it, stock and price changes lock the **variant first, then the product**, the same order as checkout.
+- **Interface** (`images.Store`): Go's way to say "anything that has these methods". The admin code only knows the interface, so we can swap "links" for "R2 uploads" later without touching it.
+
+### How to test it yourself
+See the morning checklist ("publish a product, then try the price-fix").
+
+### Decisions and questions
+- **Price is per variant** (the database already works that way), so the design's single "Price" box became a price per variant, with the lock and the Owner fix per variant.
+- **A limited run needs stock to publish.** Not in the prompt, but publishing it with 0 would make it sold out immediately. Tell me if you want to allow it.
+- Locked after publish: slug, "limited", edition size, SKU. Everything else (name, story, details, category, purchase limit, featured place, successor) can still change.
+- "Reactivate" on a limited run is your deliberate exception: once it is Active again, it can be restocked. That is how the blueprint describes it (Owner only, warning, reason, record).
+- Removing a photo from a DRAFT is fine even if it is the last one; a live product keeps at least one.
+- There is no separate "Stock" page yet (the design menu has one). Stock is changed on each product's page. A "low stock across all products" page would be a small addition later.
+- Photo upload waits for Cloudflare R2. For now: copy the file into `web/public/img/` and type `/img/the-file.webp`.
