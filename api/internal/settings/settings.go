@@ -21,6 +21,8 @@ type Settings struct {
 	GiftNoteMaxChars     int
 	CourierNoteMaxChars  int
 	HomeHeroProductSlug  string
+	LoginMaxFailures     int
+	LoginLockoutMinutes  int
 }
 
 // Querier is the one sqlc method Load needs. *db.Queries has it, inside or
@@ -53,6 +55,8 @@ func Load(ctx context.Context, q Querier) (Settings, error) {
 		{"gift_note_max_chars", &s.GiftNoteMaxChars},
 		{"courier_note_max_chars", &s.CourierNoteMaxChars},
 		{"home_hero_product_slug", &s.HomeHeroProductSlug},
+		{"login_max_failures", &s.LoginMaxFailures},
+		{"login_lockout_minutes", &s.LoginLockoutMinutes},
 	}
 	for _, f := range fields {
 		value, ok := raw[f.key]

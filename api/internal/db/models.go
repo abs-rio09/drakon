@@ -53,6 +53,47 @@ func (ns NullActorType) Value() (driver.Value, error) {
 	return string(ns.ActorType), nil
 }
 
+type AdminRole string
+
+const (
+	AdminRoleOWNER AdminRole = "OWNER"
+)
+
+func (e *AdminRole) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = AdminRole(s)
+	case string:
+		*e = AdminRole(s)
+	default:
+		return fmt.Errorf("unsupported scan type for AdminRole: %T", src)
+	}
+	return nil
+}
+
+type NullAdminRole struct {
+	AdminRole AdminRole
+	Valid     bool // Valid is true if AdminRole is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullAdminRole) Scan(value interface{}) error {
+	if value == nil {
+		ns.AdminRole, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.AdminRole.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullAdminRole) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.AdminRole), nil
+}
+
 type InventoryReason string
 
 const (
@@ -316,6 +357,25 @@ func (ns NullProductStatus) Value() (driver.Value, error) {
 	return string(ns.ProductStatus), nil
 }
 
+type Admin struct {
+	ID             int64
+	Email          string
+	PasswordHash   string
+	Role           AdminRole
+	FailedAttempts int32
+	LockedUntil    *time.Time
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
+}
+
+type AdminSession struct {
+	IDHash     []byte
+	AdminID    int64
+	CreatedAt  time.Time
+	LastSeenAt time.Time
+	ExpiresAt  time.Time
+}
+
 type BlockedPhone struct {
 	Phone     string
 	Reason    string
@@ -360,6 +420,7 @@ type InventoryMovement struct {
 	OrderID   *int64
 	Note      string
 	CreatedAt time.Time
+	ByAdminID *int64
 }
 
 type Order struct {
@@ -419,6 +480,7 @@ type OrderStatusHistory struct {
 	Actor      ActorType
 	Note       string
 	CreatedAt  time.Time
+	ByAdminID  *int64
 }
 
 type Payment struct {
