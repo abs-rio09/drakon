@@ -21,7 +21,9 @@ type ErrorBody = { error?: { code?: string; message?: string; fields?: Record<st
 
 // Sends one request and returns the JSON answer. Throws ApiError for an
 // error answer, and for network problems (code NETWORK).
-export async function apiFetch<T>(path: string, init?: { method?: 'GET' | 'POST'; body?: unknown; signal?: AbortSignal }): Promise<T> {
+export type ApiInit = { method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'; body?: unknown; signal?: AbortSignal }
+
+export async function apiFetch<T>(path: string, init?: ApiInit): Promise<T> {
   let res: Response
   try {
     res = await fetch(path, {
