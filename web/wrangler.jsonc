@@ -1,0 +1,24 @@
+// Cloudflare Worker for the DRAKON website (docs/deploy.md, blueprint part 4 decision 1).
+// - Every file of the Vite build (dist/) is served as a static asset.
+// - An unknown path (/product/x, /admin/orders) gets index.html, so
+//   react-router can show the right page ("single-page-application").
+// - Only /api/* runs the Worker code first (worker/index.ts), which
+//   forwards it to the Go API on Render. To the browser it is all one site,
+//   so the admin cookie is a normal first-party cookie.
+// Deploy (needs your Cloudflare account): npm run build && npx wrangler deploy
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "drakon",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-10-15",
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"]
+  },
+  "vars": {
+    // The Go API on Render. Replace with your service address, no trailing slash.
+    "API_ORIGIN": "https://drakon-api.onrender.com"
+  }
+}
