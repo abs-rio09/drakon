@@ -72,7 +72,7 @@ func (s *Sweeper) RunOnce(ctx context.Context) (Result, error) {
 			// CancelLocked locks the row and checks again that it is still
 			// PENDING (the admin may have confirmed it a second ago).
 			var err error
-			cancelled, err = orders.CancelLocked(ctx, q.WithTx(tx), id, onlyPending, db.ActorTypeSYSTEM, reason, now)
+			cancelled, err = orders.CancelLocked(ctx, q.WithTx(tx), id, onlyPending, db.ActorTypeSYSTEM, nil, reason, now)
 			return err
 		})
 		if err != nil {

@@ -117,7 +117,7 @@ func Cancel(ctx context.Context, pool *pgxpool.Pool, l Lookup, reason string, no
 		if err != nil {
 			return err
 		}
-		cancelled, err := CancelLocked(ctx, qtx, o.ID, cancellable, db.ActorTypeCUSTOMER, note, now)
+		cancelled, err := CancelLocked(ctx, qtx, o.ID, cancellable, db.ActorTypeCUSTOMER, nil, note, now)
 		if err != nil {
 			return err
 		}
@@ -140,9 +140,11 @@ func Cancel(ctx context.Context, pool *pgxpool.Pool, l Lookup, reason string, no
 //   - puts every item's stock back (inventory_movements CANCEL)
 //   - a SOLD_OUT product that has stock again becomes ACTIVE (product_events)
 //
-// The buyer's cancel and the auto-cancel sweep both use it.
+// The buyer's cancel, the auto-cancel sweep and the admin all use it.
+// adminID is the admin who cancelled (nil for the buyer or the server); it
+// goes on the history, stock and product event rows.
 func CancelLocked(ctx context.Context, q *db.Queries, orderID int64, allowed func(db.OrderStatus) bool,
-	actor db.ActorType, reason string, now time.Time) (bool, error) {
+	actor db.ActorType, adminID *int64, reason string, now time.Time) (bool, error) {
 	o, err := q.GetOrderForUpdate(ctx, orderID)
 	if err != nil {
 		return false, err
@@ -156,6 +158,7 @@ func CancelLocked(ctx context.Context, q *db.Queries, orderID int64, allowed fun
 	from := o.Status
 	if err := q.InsertStatusHistory(ctx, db.InsertStatusHistoryParams{
 		OrderID: orderID, FromStatus: &from, ToStatus: db.OrderStatusCANCELLED, Actor: actor, Note: reason, At: now,
+		ByAdminID: adminID,
 	}); err != nil {
 		return false, err
 	}
@@ -171,7 +174,7 @@ func CancelLocked(ctx context.Context, q *db.Queries, orderID int64, allowed fun
 		}
 		if err := q.InsertInventoryMovement(ctx, db.InsertInventoryMovementParams{
 			VariantID: it.VariantID, Change: it.Qty, Reason: db.InventoryReasonCANCEL, OrderID: &orderID,
-			Note: "Order cancelled",
+			Note: "Order cancelled", ByAdminID: adminID,
 		}); err != nil {
 			return false, err
 		}
@@ -189,6 +192,7 @@ func CancelLocked(ctx context.Context, q *db.Queries, orderID int64, allowed fun
 		if err := q.InsertProductEvent(ctx, db.InsertProductEventParams{
 			ProductID: productID, Type: db.ProductEventTypeREACTIVATE, Actor: actor,
 			Reason: "Stock came back from a cancelled order", OldValue: &old, NewValue: &next, At: now,
+			ByAdminID: adminID,
 		}); err != nil {
 			return false, err
 		}

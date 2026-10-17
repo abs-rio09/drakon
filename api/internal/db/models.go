@@ -377,9 +377,10 @@ type AdminSession struct {
 }
 
 type BlockedPhone struct {
-	Phone     string
-	Reason    string
-	CreatedAt time.Time
+	Phone            string
+	Reason           string
+	CreatedAt        time.Time
+	BlockedByAdminID *int64
 }
 
 type Category struct {
@@ -457,6 +458,7 @@ type Order struct {
 	DeliveredAt       *time.Time
 	CancelledAt       *time.Time
 	CancelReason      *string
+	AdminNote         string
 }
 
 type OrderItem struct {

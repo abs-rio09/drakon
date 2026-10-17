@@ -256,8 +256,8 @@ func (q *Queries) IncrementStock(ctx context.Context, arg IncrementStockParams) 
 }
 
 const insertInventoryMovement = `-- name: InsertInventoryMovement :exec
-INSERT INTO inventory_movements (variant_id, change, reason, order_id, note)
-VALUES ($1, $2, $3, $4, $5)
+INSERT INTO inventory_movements (variant_id, change, reason, order_id, note, by_admin_id)
+VALUES ($1, $2, $3, $4, $5, $6)
 `
 
 type InsertInventoryMovementParams struct {
@@ -266,8 +266,10 @@ type InsertInventoryMovementParams struct {
 	Reason    InventoryReason
 	OrderID   *int64
 	Note      string
+	ByAdminID *int64
 }
 
+// by_admin_id: the admin who made the change (NULL for the buyer or the server).
 func (q *Queries) InsertInventoryMovement(ctx context.Context, arg InsertInventoryMovementParams) error {
 	_, err := q.db.Exec(ctx, insertInventoryMovement,
 		arg.VariantID,
@@ -275,6 +277,7 @@ func (q *Queries) InsertInventoryMovement(ctx context.Context, arg InsertInvento
 		arg.Reason,
 		arg.OrderID,
 		arg.Note,
+		arg.ByAdminID,
 	)
 	return err
 }
@@ -400,8 +403,8 @@ func (q *Queries) InsertPayment(ctx context.Context, arg InsertPaymentParams) er
 }
 
 const insertProductEvent = `-- name: InsertProductEvent :exec
-INSERT INTO product_events (product_id, type, actor, reason, old_value, new_value, created_at)
-VALUES ($1, $2, $3, $4, $5, $6, $7)
+INSERT INTO product_events (product_id, type, actor, reason, old_value, new_value, created_at, by_admin_id)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 `
 
 type InsertProductEventParams struct {
@@ -412,6 +415,7 @@ type InsertProductEventParams struct {
 	OldValue  *string
 	NewValue  *string
 	At        time.Time
+	ByAdminID *int64
 }
 
 func (q *Queries) InsertProductEvent(ctx context.Context, arg InsertProductEventParams) error {
@@ -423,13 +427,14 @@ func (q *Queries) InsertProductEvent(ctx context.Context, arg InsertProductEvent
 		arg.OldValue,
 		arg.NewValue,
 		arg.At,
+		arg.ByAdminID,
 	)
 	return err
 }
 
 const insertStatusHistory = `-- name: InsertStatusHistory :exec
-INSERT INTO order_status_history (order_id, from_status, to_status, actor, note, created_at)
-VALUES ($1, $2, $3, $4, $5, $6)
+INSERT INTO order_status_history (order_id, from_status, to_status, actor, note, created_at, by_admin_id)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
 `
 
 type InsertStatusHistoryParams struct {
@@ -439,6 +444,7 @@ type InsertStatusHistoryParams struct {
 	Actor      ActorType
 	Note       string
 	At         time.Time
+	ByAdminID  *int64
 }
 
 func (q *Queries) InsertStatusHistory(ctx context.Context, arg InsertStatusHistoryParams) error {
@@ -449,6 +455,7 @@ func (q *Queries) InsertStatusHistory(ctx context.Context, arg InsertStatusHisto
 		arg.Actor,
 		arg.Note,
 		arg.At,
+		arg.ByAdminID,
 	)
 	return err
 }

@@ -66,12 +66,13 @@ INSERT INTO order_items (order_id, variant_id, product_id, product_name, variant
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9);
 
 -- name: InsertInventoryMovement :exec
-INSERT INTO inventory_movements (variant_id, change, reason, order_id, note)
-VALUES ($1, $2, $3, $4, $5);
+-- by_admin_id: the admin who made the change (NULL for the buyer or the server).
+INSERT INTO inventory_movements (variant_id, change, reason, order_id, note, by_admin_id)
+VALUES ($1, $2, $3, $4, $5, sqlc.narg('by_admin_id'));
 
 -- name: InsertStatusHistory :exec
-INSERT INTO order_status_history (order_id, from_status, to_status, actor, note, created_at)
-VALUES ($1, $2, $3, $4, $5, sqlc.arg('at'));
+INSERT INTO order_status_history (order_id, from_status, to_status, actor, note, created_at, by_admin_id)
+VALUES ($1, $2, $3, $4, $5, sqlc.arg('at'), sqlc.narg('by_admin_id'));
 
 -- name: InsertPayment :exec
 INSERT INTO payments (order_id, method, amount_paisa, currency, status)
@@ -96,8 +97,8 @@ WHERE p.id = sqlc.arg('id') AND p.status = 'SOLD_OUT'
 RETURNING p.id;
 
 -- name: InsertProductEvent :exec
-INSERT INTO product_events (product_id, type, actor, reason, old_value, new_value, created_at)
-VALUES ($1, $2, $3, $4, $5, $6, sqlc.arg('at'));
+INSERT INTO product_events (product_id, type, actor, reason, old_value, new_value, created_at, by_admin_id)
+VALUES ($1, $2, $3, $4, $5, $6, sqlc.arg('at'), sqlc.narg('by_admin_id'));
 
 -- name: GetOrderByNumber :one
 SELECT id, order_number, track_token_hash, phone, status, district, district_area,

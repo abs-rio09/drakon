@@ -8,5 +8,16 @@ func (s *Server) adminRoutes() []adminRoute {
 	return []adminRoute{
 		{"GET", "/api/admin/me", s.handleAdminMe},
 		{"POST", "/api/admin/logout", s.handleAdminLogout},
+
+		// Orders (admin_orders.go)
+		{"GET", "/api/admin/dashboard", s.handleAdminDashboard},
+		{"GET", "/api/admin/orders", s.handleAdminOrders},
+		{"GET", "/api/admin/orders/call-list", s.handleAdminCallList},
+		{"GET", "/api/admin/orders/{number}", s.handleAdminOrder},
+		{"POST", "/api/admin/orders/{number}/status", s.handleAdminOrderStatus},
+		{"PUT", "/api/admin/orders/{number}/note", s.handleAdminOrderNote},
+		{"GET", "/api/admin/blocked-phones", s.handleBlockedPhones},
+		{"POST", "/api/admin/blocked-phones", s.handleBlockPhone},
+		{"POST", "/api/admin/blocked-phones/unblock", s.handleUnblockPhone},
 	}
 }

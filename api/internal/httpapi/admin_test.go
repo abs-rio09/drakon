@@ -326,6 +326,16 @@ func TestEveryAdminRouteNeedsASession(t *testing.T) {
 	routes := []struct{ method, path string }{
 		{"GET", "/api/admin/me"},
 		{"POST", "/api/admin/logout"},
+
+		{"GET", "/api/admin/dashboard"},
+		{"GET", "/api/admin/orders"},
+		{"GET", "/api/admin/orders/call-list"},
+		{"GET", "/api/admin/orders/DRK-AAAAAA"},
+		{"POST", "/api/admin/orders/DRK-AAAAAA/status"},
+		{"PUT", "/api/admin/orders/DRK-AAAAAA/note"},
+		{"GET", "/api/admin/blocked-phones"},
+		{"POST", "/api/admin/blocked-phones"},
+		{"POST", "/api/admin/blocked-phones/unblock"},
 	}
 
 	c := newAdminClient(t, s)
