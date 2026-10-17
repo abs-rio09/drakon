@@ -1,0 +1,16 @@
+# Cloudflare Workers static assets: extra response headers (docs/deploy.md).
+# Not used by the Vite dev server. The /api answers get theirs from Go.
+
+# Every page: no framing by other sites (stops "clickjacking": a bad site
+# showing our admin in an invisible frame and tricking clicks), no MIME
+# guessing, and only the origin is sent to other sites in the Referer.
+/*
+  X-Frame-Options: DENY
+  Content-Security-Policy: frame-ancestors 'none'
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+
+# The admin pages: never in search engines, never stored by caches.
+/admin/*
+  X-Robots-Tag: noindex, nofollow
+  Cache-Control: no-store

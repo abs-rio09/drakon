@@ -97,3 +97,15 @@ func TestUnknownEndpointIsJSON404(t *testing.T) {
 		t.Fatalf("got %d %v", status, body)
 	}
 }
+
+func TestSecurityHeaders(t *testing.T) {
+	s := newTestServer(t, false)
+	for _, path := range []string{"/api/health", "/api/nope", "/api/admin/me"} {
+		rec := httptest.NewRecorder()
+		s.Handler().ServeHTTP(rec, httptest.NewRequest(http.MethodGet, path, nil))
+		h := rec.Header()
+		if h.Get("X-Content-Type-Options") != "nosniff" || h.Get("X-Frame-Options") != "DENY" || h.Get("Referrer-Policy") != "no-referrer" {
+			t.Errorf("%s headers = %v", path, h)
+		}
+	}
+}

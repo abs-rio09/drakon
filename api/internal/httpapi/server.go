@@ -70,7 +70,7 @@ func (s *Server) wrap(h handlerFunc) http.HandlerFunc {
 func (s *Server) Handler() http.Handler {
 	mux := http.NewServeMux()
 	s.routes(mux)
-	return s.recoverPanics(s.logRequests(s.guardAdmin(mux)))
+	return s.recoverPanics(s.logRequests(securityHeaders(s.guardAdmin(mux))))
 }
 
 func (s *Server) routes(mux *http.ServeMux) {
@@ -112,6 +112,19 @@ func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) error {
 	}
 	writeJSON(w, http.StatusOK, map[string]string{"status": "ok", "database": "ok"})
 	return nil
+}
+
+// securityHeaders are sent with every API answer: the browser must not
+// guess other content types, must not show an answer inside a frame, and
+// gets no Referer to pass on.
+func securityHeaders(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		h := w.Header()
+		h.Set("X-Content-Type-Options", "nosniff")
+		h.Set("X-Frame-Options", "DENY")
+		h.Set("Referrer-Policy", "no-referrer")
+		next.ServeHTTP(w, r)
+	})
 }
 
 // recoverPanics turns a crash inside a handler into a 500 answer. The stack
