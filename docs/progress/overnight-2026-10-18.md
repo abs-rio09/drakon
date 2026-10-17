@@ -10,7 +10,7 @@ Written for Abu Bakkar Siddik, in simple English. Nothing in this run was pushed
 - [x] 3. Orders admin (API + web)
 - [x] 4. Products admin (API + web)
 - [x] 5. Categories, settings and delivery admin
-- [ ] 6. Returns
+- [x] 6. Returns
 - [ ] 7. Deploy-ready files (prepare only, deploy nothing)
 - [ ] 8. Final review pass
 
@@ -300,3 +300,39 @@ See the morning checklist ("change the delivery charge and see it on checkout").
 - A new area starts in the zone of the district's other area (you can change it in the form).
 - Free delivery on/off is the setting `free_delivery_enabled` (also on the Delivery page); the amount is per zone ("free over").
 - Open question 11 (hero product in Settings): built, as recommended.
+
+---
+
+## Phase 6: returns (blueprint rule 3)
+
+### What I built
+- **Migration `00006_returns.sql`**: `returns` (order, reason COMPANY_FAULT / OTHER, note, who paid the delivery, refund in paisa, refund method BKASH / NAGAD / CASH, reference, status, admin id, time) and `return_items` (which order line, how many, can it be sold again). Two database rules as a safety net: money refunded always says how, and "our mistake" always means the company pays the delivery.
+- **`POST /api/admin/orders/{number}/returns`** (`api/internal/orders/returns.go`), in ONE transaction with the order row locked:
+  - only a **DELIVERED** order (`409 NOT_DELIVERED`), and only within **`return_days`** after delivery (`409 RETURN_WINDOW_OVER`; the setting, 3 days now)
+  - reason: **COMPANY_FAULT** (the company must pay the delivery) or **OTHER** (the condition must be checked: unused, tags on, seal not opened)
+  - which pieces come back: never more than bought minus earlier returns (`409 TOO_MANY_PIECES`)
+  - refund: all refunds together never more than the money collected (`409 REFUND_TOO_HIGH`); a refund needs a method, and bKash / Nagad need the transaction id
+  - pieces that can be sold again go back to stock with `inventory_movements` **RETURN** (with your id and the order), and a SOLD_OUT product with stock again becomes ACTIVE (REACTIVATE event, blueprint rule 9)
+  - when everything is refunded, the payment becomes **REFUNDED**
+  - the order itself stays DELIVERED.
+- The admin order now has `returnUntil`, `refundedPaisa`, and each line's `returnedQty`; the order answer lists the returns.
+- **Web**: a **Returns** panel on delivered orders ("Open until 21 Oct, 2:20 am"), each return as a card, "Refunded so far: ৳350 of ৳410", and the **Record a return** form (reason with the policy explained, condition check, who pays delivery for "other", pieces per line with "Can be sold again", what happened, refund with "Pieces: ৳… · At most ৳…", bKash / Nagad / cash and the transaction id).
+
+### Tests (all pass)
+Only for delivered orders; one sellable piece back (stock +1, RETURN movement with admin id and order, payment still COLLECTED, the return shows with the admin email); too many pieces; refund too high; a broken piece (not back in stock) + the rest refunded in cash → payment REFUNDED, order still DELIVERED; every form rule; a line of another order; the window (4 days ago with 3 days → closed, with 7 days → open); a return of a sold-out drone makes it ACTIVE again.
+
+### Browser check
+On the delivered test order: recorded "Our mistake", 1 box not sellable, ৳350 back by bKash with an id. The card, "Refunded so far: ৳350 of ৳410" and "Every piece of this order has come back" showed; stock stayed 46; payment stayed Collected (partial refund).
+
+### Key concepts (for a beginner)
+- **Cumulative check**: "never more than paid" must count all earlier refunds too, not just this one. That is why the order row is locked: two returns typed at the same moment are checked one after the other.
+- **CHECK constraint as a safety net**: even if the Go code had a bug, the database itself refuses "our mistake but the customer pays".
+
+### How to test it yourself
+Deliver a test order (checklist), open it: the Returns panel is at the bottom of the left column.
+
+### Decisions and questions
+- For "Our mistake" the pieces are **not** marked "can be sold again" by default (usually broken or wrong); for "Other reason" they are (unused, sealed). You can change the box per line.
+- For "Other reason" you may still choose "We pay the delivery" (goodwill). For "Our mistake" the customer paying is refused (policy).
+- A return does not change the order's status (still DELIVERED); the payment shows REFUNDED only when everything was refunded.
+- No separate `/admin/returns` list page yet (the sitemap has one). Returns are on each order's page.
