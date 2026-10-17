@@ -243,3 +243,39 @@ export type VariantInput = {
 }
 
 export type ImageInput = { url: string; thumbUrl: string; shortName: string; alt: string }
+
+// GET /api/admin/settings
+export type SettingRow = {
+  key: string
+  label: string
+  kind: 'int' | 'bool' | 'text'
+  min?: number
+  max?: number
+  unit?: string
+  value: number | boolean | string
+  description: string
+  updatedAt: string
+}
+
+export type AdminZone = {
+  id: number
+  code: string
+  name: string
+  chargePaisa: number
+  freeOverPaisa: number | null
+  currency: string
+  isActive: boolean
+  activeAreas: number
+}
+
+export type AdminArea = {
+  id: number
+  district: string
+  label: string
+  hint: string
+  zoneId: number
+  sortOrder: number
+  isActive: boolean
+}
+
+export type AdminDelivery = { zones: AdminZone[]; areas: AdminArea[]; freeDeliveryEnabled: boolean }

@@ -4,12 +4,15 @@ import { Loading } from '../../components/ui/LoadState'
 import { useAdmin } from '../../features/admin/AdminContext'
 import { AdminProvider } from '../../features/admin/AdminProvider'
 import AdminBlockedPhones from './AdminBlockedPhones'
+import AdminCategories from './AdminCategories'
 import AdminDashboard from './AdminDashboard'
+import AdminDelivery from './AdminDelivery'
 import AdminLogin from './AdminLogin'
 import AdminOrder from './AdminOrder'
 import AdminOrders from './AdminOrders'
 import AdminProductEdit from './AdminProductEdit'
 import AdminProducts from './AdminProducts'
+import AdminSettings from './AdminSettings'
 
 // Everything under /admin. Loaded only when someone opens /admin (a separate
 // file in the build), and never linked from the shop.
@@ -28,6 +31,9 @@ export default function AdminApp() {
             <Route path="products" element={<AdminProducts />} />
             <Route path="products/new" element={<AdminProductEdit />} />
             <Route path="products/:id" element={<AdminProductEdit />} />
+            <Route path="categories" element={<AdminCategories />} />
+            <Route path="delivery" element={<AdminDelivery />} />
+            <Route path="settings" element={<AdminSettings />} />
             <Route path="blocked-phones" element={<AdminBlockedPhones />} />
             <Route path="*" element={<AdminNotFound />} />
           </Route>

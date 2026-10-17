@@ -3,7 +3,7 @@ import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router'
 import { useAdmin } from '../../features/admin/AdminContext'
 import { getDashboard } from '../../features/admin/adminApi'
 import { useApi } from '../../lib/useApi'
-import { BanIcon, ClipboardIcon, CloseIcon, DashboardIcon, LogOutIcon, MenuIcon, TagIcon } from '../icons'
+import { BanIcon, ClipboardIcon, CloseIcon, DashboardIcon, LayersIcon, LogOutIcon, MenuIcon, SlidersIcon, TagIcon, TruckIcon } from '../icons'
 import { ScrollManager } from '../layout/ScrollManager'
 
 // One row per admin page, in menu order (docs/design/screens/AdminNav.dc.html).
@@ -18,6 +18,9 @@ const navItems: NavItem[] = [
   { to: '/admin', label: 'Dashboard', icon: DashboardIcon, end: true },
   { to: '/admin/orders', label: 'Orders', icon: ClipboardIcon },
   { to: '/admin/products', label: 'Products', icon: TagIcon },
+  { to: '/admin/categories', label: 'Categories', icon: LayersIcon },
+  { to: '/admin/delivery', label: 'Delivery', icon: TruckIcon },
+  { to: '/admin/settings', label: 'Settings', icon: SlidersIcon },
   { to: '/admin/blocked-phones', label: 'Blocked phones', icon: BanIcon },
 ]
 

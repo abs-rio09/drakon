@@ -5,12 +5,14 @@ import { ApiError, apiFetch, type ApiInit } from '../../lib/api'
 import type {
   Admin,
   AdminCategory,
+  AdminDelivery,
   AdminOrder,
   AdminProduct,
   AdminProductRow,
   ImageInput,
   ProductInput,
   ProductStatus,
+  SettingRow,
   VariantInput,
   BlockedPhone,
   CallListRow,
@@ -125,3 +127,32 @@ export const removeImage = (id: number) => product(adminFetch(`/images/${id}`, {
 // ---------- Categories ----------
 
 export const getAdminCategories = () => adminFetch<{ categories: AdminCategory[] }>('/categories').then((d) => d.categories)
+
+type CategoriesAnswer = { categories: AdminCategory[] }
+const categories = (p: Promise<CategoriesAnswer>) => p.then((d) => d.categories)
+
+export const createCategory = (body: { slug?: string; name: string; image: string; isActive: boolean }) =>
+  categories(adminPost('/categories', body))
+export const updateCategory = (id: number, body: { name: string; image: string; isActive: boolean }) =>
+  categories(adminFetch(`/categories/${id}`, { method: 'PUT', body }))
+export const reorderCategories = (ids: number[]) => categories(adminFetch('/categories/order', { method: 'PUT', body: { ids } }))
+
+// ---------- Settings ----------
+
+export const getAdminSettings = () => adminFetch<{ settings: SettingRow[] }>('/settings').then((d) => d.settings)
+export const saveSettings = (values: Record<string, number | boolean | string>) =>
+  adminFetch<{ settings: SettingRow[] }>('/settings', { method: 'PUT', body: { values } }).then((d) => d.settings)
+
+// ---------- Delivery ----------
+
+export const getAdminDelivery = () => adminFetch<AdminDelivery>('/delivery')
+
+export type ZoneInput = { name: string; chargePaisa: number; freeOverPaisa: number | null; isActive: boolean }
+export const createZone = (body: { code: string; name: string; chargePaisa: number; freeOverPaisa: number | null }) =>
+  adminPost<AdminDelivery>('/delivery/zones', body)
+export const updateZone = (id: number, body: ZoneInput) => adminFetch<AdminDelivery>(`/delivery/zones/${id}`, { method: 'PUT', body })
+
+export type AreaInput = { label: string; hint: string; zoneId: number; isActive: boolean }
+export const createArea = (body: { district: string; label: string; hint: string; zoneId: number }) =>
+  adminPost<AdminDelivery>('/delivery/areas', body)
+export const updateArea = (id: number, body: AreaInput) => adminFetch<AdminDelivery>(`/delivery/areas/${id}`, { method: 'PUT', body })
