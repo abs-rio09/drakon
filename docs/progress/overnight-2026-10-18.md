@@ -571,6 +571,28 @@ Expected: `ERROR: ... violates check constraint "order_status_history_admin_chec
 
 ---
 
+---
+
+# After all phases: edge-case tests and phone polish
+
+You sent the same overnight prompt a second time after everything was done. The prompt says: "If you finish everything, don't start new features. Add tests for edge cases and polish the admin UI on phone width." So I did only that.
+
+**Edge-case tests** (`api/internal/httpapi/admin_edge_test.go`, commit `00f9c67`, 8 new tests, **111 in total**):
+- 10 "Mark as confirmed" at the same moment → exactly 1 wins, 1 history row.
+- The buyer cancels on the website while you cancel in the admin → exactly one cancel, the stock comes back once.
+- You take the last limited drone away (broken) while a buyer orders it, 5 rounds → always exactly one winner, stock never below 0, exactly one SOLD_OUT event.
+- 8 returns of the same order at the same moment → never more pieces or money than bought / paid.
+- Login with a 500-letter password, a password over bcrypt's 72 bytes, a 5,000-letter email, an email with a space, an extra field → the normal "wrong email or password" answer (or 400 for the extra field), never a crash.
+- Broken JSON, `text/plain`, empty settings, a duplicate in the category order, "free over ৳0", product id 0 / `abc`.
+- Publishing with only a turned-off variant, a price fix on a SOLD_OUT product, a huge restock, a photo order with a duplicate or another product's photo, `imageIndex -1`.
+- "Today" on the dashboard starts at **midnight in Bangladesh**: an order delivered at 23:50 yesterday is not in "today", one at 00:10 is.
+- The race tests ran 3 times with `-race`: always green.
+
+**Phone polish** (commit `1bde4d8`), measured at 390 px in the browser (throwaway `drakon_ui` database again, dropped afterwards):
+- 13 small text buttons (Edit, Change stock, the photo arrows …) were 36 px tall; now **44 px** like every other button (the design system's size).
+- Inline links (order numbers, product names, breadcrumbs, the customer's phone, "See them", "Delivery") and the Limited switch got an **invisible 44 px tap area** that does not move anything on the page. Checked: a tap 15 px above or below the centre of each still hits it.
+- No admin page scrolls sideways (all 10 checked).
+
 # Start everything
 
 ```zsh
@@ -580,7 +602,7 @@ git log --oneline | head -30        # tonight's work (not pushed)
 cd api
 make db-up                          # database (Docker)
 make migrate                        # nothing new on your PC (00004–00006 are applied), safe to run
-make check                          # gofmt + vet + 103 tests (uses drakon_test)
+make check                          # gofmt + vet + 111 tests (uses drakon_test)
 make run                            # API on :8080, keep this terminal open
 ```
 Second terminal:
