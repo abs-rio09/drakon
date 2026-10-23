@@ -12,7 +12,7 @@ Security details of problems that are **not fixed yet** are not in this file (th
 - [x] 3. API contract check
 - [x] 4. Real browser check of every page
 - [x] 5. Database check
-- [ ] 6. Code health
+- [x] 6. Code health
 - [ ] 7. Docs check
 - [ ] 8. Finish
 
@@ -325,3 +325,47 @@ export PATH="$PATH:$(go env GOPATH)/bin"
 make sqlc && git status          # nothing changed = generated code is up to date
 ```
 (The up/down test needs a throwaway database; do not run `goose down` on your `drakon` database, it deletes the tables and your test data.)
+
+---
+
+## Phase 6: code health
+
+### What I checked
+| Check | Result |
+|---|---|
+| `go vet ./...` | clean |
+| `staticcheck` (run with `go run …@latest`, nothing added to the project) | only one style rule (ST1005: "error text should start with a small letter") on the photo messages in `images.go`. Those messages are full sentences shown to you in the admin, so they are right as they are. No unused Go code. |
+| `govulncheck` | **0** problems your code can reach. It lists one in `golang.org/x/crypto/openpgp`, a package DRAKON never imports (we use only `bcrypt` from that module). |
+| `go test -race -count=1 ./...` | all pass, no data races |
+| `errcheck` (ignored Go errors) | only harmless ones (closing a file we only read, `json.Marshal` of a plain number) |
+| `npm audit` (read only) | 0 vulnerabilities |
+| TypeScript strict | **on**. There is no `"strict": true` line, because TypeScript 6 turns it on by default. I proved it with a small test file: both an untyped parameter and `null` in a `string` were refused. |
+| Unused exports (script + the **typescript LSP** "find references") | 2 found: `PackageIcon` and `lineCount`. The LSP showed no use anywhere, so I removed them. |
+| Duplicated logic | none harmful: one money formatter (`lib/money.ts`), one Taka parser for admin inputs (text-based, no float maths), one phone rule (same as Go), one `fetch` wrapper (`lib/api.ts`) |
+| Hard-coded business numbers | none. Delivery charges, the 48 hours, return days, limits and the low-stock number all come from the API. What remains are safety limits (text lengths, max price, page sizes). |
+| Error handling in React | every button action catches errors and shows a message; every page load has loading and error states (the "API down" test in Phase 4 proved it) |
+| Double order | a triple click on "Place order" sent exactly **one** order (tested in the browser on a throwaway database, then dropped it) |
+| graphify map | the most connected web functions, `formatTaka` (48 links) and `useApi` (41), have no unit tests: the web has no test runner yet (finding) |
+
+### What I found
+- No bugs. 4 Low findings: no web unit tests; the Cloudflare Worker file is not type-checked by `npm run build` (it is clean when checked by hand); `Checkout.tsx` (793 lines) and `AdminOrder.tsx` (636 lines) are big; search shows at most 48 results. Details in the private report.
+- I did **not** split the two big files: the rule was "only a pure move with the browser check passing", and a careful split plus a full re-check is better done in daylight with you.
+
+### What I fixed
+| Commit | What |
+|---|---|
+| `712325a` | web: remove two exports nothing uses (`PackageIcon`, `lineCount`) |
+
+### Key concepts (for a beginner)
+- **Race detector** (`go test -race`): Go watches every memory read and write while the tests run and complains if two goroutines touch the same variable without a lock. Slower, but it finds bugs that happen only "sometimes".
+- **Vulnerability scan** (`govulncheck`): compares your modules with a public list of known security bugs, and checks whether your code actually *calls* the broken function. "In a module you require, but not called" = no danger.
+- **Dead code**: code nobody calls. It still has to be read and kept working, so it is removed, but only after a tool (the LSP) proves nothing uses it.
+- **Strict TypeScript**: makes TypeScript refuse values that might be missing (`null`) or have no type (`any`), so many bugs show up as red errors before the code ever runs.
+
+### How to test it yourself
+```zsh
+cd ~/Desktop/projects/Drakon/drakon/api
+go vet ./... && go test -race -count=1 ./...          # takes about 5 minutes with -race
+go run golang.org/x/vuln/cmd/govulncheck@latest ./...
+cd ../web && npm audit && npm run build && npm run lint
+```
