@@ -368,3 +368,36 @@ func TestNulCharacterIsABadRequest(t *testing.T) {
 		t.Errorf("category: %d %v", status, body)
 	}
 }
+
+// Every route that reads a body answers broken or odd bodies with the one
+// error shape and a 4xx, never a 500.
+func TestEveryBodyRouteRefusesBadBodies(t *testing.T) {
+	s := newTestServer(t, true)
+	c := loginOwner(t, s)
+	number, _ := placeTestOrder(t, s, "01712345678", line(variantID(t, "BALL-5"), 1))
+	routes := [][2]string{
+		{"POST", "/api/checkout/quote"}, {"POST", "/api/orders"}, {"POST", "/api/orders/track"},
+		{"POST", "/api/orders/cancel"}, {"POST", "/api/admin/login"},
+	}
+	for _, rt := range s.adminRoutes() {
+		if rt.Method != "GET" && rt.Path != "/api/admin/logout" { // logout reads no body
+			routes = append(routes, [2]string{rt.Method, rt.Path})
+		}
+	}
+	for _, rt := range routes {
+		path := strings.NewReplacer("{number}", number, "{id}", "1").Replace(rt[1])
+		for _, body := range []string{"{", `{"zzz":1}`, "[]", "", `"x"`, "123", `{"a":1}{"b":2}`} {
+			req := httptest.NewRequest(rt[0], path, strings.NewReader(body))
+			req.Header.Set("Content-Type", "application/json")
+			req.Header.Set("Origin", testOrigin)
+			req.AddCookie(c.cookie)
+			rec := httptest.NewRecorder()
+			s.Handler().ServeHTTP(rec, req)
+			var out map[string]any
+			_ = json.Unmarshal(rec.Body.Bytes(), &out)
+			if rec.Code < 400 || rec.Code >= 500 || errorCode(out) == "" {
+				t.Errorf("%s %s with %q: %d %s", rt[0], path, body, rec.Code, rec.Body.String())
+			}
+		}
+	}
+}
