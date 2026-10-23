@@ -13,7 +13,7 @@ Security details of problems that are **not fixed yet** are not in this file (th
 - [x] 4. Real browser check of every page
 - [x] 5. Database check
 - [x] 6. Code health
-- [ ] 7. Docs check
+- [x] 7. Docs check
 - [ ] 8. Finish
 
 ---
@@ -368,4 +368,36 @@ cd ~/Desktop/projects/Drakon/drakon/api
 go vet ./... && go test -race -count=1 ./...          # takes about 5 minutes with -race
 go run golang.org/x/vuln/cmd/govulncheck@latest ./...
 cd ../web && npm audit && npm run build && npm run lint
+```
+
+---
+
+## Phase 7: docs check
+
+### What I checked
+- **`.env.example`** against every `os.Getenv` in the Go code: `DATABASE_URL`, `PORT`, `COOKIE_SECURE`, `ALLOWED_ORIGINS`, `DEV_ADMIN_EMAIL`, `DEV_ADMIN_PASSWORD` are there. `TEST_DATABASE_URL` (an optional setting for the tests) was missing.
+- **`README.md`**: commands, Go 1.27 (go.mod says 1.27.1), the checks table, the admin account commands: all correct.
+- **`CLAUDE.md`** Commands and library notes: React Router 7.18 (still v7, as decided), Vite 8, Tailwind 4, sqlc `version: "2"` with `pgx/v5` and `db/migrations`, the admin route rule and its test name: all correct.
+- **`docs/api.md`**: every route (Phase 3), the public settings keys and every admin setting limit (compared with `settings/rules.go`), the search fields (shop: name + kind; admin products: name + SKU), the session times, the error codes (I added `BAD_TEXT` in Phase 3).
+- **`docs/deploy.md`**: Dockerfile Go version (1.27), health path, the 64 districts / 65 delivery areas, the env variables table: all correct.
+
+### What I found
+- One small gap: `TEST_DATABASE_URL` was not in `.env.example`. Fixed (as a commented, optional line).
+- Six new decisions for you, from tonight's findings, are now **open questions 19–24** in `docs/open-questions.md` (each with my recommendation).
+
+### What I fixed
+| Commit | What |
+|---|---|
+| `a81b916` | docs: mention the optional TEST_DATABASE_URL in .env.example |
+| `39c5214` | docs: open questions 19–24 from the audit |
+
+### Key concepts (for a beginner)
+- **Docs drift**: code changes but the docs do not, and after a few weeks the README tells you to run a command that no longer exists. Checking docs against the code (not against memory) after big changes keeps them true.
+- **`.env.example`**: the public list of every setting the program reads, with safe example values. The real `.env` (with passwords) stays only on your PC.
+
+### How to test it yourself
+```zsh
+cd ~/Desktop/projects/Drakon/drakon
+grep -rhoE 'Getenv\("[A-Z_]+"\)' api --include='*.go' | sort -u     # every setting the Go code reads
+grep -oE '^#? ?[A-Z_]+=' .env.example                               # every setting in the example file
 ```
