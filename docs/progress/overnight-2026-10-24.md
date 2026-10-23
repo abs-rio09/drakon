@@ -14,7 +14,7 @@ Security details of problems that are **not fixed yet** are not in this file (th
 - [x] 5. Database check
 - [x] 6. Code health
 - [x] 7. Docs check
-- [ ] 8. Finish
+- [x] 8. Finish (plus: safe open items fixed, project skills)
 
 ---
 
@@ -401,3 +401,135 @@ cd ~/Desktop/projects/Drakon/drakon
 grep -rhoE 'Getenv\("[A-Z_]+"\)' api --include='*.go' | sort -u     # every setting the Go code reads
 grep -oE '^#? ?[A-Z_]+=' .env.example                               # every setting in the example file
 ```
+
+---
+
+## After the phases: safe open items, then project skills
+
+The plan said: with time left, go back to open findings that turned out to be safe, then write project skills. I fixed four (each its own commit, build and lint green):
+
+| Commit | What | How I proved it |
+|---|---|---|
+| `0222e41` | web: type-check the Cloudflare Worker in `npm run build` (new `web/tsconfig.worker.json`, added to the references) | I put a deliberate type error into `worker/index.ts`: before, `npm run build` passed; after, it failed with `TS2322`. Then I removed the error. (Checked TypeScript project references with Context7 first.) |
+| `6f4b3eb` | web: the admin order total says "Collected in cash" after delivery and "Order total" after a cancel (it always said "Collect in cash") | browser, before/after screenshots in the private reports folder |
+| `f8c0d27` | web: `noindex` and `no-store` also for the bare `/admin` page (the rule `/admin/*` does not match `/admin` itself; Cloudflare docs via Context7) | only testable after deploy: `curl -sI https://<your-site>/admin` should show `X-Robots-Tag` |
+| `9c58cd3` | web: the "Published. It is live" notice disappears after the next change (it stayed even after the product became Sold out) | browser: shown after Publish, gone after a stock change |
+
+I left the "Published at AUD-STD 160050" record text as it is: making it show ৳ would need a money helper shared between two Go packages, too much change for a cosmetic text.
+
+**Project skills** (`.claude/skills/`, commit `cefc0f0`), written after checking the current Claude Code docs on skills with Context7:
+- `drakon-new-migration`: how to add a goose migration, prove the Down step on a throwaway database, regenerate sqlc
+- `drakon-admin-route`: the checklist for a new `/api/admin` route (route table + its test, Origin, errors, transactions, docs)
+- `drakon-money-and-stock`: paisa, server-side prices, the safe stock decrement, cancels, returns, SOLD_OUT and limits, and the nasty cases to test
+
+Claude Code reads them by itself when a task matches their description.
+
+---
+
+## Phase 8: finish
+
+### Final checks
+- `make check` (gofmt, vet, all tests, also once with `-count=1` so nothing came from the cache): **green**
+- `npm run build` and `npm run lint`: **green**
+- `git status`: on `main`, nothing changed except your own untracked `web/src/components/_preview/` (I never touched it). No reports, screenshots or `CLAUDE-SECURITY-*` folders in the repo. The Playwright tool's working folder was moved out of the repo after each browser session.
+- Throwaway databases `drakon_ui` and `drakon_audit`: dropped. Your `drakon` database: never touched.
+- **Nothing was pushed.**
+
+### Every commit of tonight (24, oldest first)
+| Commit | What |
+|---|---|
+| `fecf330` | docs: start the audit log (phase 0) |
+| `341d478` | docs: audit log phase 1 (security review) |
+| `10fa0ea` | api: compare a refund with the amount left, not a sum that can wrap |
+| `560f46e` | api: test Bangla names and addresses at checkout and in the admin search |
+| `422eb5a` | docs: audit log phase 2 (business rule table) |
+| `9fad8d8` | api: clear message when the request body is not a JSON object |
+| `452ae70` | api: answer 400 BAD_TEXT, not 500, for text the database cannot store |
+| `4fabb1d` | docs: audit log phase 3 (API contract) |
+| `917984a` | api: test odd bodies on every route that reads one (committed red by mistake, see Phase 3) |
+| `950f927` | api: leave DELETE out of the odd-body test (makes it green) |
+| `e4a8bbb` | seed: football variant label 5, not Size 5 |
+| `21caf54` | docs: audit log phase 4 (browser check) |
+| `2d5176e` | docs: audit log phase 5 (database) |
+| `712325a` | web: remove two exports nothing uses |
+| `f6c7686` | docs: audit log phase 6 (code health) |
+| `a81b916` | docs: mention the optional TEST_DATABASE_URL in .env.example |
+| `39c5214` | docs: open questions 19–24 from the audit |
+| `d23e38b` | docs: audit log phase 7 (docs check) |
+| `0222e41` | web: type-check the Cloudflare worker in npm run build |
+| `6f4b3eb` | web: admin order total says Collected / Order total |
+| `f8c0d27` | web: noindex and no-store also for the bare /admin page |
+| `9c58cd3` | web: clear the Published notice after the next product change |
+| `cefc0f0` | docs: project skills for migrations, admin routes, money and stock |
+| (this one) | docs: finish the audit log (phase 8) |
+
+## Summary
+
+| Severity | Found | FIXED | OPEN |
+|---|---|---|---|
+| High | 0 | 0 | 0 |
+| Medium | 4 | 2 | 2 |
+| Low | 17 | 6 | 11 |
+| **All** | **21** | **8** | **13** |
+
+**FIXED (short):** refund limit check could wrap around · NUL character gave a 500 · odd message for a non-object body · "Size Size 5" in the sample data · Worker not type-checked by the build · "Collect in cash" after delivery · `/admin` page header rule · stale "Published" notice.
+
+**New tests:** `TestAdminRefundCannotOverflow`, `TestPlaceOrderBanglaText`, `TestDecodeJSONNotAnObject`, `TestNulCharacterIsABadRequest`, `TestEveryBodyRouteRefusesBadBodies`, `TestSeedVariantLabelsDoNotRepeatTheKind`.
+
+**OPEN items: see the private report** `~/Desktop/projects/Drakon/reports/audit-2026-10-24.md` (13 items, each with a suggested fix and effort).
+
+## Decisions for the morning
+1. **Rate limiting** (open questions 4 and 14) is still the biggest missing piece before launch.
+2. **Open questions 19–24** (new tonight), each with my recommendation:
+   - 19: a new variant on a live product, with any price and no record
+   - 20: turning a variant off should re-check "sold out"
+   - 21: refuse option names like "Size M" for a Size
+   - 22: bigger shop links (44 px)
+   - 23: a few web unit tests with Node's own test runner (no new package)
+   - 24: "48 of N" on the search page
+3. Splitting `Checkout.tsx` (793 lines) and `AdminOrder.tsx` (636 lines): a good daylight job together, with a full browser re-check.
+
+## Morning checklist
+- [ ] Read the private report: `~/Desktop/projects/Drakon/reports/audit-2026-10-24.md` (start with the 2 open Medium items).
+- [ ] Look at a few screenshots in `~/Desktop/projects/Drakon/reports/screens-2026-10-24/` (`390-…` = phone, `1440-…` = desktop).
+- [ ] Run the checks yourself:
+  ```zsh
+  cd ~/Desktop/projects/Drakon/drakon/api && make check
+  cd ../web && npm run build && npm run lint
+  ```
+- [ ] Fix the old label in your dev database: Admin → Products → Night Striker Football → variant → Edit → Option name `5`.
+- [ ] Answer open questions 19–24 (and 4 / 14).
+- [ ] Look at `git log --oneline -25`, then push when you are happy: `git push`.
+- [ ] Decide what to do with your untracked `web/src/components/_preview/` folder.
+
+## Morning practice
+Small exercises, typed by you, based on tonight's fixes. Each takes 5–15 minutes.
+
+1. **See an integer overflow.** Make a scratch folder outside the repo and run a tiny Go program:
+   ```zsh
+   mkdir -p ~/scratch/overflow && cd ~/scratch/overflow
+   cat > main.go <<'GO'
+   package main
+
+   import (
+   	"fmt"
+   	"math"
+   )
+
+   func main() {
+   	before, paid := int64(1000), int64(366000)
+   	refund := int64(math.MaxInt64 - 500)
+   	fmt.Println("before+refund =", before+refund)                 // a negative number!
+   	fmt.Println("old check says too high:", before+refund > paid) // false: the bug
+   	fmt.Println("new check says too high:", refund > paid-before) // true: correct
+   }
+   GO
+   go run main.go
+   ```
+   Then explain in one sentence why `paid - before` can never overflow here.
+2. **Read a test.** Open `api/internal/httpapi/admin_returns_test.go`, find `TestAdminRefundCannotOverflow`, and run only it: `cd ~/Desktop/projects/Drakon/drakon/api && go test ./internal/httpapi -run TestAdminRefundCannotOverflow -v -count=1`.
+3. **Add one case to a table test.** In `api/internal/httpapi/json_test.go`, `TestDecodeJSONNotAnObject` loops over `[]`, `"x"`, `123`, `true`. Add `false` and `null`. Run the test. One of them fails: which one, and why? (Hint: what does Go do when it decodes `null` into a struct?) Remove the failing one again, or keep it and explain it in a comment.
+4. **Watch the Worker type-check work.** Add `export const x: number = 'oops'` at the end of `web/worker/index.ts`, run `npm run build` in `web/` (red), then delete the line (green). This is exactly what `tsconfig.worker.json` added tonight.
+5. **Read the sweep and draw it.** Open `api/internal/jobs/sweep.go` and draw on paper the three things `RunOnce` does, in order, and which table each one changes.
+
+OVERNIGHT STATUS: ALL PHASES DONE
