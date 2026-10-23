@@ -180,3 +180,23 @@ func TestAdminReturnBringsSoldOutBack(t *testing.T) {
 		t.Fatal("no REACTIVATE event for the return")
 	}
 }
+
+// A huge refund after an earlier one must not wrap around int64 and slip
+// past "never more than was paid".
+func TestAdminRefundCannotOverflow(t *testing.T) {
+	s := newTestServer(t, true)
+	c := loginOwner(t, s)
+	number, items := deliveredOrder(t, s, c, "01712345678", line(variantID(t, "BALL-5"), 2))
+	path := "/api/admin/orders/" + number + "/returns"
+	if status, body := c.do("POST", path, returnBody([]map[string]any{back(items[0], 1, true)}, 1000)); status != 200 {
+		t.Fatalf("first return: %d %v", status, body)
+	}
+	const maxInt64 = int64(^uint64(0) >> 1)
+	status, body := c.do("POST", path, returnBody([]map[string]any{back(items[0], 1, false)}, maxInt64-500))
+	if status != http.StatusConflict || errorCode(body) != "REFUND_TOO_HIGH" {
+		t.Fatalf("huge refund: %d %v", status, body)
+	}
+	if n := queryInt(t, "SELECT count(*) FROM returns r JOIN orders o ON o.id = r.order_id WHERE o.order_number = $1", number); n != 1 {
+		t.Fatalf("returns saved = %d, want only the first", n)
+	}
+}

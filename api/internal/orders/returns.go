@@ -192,7 +192,9 @@ func RecordReturn(ctx context.Context, pool *pgxpool.Pool, number string, in Ret
 		if err != nil {
 			return err
 		}
-		if before+in.RefundPaisa > pay.AmountPaisa {
+		// Compare with what is left (not before+refund): a huge number
+		// could wrap around int64 and look small.
+		if in.RefundPaisa > pay.AmountPaisa-before {
 			return &ReturnError{Code: "REFUND_TOO_HIGH", Message: fmt.Sprintf(
 				"The refund cannot be more than was paid: ৳%s paid, ৳%s already refunded.", taka(pay.AmountPaisa), taka(before))}
 		}
