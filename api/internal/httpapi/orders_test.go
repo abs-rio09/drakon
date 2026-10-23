@@ -6,7 +6,9 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"regexp"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -480,5 +482,39 @@ func TestPlaceOrderRefusesDraftProduct(t *testing.T) {
 	status, res := do(t, s, http.MethodPost, "/api/orders", orderBody(t, "01712345678", line(variantID(t, "BALL-5"), 1)))
 	if status != http.StatusConflict || errorCode(res) != "UNAVAILABLE" {
 		t.Fatalf("got %d %v", status, res)
+	}
+}
+
+// Bangla names and addresses are stored exactly, length limits count
+// letters (not bytes: one Bangla letter is 3 bytes), and the admin search
+// finds a Bangla name.
+func TestPlaceOrderBanglaText(t *testing.T) {
+	s := newTestServer(t, true)
+	body := orderBody(t, "01712345678", line(variantID(t, "BALL-5"), 1))
+	body["name"] = "নুসরাত জাহান"
+	body["area"] = "মিরপুর ১০"
+	body["address"] = strings.Repeat("ক", 500) // the longest address, 1500 bytes
+	body["courierNote"] = strings.Repeat("খ", 200)
+	status, res := do(t, s, http.MethodPost, "/api/orders", body)
+	if status != http.StatusCreated {
+		t.Fatalf("Bangla order: %d %v", status, res)
+	}
+	number := res["orderNumber"].(string)
+	if got := queryString(t, "SELECT name || '|' || area FROM orders WHERE order_number = $1", number); got != "নুসরাত জাহান|মিরপুর ১০" {
+		t.Fatalf("stored = %q", got)
+	}
+
+	body["address"] = strings.Repeat("ক", 501)
+	body["courierNote"] = strings.Repeat("খ", 201)
+	status, res = do(t, s, http.MethodPost, "/api/orders", body)
+	fields, _ := res["error"].(map[string]any)["fields"].(map[string]any)
+	if status != http.StatusUnprocessableEntity || fields["address"] == nil || fields["courierNote"] == nil {
+		t.Fatalf("one letter too many: %d %v", status, res)
+	}
+
+	c := loginOwner(t, s)
+	status, res = c.do("GET", "/api/admin/orders?q="+url.QueryEscape("জাহান"), nil)
+	if status != 200 || num(res["total"]) != 1 {
+		t.Fatalf("admin search for a Bangla name: %d %v", status, res)
 	}
 }
