@@ -342,3 +342,29 @@ func TestAdminDashboardTodayIsDhakaTime(t *testing.T) {
 		t.Fatalf("deliveredLast7Days = %v, want both", d)
 	}
 }
+
+// A NUL character (\u0000) cannot be stored by PostgreSQL. Typed into any
+// text (form, search, address in the URL) it must give a 400, not a 500.
+func TestNulCharacterIsABadRequest(t *testing.T) {
+	s := newTestServer(t, true)
+	c := loginOwner(t, s)
+	b := orderBody(t, "01712345678", line(variantID(t, "BALL-5"), 1))
+	b["name"] = "Nus\u0000rat"
+	if status, body := do(t, s, http.MethodPost, "/api/orders", b); status != http.StatusBadRequest || errorCode(body) != "BAD_TEXT" {
+		t.Fatalf("order: %d %v", status, body)
+	}
+	if n := queryInt(t, "SELECT count(*) FROM orders"); n != 0 {
+		t.Fatalf("orders saved = %d", n)
+	}
+	for _, path := range []string{"/api/products?q=%00", "/api/products/%00"} {
+		if status, body := do(t, s, http.MethodGet, path, nil); status != http.StatusBadRequest || errorCode(body) != "BAD_TEXT" {
+			t.Errorf("%s: %d %v", path, status, body)
+		}
+	}
+	if status, body := c.do("GET", "/api/admin/orders?q=%00", nil); status != http.StatusBadRequest || errorCode(body) != "BAD_TEXT" {
+		t.Errorf("admin search: %d %v", status, body)
+	}
+	if status, body := c.do("POST", "/api/admin/categories", map[string]any{"name": "Bo\u0000ard", "slug": "", "image": ""}); status != http.StatusBadRequest || errorCode(body) != "BAD_TEXT" {
+		t.Errorf("category: %d %v", status, body)
+	}
+}

@@ -11,6 +11,7 @@ import (
 	"runtime/debug"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/abs-rio09/drakon/api/internal/auth"
@@ -59,6 +60,13 @@ func (s *Server) wrap(h handlerFunc) http.HandlerFunc {
 		}
 		if errors.Is(err, context.Canceled) {
 			// The browser went away; nobody is waiting for an answer.
+			return
+		}
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "22021" {
+			// PostgreSQL cannot store this text (a NUL character, \u0000).
+			// That is the visitor's input, not our bug: 400, not 500.
+			writeError(w, badRequest("BAD_TEXT", "Some text contains a character we cannot save. Remove it and try again."))
 			return
 		}
 		s.log.Error("request failed", "method", r.Method, "path", r.URL.Path, "err", err)

@@ -19,7 +19,7 @@ Some errors add more:
 
 | Status | Codes |
 |---|---|
-| 400 | `BAD_JSON`, `UNKNOWN_FIELD`, `BAD_QUERY`, `EMPTY_CART`, `BAD_CART`, `CART_TOO_LARGE` |
+| 400 | `BAD_JSON`, `UNKNOWN_FIELD`, `BAD_QUERY`, `EMPTY_CART`, `BAD_CART`, `CART_TOO_LARGE`, `BAD_TEXT` (a NUL character `\u0000` in any text: the database cannot store it) |
 | 401 | `UNAUTHORIZED`, `INVALID_LOGIN` (admin) |
 | 403 | `PHONE_BLOCKED`, `BAD_ORIGIN` (admin) |
 | 404 | `NOT_FOUND`, `ORDER_NOT_FOUND` |
