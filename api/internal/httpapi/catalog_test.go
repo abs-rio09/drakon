@@ -223,3 +223,13 @@ func TestMissingSettingIsAnError(t *testing.T) {
 		t.Fatalf("got %d %v", status, body)
 	}
 }
+
+// The shop names a variant "<kind> <label>" ("Size M"), so a sample label
+// must not repeat the kind, or buyers read "Size Size 5".
+func TestSeedVariantLabelsDoNotRepeatTheKind(t *testing.T) {
+	newTestServer(t, true)
+	if n := queryInt(t, `SELECT count(*) FROM product_variants v JOIN products p ON p.id = v.product_id
+	                     WHERE lower(v.label) LIKE lower(p.variant_kind) || ' %'`); n != 0 {
+		t.Fatalf("%d sample variants repeat their kind in the label", n)
+	}
+}

@@ -172,7 +172,7 @@ WHERE p.slug = 'night-striker-football'
 INSERT INTO product_variants (product_id, sku, label, note, price_paisa, stock, image_index, sort_order)
 SELECT p.id, v.sku, v.label, v.note, v.price_paisa, v.stock, v.image_index, v.sort_order
 FROM products p, (VALUES
-    ('BALL-5', 'Size 5', '', 180000, 20, NULL::integer, 0)
+    ('BALL-5', '5', '', 180000, 20, NULL::integer, 0)
 ) AS v (sku, label, note, price_paisa, stock, image_index, sort_order)
 WHERE p.slug = 'night-striker-football'
 ON CONFLICT (sku) DO NOTHING;
