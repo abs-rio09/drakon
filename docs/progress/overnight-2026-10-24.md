@@ -9,7 +9,7 @@ Security details of problems that are **not fixed yet** are not in this file (th
 - [x] 0. Start: clean git, database up, all checks pass, tool list
 - [x] 1. Security scan (manual review; the plugin could not run here)
 - [x] 2. Business rules vs. the code
-- [ ] 3. API contract check
+- [x] 3. API contract check
 - [ ] 4. Real browser check of every page
 - [ ] 5. Database check
 - [ ] 6. Code health
@@ -195,3 +195,41 @@ cd ~/Desktop/projects/Drakon/drakon/api
 go test ./internal/httpapi -run 'TestAdminRefundCannotOverflow|TestPlaceOrderBanglaText' -count=1 -v
 ```
 To see the old bug: open `api/internal/orders/returns.go`, find `in.RefundPaisa > pay.AmountPaisa-before`, change it back to `before+in.RefundPaisa > pay.AmountPaisa`, run the test (FAIL, 500), then put the fix back (PASS).
+
+---
+
+## Phase 3: API contract check
+
+### What I checked
+- **Every route in the Go router against `docs/api.md`**: 12 public routes + admin login + 39 admin routes (the table in `admin_routes.go`). Every route is in the docs, and every route in the docs exists. Field names in the examples match the Go `json:"…"` tags I read.
+- **Every error code** the Go code can send against the docs' tables: all are listed.
+- **Bad input on every route that takes a body** (a test that loops over all of them): broken JSON `{`, unknown field, a list `[]` instead of an object, empty body, `null`, a plain string, two objects, a number. Result: never a 500, always the one error shape `{"error":{"code","message"}}`.
+- **Strange text**: very long text, Bangla, and the "NUL character" (`\u0000`, an invisible character with the number 0).
+- **Public answers never show admin-only data**: tracking and checkout answers have no name, phone, address, admin note or other buyers' data; the shop never shows DRAFT products or turned-off variants. Track and cancel need the order number **and** the right phone or token.
+- Wrong method on a known path (`POST /api/health`) answers 404: that is open question 10 (your choice), not a bug.
+
+### What I found
+1. A **NUL character** in any text made the API answer **500** ("Something went wrong on our side"). PostgreSQL cannot store this character at all, so it refused, and our code treated that like our own bug. It happened on public pages too (order form, shop search, product address). → fixed: now `400 BAD_TEXT` with a clear message.
+2. A body that is not an object (`[]`, `123`) gave the odd message `The field "" has the wrong type.` → fixed: "The request body must be a JSON object (between { and })."
+3. Docs vs code: no differences (I added the new `BAD_TEXT` code to `docs/api.md`).
+
+### What I fixed
+| Commit | What |
+|---|---|
+| `9fad8d8` | api: clear message when the request body is not a JSON object (test `TestDecodeJSONNotAnObject`) |
+| `452ae70` | api: answer 400 BAD_TEXT, not 500, for text the database cannot store (test `TestNulCharacterIsABadRequest`, docs/api.md) |
+
+### Key concepts (for a beginner)
+- **400 vs 500**: 4xx means "the request was wrong" (the visitor can fix it). 5xx means "the server broke" (we must fix it). Giving a 500 for bad input is wrong twice: the visitor gets no help, and our log fills with false alarms.
+- **SQLSTATE**: every PostgreSQL error has a 5-character code. `22021` means "this text has a character the database cannot store". In Go, `errors.As(err, &pgErr)` lets us read that code from the error.
+- **One place for a rule**: instead of checking for NUL in 40 handlers, the fix sits in `wrap` (the function every handler goes through). One change, every route is covered.
+
+### How to test it yourself
+```zsh
+cd ~/Desktop/projects/Drakon/drakon/api
+go test ./internal/httpapi -run 'TestNulCharacterIsABadRequest|TestDecodeJSONNotAnObject' -count=1 -v
+make run        # terminal 1, then in terminal 2:
+curl -s 'localhost:8080/api/products?q=%00'                     # {"error":{"code":"BAD_TEXT",…}}
+curl -s -X POST localhost:8080/api/orders/track -H 'Content-Type: application/json' -d '[]'
+# {"error":{"code":"BAD_JSON","message":"The request body must be a JSON object (between { and })."}}
+```
