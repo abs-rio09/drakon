@@ -11,7 +11,7 @@ Security details of problems that are **not fixed yet** are not in this file (th
 - [x] 2. Business rules vs. the code
 - [x] 3. API contract check
 - [x] 4. Real browser check of every page
-- [ ] 5. Database check
+- [x] 5. Database check
 - [ ] 6. Code health
 - [ ] 7. Docs check
 - [ ] 8. Finish
@@ -274,3 +274,54 @@ Then on your phone-sized browser window (Chrome: F12 → the phone icon → 390 
 1. Open http://localhost:5173/product/ember-night-hoodie-edition-02, press + until it stops (2), add to cart, pick size M: the button says "Limit reached in your cart".
 2. Stop the API (Ctrl+C in terminal 1) and reload: the friendly message, no white screen. Start it again and press Try again.
 3. Admin → Delivery → change Inside Dhaka to 70 → open a product page: "Delivery ৳70 inside Dhaka". Change it back to 60.
+
+---
+
+## Phase 5: database check
+
+### What I checked
+1. **Constraints**, read from the real schema (not from memory):
+   - every money column is `BIGINT` (`*_paisa`) with a CHECK: prices and order lines `> 0`, delivery charge, payments, refunds `>= 0`, free-over `> 0`
+   - `stock >= 0`, every `qty > 0`, stock movements `change <> 0`
+   - `orders.total_paisa = subtotal_paisa + delivery_paisa` and `order_items.line_total_paisa = unit_price_paisa * qty`: the database itself refuses wrong sums
+   - phone format, order number format, a cancelled order must have a time and a reason, an ADMIN history row must name the admin
+2. **Foreign keys**: all 25 use the default `NO ACTION`. Nothing uses `ON DELETE CASCADE`. So the database itself refuses to delete a product or an order that anything points to.
+3. **Every `DELETE` in the queries**: only admin sessions, an unblocked phone, product detail rows (rewritten on save) and a single photo. Never an order, product or variant.
+4. **Indexes + `EXPLAIN ANALYZE`**: on a throwaway database with the sample data **plus 50,000 generated orders** (with tiny tables PostgreSQL always reads the whole table, so the result would mean nothing). 13 main queries: shop list, order by number, admin order list (no filter, by status, search), search count, sweep, dashboard (3), purchase limit by phone, call list, and the "generic plan" pgx may use after 5 calls.
+5. **Migrations**: on the same throwaway database: `goose up` → `goose down-to 0` → `goose up`. After `down-to 0` only goose's own table was left (no tables, no enum types).
+6. **`make sqlc`**: no diff (the generated Go code matches the SQL files).
+
+### What I found
+| Query | 50,000 orders | Plan |
+|---|---|---|
+| order by number (track, admin) | 0.03 ms | unique index |
+| admin list, newest 50 (any status) | 0.1–0.2 ms | index on `created_at` |
+| purchase limit (earlier orders of a phone) | 0.04 ms | index on `phone` |
+| sweep (PENDING older than 48 h) | 4 ms | index on `(status, created_at)` |
+| dashboard "placed today" | 0.2 ms | index on `created_at` |
+| dashboard counts per status | 10 ms | reads all orders (fine) |
+| admin **search** count (`%text%`) | 33 ms | reads all orders |
+
+- No query is slow. The search reads every order because `ILIKE '%text%'` (text anywhere in the name) cannot use a normal index. 33 ms at 50,000 orders is fine; only at hundreds of thousands it would need a special "trigram" index. **So: no new index, no new migration.**
+- Every Down migration works. `make sqlc` gives no diff.
+- 2 Low findings (a missing `currency = 'BDT'` check, the search note above). Details in the private report.
+
+### What I fixed
+Nothing (nothing was broken). Both throwaway databases are dropped.
+
+### Key concepts (for a beginner)
+- **CHECK constraint**: a rule inside the database, like `CHECK (stock >= 0)`. Even if the Go code had a bug, the database would refuse the bad row. It is the last safety net.
+- **Foreign key**: `order_items.order_id REFERENCES orders(id)` means "every line must belong to a real order". With the default rule (NO ACTION), deleting an order that has lines is refused. `ON DELETE CASCADE` would delete the lines too; DRAKON never uses it, on purpose.
+- **Index**: like the index at the back of a book. Without it the database reads every row (a "Seq Scan"). With it, it jumps to the right rows ("Index Scan"). A search for text *in the middle* of a word (`%abc%`) cannot use a normal index, like a book index cannot find words by their middle letters.
+- **`EXPLAIN ANALYZE`**: shows the plan PostgreSQL chose and how long it really took.
+- **Up / Down migration**: Up builds the change, Down undoes it. Running up → down → up proves you can always go back one step safely.
+
+### How to test it yourself
+```zsh
+cd ~/Desktop/projects/Drakon/drakon/api
+docker compose exec db psql -U drakon -d drakon -c "EXPLAIN ANALYZE SELECT * FROM orders WHERE order_number = 'DRK-AAAAAA'"
+# look for "Index Scan using orders_order_number_key"
+export PATH="$PATH:$(go env GOPATH)/bin"
+make sqlc && git status          # nothing changed = generated code is up to date
+```
+(The up/down test needs a throwaway database; do not run `goose down` on your `drakon` database, it deletes the tables and your test data.)
