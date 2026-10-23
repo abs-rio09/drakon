@@ -10,7 +10,7 @@ Security details of problems that are **not fixed yet** are not in this file (th
 - [x] 1. Security scan (manual review; the plugin could not run here)
 - [x] 2. Business rules vs. the code
 - [x] 3. API contract check
-- [ ] 4. Real browser check of every page
+- [x] 4. Real browser check of every page
 - [ ] 5. Database check
 - [ ] 6. Code health
 - [ ] 7. Docs check
@@ -218,6 +218,7 @@ To see the old bug: open `api/internal/orders/returns.go`, find `in.RefundPaisa 
 |---|---|
 | `9fad8d8` | api: clear message when the request body is not a JSON object (test `TestDecodeJSONNotAnObject`) |
 | `452ae70` | api: answer 400 BAD_TEXT, not 500, for text the database cannot store (test `TestNulCharacterIsABadRequest`, docs/api.md) |
+| `917984a` + `950f927` | api: test odd bodies on every route that reads one (`TestEveryBodyRouteRefusesBadBodies`). Honest note: `917984a` was committed with this test failing (my command hid the red result behind a pipe); `950f927` fixed the test a minute later (DELETE routes read no body). From then on I ran the checks with `set -o pipefail`. |
 
 ### Key concepts (for a beginner)
 - **400 vs 500**: 4xx means "the request was wrong" (the visitor can fix it). 5xx means "the server broke" (we must fix it). Giving a 500 for bad input is wrong twice: the visitor gets no help, and our log fills with false alarms.
@@ -233,3 +234,43 @@ curl -s 'localhost:8080/api/products?q=%00'                     # {"error":{"cod
 curl -s -X POST localhost:8080/api/orders/track -H 'Content-Type: application/json' -d '[]'
 # {"error":{"code":"BAD_JSON","message":"The request body must be a JSON object (between { and })."}}
 ```
+
+---
+
+## Phase 4: real browser check of every page
+
+### What I checked
+- Setup: a throwaway database **`drakon_ui`** (all migrations + the sample data) with a throwaway owner `ui-test@drakon.test`, the API pointed at it, and the Vite dev server. I checked that the API wrote only to `drakon_ui` (your `drakon` database was not touched). At the end I stopped both servers and **dropped `drakon_ui`**.
+- Tool: the **Playwright MCP** (a real Chromium browser), at **390×844** (phone) and **1440×900** (desktop).
+- On **every page** (20 shop pages, 11 admin pages, both sizes) one script checked: sideways scrolling, broken images, images without alt text, inputs without a label, text sticking out of the screen, links and buttons smaller than 44 px, console errors and failed network requests. A second script pressed Tab through pages and checked that every focused element shows a visible ring.
+- **Customer journey** (by hand, in the browser): Home → Shop → Clothes → hoodie (sold-out size L is disabled and read out as "sold out") → quantity stops at the limit (2) → adding another size says "Limit reached in your cart" → Cart → Checkout: empty form (clear messages, focus jumps to the first mistake) → Dhaka → "Dhaka city ৳60 / Outside Dhaka city ৳100" → Khulna ৳100 → order with a **Bangla name and area** and the phone typed `+880 1712-345678` → Confirmation (order number, Copy button says "Copied") → Track with a lower-case number and the phone typed `8801712345678` → Cancel with a **double click** → the stock came back exactly once.
+- **API down**: I stopped the API. Every page shows "The shop is not answering right now. Please try again in a moment." with a Try again button. No crash. After restarting the API, Try again worked.
+- **Admin journey**: wrong password (clear message with the lockout numbers) → login → Dashboard → Orders (search by name, search by phone typed `018-1234`, status tabs) → order: confirm → ship (button waits for courier + tracking code) → delivered and paid → return (a too-high refund is blocked on the page; ৳1,800 by bKash saved with the admin email) → cancel another order with a reason (stock back to 48) → Products: new DRAFT → bad photo address refused → photo → variant at `1,600.50` Taka → stock +10 → Publish (price confirm step) → Owner price fix (needs an "I checked" tick; old → new price and reason in the record) → stock to 0 (Sold out) → Archive → Bring back (reason of at least 10 letters) → Delivery: Dhaka city ৳60 → ৳70, and the shop showed ৳70 at once → Settings: 36 hours saved, 999 refused ("Use 1 to 168 hours") → Categories → Blocked phones (an order from the blocked phone, typed differently, was refused with 403) → unblock → Log out (admin pages go back to the login page).
+- Screenshots (65) are only in `~/Desktop/projects/Drakon/reports/screens-2026-10-24/` (not in the repo).
+
+### What I found
+- **No** sideways scrolling, broken images, missing alt texts, inputs without labels or overflowing text on any page, at either size. Focus is visible everywhere I tabbed. The only console errors were expected ones (a 404 for a made-up product, 401 before logging in, 502 while I had stopped the API).
+- **1 bug, fixed**: the football's size showed as **"Size Size 5"** (cart, order, admin). Cause: the sample data had the label `Size 5`, and the site always writes "Size " before a size label. I fixed the sample data (label `5`) and added a test that no sample label repeats its kind.
+- **Low findings (not fixed, need a design choice or are cosmetic)**: many shop links are smaller than 44 px (footer links 18 px tall, category chips 36 px, breadcrumbs 16 px); a few admin targets too; "Collect in cash" still shows after the cash was collected; the publish record shows the price in paisa (`160050`); the "Published" notice stays on screen; nothing stops you typing a label like "Size M" for a size. Details in the private report.
+
+### What I fixed
+| Commit | What |
+|---|---|
+| `e4a8bbb` | seed: football variant label 5, not Size 5 (test `TestSeedVariantLabelsDoNotRepeatTheKind`) |
+
+**Your own dev database still has the old label** (the seed never overwrites). Fix it in 20 seconds: Admin → Products → Night Striker Football → the variant → Edit → Option name `5` → Save. Old orders keep "Size Size 5" on purpose: an order is a snapshot and never changes.
+
+### Key concepts (for a beginner)
+- **Snapshot**: when an order is placed, the product name, option name and price are *copied* into `order_items`. Later changes to the product never change old orders. That is why the old test order still shows "Size Size 5": it is a true copy of what the buyer saw.
+- **Tap target**: the area you can touch to press a link or button. Apple and Google suggest at least 44–48 px, so a thumb hits it without zooming.
+- **Seed data**: sample rows (`api/db/seed/dev_seed.sql`) so your PC has products to look at. It is not the real shop data; the live site starts empty.
+
+### How to test it yourself
+```zsh
+cd ~/Desktop/projects/Drakon/drakon/api && make run        # terminal 1
+cd ~/Desktop/projects/Drakon/drakon/web && npm run dev     # terminal 2
+```
+Then on your phone-sized browser window (Chrome: F12 → the phone icon → 390 × 844):
+1. Open http://localhost:5173/product/ember-night-hoodie-edition-02, press + until it stops (2), add to cart, pick size M: the button says "Limit reached in your cart".
+2. Stop the API (Ctrl+C in terminal 1) and reload: the friendly message, no white screen. Start it again and press Try again.
+3. Admin → Delivery → change Inside Dhaka to 70 → open a product page: "Delivery ৳70 inside Dhaka". Change it back to 60.
