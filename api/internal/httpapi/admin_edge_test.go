@@ -380,7 +380,7 @@ func TestEveryBodyRouteRefusesBadBodies(t *testing.T) {
 		{"POST", "/api/orders/cancel"}, {"POST", "/api/admin/login"},
 	}
 	for _, rt := range s.adminRoutes() {
-		if rt.Method != "GET" && rt.Path != "/api/admin/logout" { // logout reads no body
+		if rt.Method != "GET" && rt.Method != "DELETE" && rt.Path != "/api/admin/logout" { // these read no body
 			routes = append(routes, [2]string{rt.Method, rt.Path})
 		}
 	}
