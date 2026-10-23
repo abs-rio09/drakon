@@ -73,6 +73,9 @@ func decodeJSON(w http.ResponseWriter, r *http.Request, dst any) error {
 			return errorf(http.StatusRequestEntityTooLarge, "BODY_TOO_LARGE", "The request body must be at most 1 MB.")
 		case errors.As(err, &syntaxErr), errors.Is(err, io.ErrUnexpectedEOF):
 			return badRequest("BAD_JSON", "The request body is not valid JSON.")
+		case errors.As(err, &typeErr) && typeErr.Field == "":
+			// The whole body has the wrong type ([], "x", 123): no field to name.
+			return badRequest("BAD_JSON", "The request body must be a JSON object (between { and }).")
 		case errors.As(err, &typeErr):
 			return badRequest("BAD_JSON", fmt.Sprintf("The field %q has the wrong type.", typeErr.Field))
 		case strings.HasPrefix(err.Error(), "json: unknown field "):

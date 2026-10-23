@@ -53,3 +53,20 @@ func TestDecodeJSONRejectsOtherContentType(t *testing.T) {
 		t.Fatalf("got %v", err)
 	}
 }
+
+// A body that is not an object ([] or "x" or 123) names no field, so the
+// message must not read `The field "" has the wrong type.`
+func TestDecodeJSONNotAnObject(t *testing.T) {
+	for _, body := range []string{`[]`, `"x"`, `123`, `true`} {
+		req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		var v struct {
+			Name string `json:"name"`
+		}
+		var apiErr *apiError
+		err := decodeJSON(httptest.NewRecorder(), req, &v)
+		if !errors.As(err, &apiErr) || apiErr.Code != "BAD_JSON" || apiErr.Message != "The request body must be a JSON object (between { and })." {
+			t.Errorf("%s: got %v", body, err)
+		}
+	}
+}
