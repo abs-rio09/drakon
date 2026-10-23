@@ -22,6 +22,12 @@
 | 16 | The admin order search puts the phone into the URL (`?q=017…`), so it is in your browser history and maybe the hosting logs. OK for one owner? | OK for now | — |
 | 17 | The design menu has a "Stock" page and the sitemap a "Returns" list page. Both are on each product/order page now. Separate pages later? | Later | — |
 | 18 | Couriers to choose from: Steadfast, Pathao, RedX, Other (typed). Others you use? | Add yours | — |
+| 19 | A new variant can be added to a product that is already on sale, with any price and no reason in the record. Should that follow the price lock (refuse it, or ask for a reason and record it like a price fix)? | Ask for a reason and record it | — |
+| 20 | Turning a variant off does not re-check the product: a limited run whose other variants are all at 0 stays "Active" with nothing to buy. Should "turned off" count like "sold out" here? | Yes: re-check after every on/off change | — |
+| 21 | The admin can type an option name that repeats its kind ("Size M" for a Size), which shows as "Size Size M". Refuse it in the form? | Yes, with a clear message | — |
+| 22 | Many shop links are smaller than 44 px (footer links, breadcrumbs, category chips). Make them bigger like the admin (2026-10-21)? | Yes, before launch | — |
+| 23 | The website has no unit tests (only build + lint). Add a few with Node's built-in test runner (no new package) for money and phone formatting? | Yes, small | — |
+| 24 | Search shows at most 48 results, with no "show more". Add paging or a "48 of N" line? | A "48 of N" line is enough for now | — |
 
 ## আগের suggestion list (এখনো হ্যাঁ/না বলা হয়নি)
 - এখন: material variant (paper / plastic / metal / key-ring) আলাদা দাম আর stock সহ, Bangla policy page, backup
