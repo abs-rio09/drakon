@@ -8,7 +8,7 @@ Security details of problems that are **not fixed yet** are not in this file (th
 
 - [x] 0. Start: clean git, database up, all checks pass, tool list
 - [x] 1. Security scan (manual review; the plugin could not run here)
-- [ ] 2. Business rules vs. the code
+- [x] 2. Business rules vs. the code
 - [ ] 3. API contract check
 - [ ] 4. Real browser check of every page
 - [ ] 5. Database check
@@ -103,3 +103,95 @@ curl -si -X POST -H 'Origin: https://evil.example' localhost:8080/api/admin/logo
 curl -si localhost:8080/api/admin/orders | head -1                            # 401: no cookie
 curl -si localhost:8080/api/health | grep -i 'x-frame\|nosniff'              # security headers
 ```
+
+---
+
+## Phase 2: business rules vs. the code
+
+### What I checked
+Every business rule in `docs/blueprint.md` (rules 1–10) and the hard rules in `CLAUDE.md`, cut into small lines. For each line: where the code is, which test proves it.
+Then the nasty cases: two requests at the same moment, the same order cancelled twice, stock exactly 1, limit exactly reached, midnight in Dhaka, very big and negative numbers, empty text, Bangla text, and the three phone formats.
+
+Legend: ✅ OK (code + test) · ⚠️ no test (I wrote one) · ❌ wrong · ⏳ not built (open question or later) · 🔶 works as written, but there is a gap that needs your decision (finding)
+
+### The rule table
+
+| # | Rule line | Where (file → function) | Test | |
+|---|---|---|---|---|
+| 1a | Purchase limit per product (all variants together) | `orders/quote.go` → `buildQuote` | `TestQuoteProblems`, `TestPlaceOrderPurchaseLimitAcrossOrders` | ✅ |
+| 1b | No limit set → default from `settings.default_purchase_limit` | `buildQuote` | `TestPlaceOrderPurchaseLimitAcrossOrders` (sleeves, 6 > 5) | ✅ |
+| 1c | Guests counted by phone, across earlier orders (not cancelled) | `orders/place.go` → `Place` + `EarlierQtyByProduct` | `…AcrossOrders`, `TestPlaceOrderCancelledOrdersDoNotCountTowardsLimit` | ✅ |
+| 1d | Limit exactly reached is allowed, one more is refused | `buildQuote` (`> limit`) | `…AcrossOrders` (1 + 1 = 2 OK, 1 + 2 refused) | ✅ |
+| 1e | Same phone, two orders at the same moment | `LockPhone` (advisory lock) | `TestPlaceOrderLimitRaceSamePhone` | ✅ |
+| 1f | Phone typed `+880 1712-345678` / `8801712345678` / `01712345678` = the same buyer | `orders/validate.go` → `NormalizePhone` | `TestNormalizePhone`, `…AcrossOrders`, `TestTrackByPhoneAndToken` | ✅ |
+| 2a | Buyer cancels only in PENDING / CONFIRMED (number + phone or token) | `orders/track.go` → `Cancel` | `TestCancelOnlyWhilePendingOrConfirmed`, `TestCancelWithTokenAndWithWrongPhone` | ✅ |
+| 2b | Stock back exactly once, also when cancelled twice | `CancelLocked` (row lock + status check) | `TestCancelPutsStockBack` ("cancelling twice"), `TestAdminAndBuyerCancelAtTheSameMoment` | ✅ |
+| 2c | After SHIPPED only the admin can cancel | `orders/admin.go` → `nextMoves` | `TestAdminEveryMoveAllowedOrRefused` | ✅ |
+| 3a | Return window from `return_days` after delivery | `orders/returns.go` → `RecordReturn` | `TestAdminReturnWindowAndValidation` | ✅ |
+| 3b | Company's mistake → company pays the delivery; other reason → condition checked | `ReturnInput.clean` + DB CHECK | `TestAdminReturnWindowAndValidation` | ✅ |
+| 3c | Refund never more than paid (all refunds together) | `RecordReturn` | `TestAdminReturnsStockRefundAndPayment`, **new** `TestAdminRefundCannotOverflow` | ❌ → ✅ fixed tonight |
+| 3d | Refund recorded with method + bKash/Nagad reference | `ReturnInput.clean` | `TestAdminReturnWindowAndValidation` | ✅ |
+| 3e | Two returns at the same moment | `GetOrderForReturn` (row lock) | `TestTwoReturnsAtTheSameMoment` | ✅ |
+| 4a | COD sweep: PENDING older than `cod_confirm_hours` → CANCELLED by SYSTEM | `jobs/sweep.go` → `RunOnce` | `TestAutoCancelOldPendingOrders`, `TestAutoCancelUsesTheSetting` | ✅ |
+| 4b | Sweep puts stock back, SOLD_OUT → ACTIVE | `CancelLocked` | `TestAutoCancelBringsSoldOutBack` | ✅ |
+| 4c | Two sweeps at once cancel only once | row lock | `TestConcurrentSweepsCancelOnce` | ✅ |
+| 4d | Admin cannot confirm an order that is already past the time | sweep before admin reads/changes | `TestAdminCannotConfirmAnExpiredOrder` | ✅ |
+| 4e | Email to the buyer on auto-cancel | — | — | ⏳ (email not built) |
+| 4f | Admin can block a phone; blocked phone cannot order | `blocked_phones`, `Place` | `TestAdminBlockAndUnblockPhone`, `TestPlaceOrderBlockedPhone` | ✅ |
+| 5a | Delivery charge from the zone in the database | `GetDeliveryArea`, `applyDelivery` | `TestQuotePricesFromDatabase`, `TestQuoteOutsideDhakaAndFreeDelivery` | ✅ |
+| 5b | Dhaka → "Dhaka city / Outside Dhaka city" choice; areas and zones admin-controlled | `delivery_areas`, admin delivery API | `TestDeliveryAreas`, `TestAdminDeliveryAreas`, `TestAdminDeliveryCharges` | ✅ |
+| 5c | A turned-off area or zone cannot be ordered to | `GetDeliveryArea` (`is_active`) | `TestAdminDeliveryAreas` | ✅ |
+| 6a | Free delivery over an amount, per zone, with the on/off setting (off at launch) | `applyDelivery` | `TestQuoteOutsideDhakaAndFreeDelivery`, `TestPlaceOrderAppliesFreeDelivery` | ✅ |
+| 6b | Free delivery by coupon | — | — | ⏳ (later) |
+| 7a | Phone required, email optional | `Checkout.Validate` | `TestPlaceOrderValidation` | ✅ |
+| 7b | Order number + secret token; browser keeps only those two | `orders/tokens.go`, `web/src/features/orders/recentOrders.ts` | `TestTrackTokenHash`, `TestTrackByPhoneAndToken` | ✅ |
+| 7c | Tracking answer has no personal data | `orders/view.go` | `TestTrackByPhoneAndToken` | ✅ |
+| 7d | Status notifications (email / site / SMS) | — | — | ⏳ (email not built) |
+| 8a | Only one Owner; role column | migration 00004 unique index | `TestOnlyOneOwnerAndPasswordReset` | ✅ |
+| 8b | Strong password, lockout after wrong tries (numbers in settings) | `auth/auth.go` | `TestCheckNewPassword`, `TestAdminLockoutAndUnlock`, `TestAdminLockoutNumbersComeFromSettings` | ✅ |
+| 8c | Admin URL never shown in the shop | (no link in `web/src` outside the admin) | checked by search | ✅ |
+| 8d | Audit log of settings changes | — | — | ⏳ (open question 15) |
+| 9a | DRAFT → ACTIVE only by Publish (photo + priced active variant, stock for a limited run) | `products/lifecycle.go` → `Publish` | `TestAdminPublishRules` | ✅ |
+| 9b | Limited + stock 0 → SOLD_OUT (Showcase); normal → "Out of stock", can restock | `MarkSoldOutIfEmpty`, `ChangeStock` | `TestPlaceOrderSetsSoldOut`, `TestAdminStockRules` | ✅ |
+| 9c | A limited run that sold out is never restocked | `ChangeStock` (`LIMITED_NO_RESTOCK`) | `TestAdminStockRules` | ✅ |
+| 9d | Stock back after cancel/return → SOLD_OUT becomes ACTIVE again | `ReactivateIfStocked` | `TestCancelBringsSoldOutProductBack`, `TestAdminReturnBringsSoldOutBack` | ✅ |
+| 9e | Auto-ARCHIVED after `archive_after_days`, or by hand | `ArchiveOldSoldOut`, `Archive` | `TestAutoArchive`, `TestAdminArchiveAndReactivate` | ✅ |
+| 9f | ARCHIVED → ACTIVE only Owner, reason required, recorded | `Reactivate` + `product_events` | `TestAdminArchiveAndReactivate` | ✅ |
+| 9g | One variant empty → only that one disabled; all empty → SOLD_OUT | `MarkSoldOutIfEmpty` (web shows the variant disabled) | `TestPlaceOrderSetsSoldOut` | 🔶 turning a variant *off* does not re-check (finding) |
+| 9h | No product is ever deleted | no DELETE route for products/variants | `TestEveryAdminRouteNeedsASession` lists every route | ✅ (foreign keys: Phase 5) |
+| 10a | Prices only BDT, integer paisa, with a currency column | migrations, `BIGINT …_paisa` | (schema) | ✅ (constraints: Phase 5) |
+| 10b | Price can change in DRAFT, locked after ACTIVE | `UpdateVariant` (`PRICE_LOCKED`) | `TestAdminPriceLockAndPriceFix` | ✅ |
+| 10c | Emergency price fix: Owner, reason, record | `PriceFix` + `product_events` | `TestAdminPriceLockAndPriceFix` | ✅ |
+| 10d | A new variant on a live product with its own price | `AddVariant` | (probe) | 🔶 allowed without reason or record (finding) |
+| 10e | Confirm prices before publish | `Publish` (`PRICES_CHANGED`) | `TestAdminPublishRules` | ✅ |
+| 10f | Order keeps a snapshot: name, label, price, delivery charge | `InsertOrder`, `InsertOrderItem` | `TestPlaceOrderHappyPath`, `TestAdminPriceLockAndPriceFix` | ✅ |
+| H1 | Server decides money; browser prices ignored | `orders` package; `DisallowUnknownFields` | `TestPlaceOrderIgnoresClientPrices` | ✅ |
+| H6 | Stock decrement `… AND stock >= $1`, 0 rows → rollback | `DecrementStock` | `TestDecrementStockGuardWithTwoTransactions`, `TestPlaceOrderRaceForLastItem` (stock exactly 1) | ✅ |
+| H7 | Order statuses and their only allowed moves | `nextMoves` | `TestAdminEveryMoveAllowedOrRefused` | ✅ |
+| — | Two clicks on Confirm at the same moment | row lock | `TestAdminConfirmTwiceAtTheSameMoment` | ✅ |
+| — | Admin stock change and checkout race for the last piece | lock order variant → product | `TestAdminStockChangeAndCheckoutRaceForTheLastPiece` | ✅ |
+| — | "Today" on the dashboard starts at midnight in Dhaka | dashboard query | `TestAdminDashboardTodayIsDhakaTime` | ✅ |
+| — | Bangla names / addresses: stored exactly, limits count letters not bytes, admin search finds them | `Checkout.Validate` (`utf8.RuneCountInString`) | **new** `TestPlaceOrderBanglaText` | ⚠️ → ✅ |
+
+### What I found
+- **1 bug (❌)**: the "refund never more than paid" check added two numbers. With an earlier refund and a giant new number, the sum "wraps around" (see Key concepts) and looked small, so the check let it through. The request then crashed later with a 500 (the database refused, so nothing wrong was saved). Fixed.
+- **2 gaps (🔶)** that need your decision: turning a variant off on a live limited product, and adding a new variant with any price to a live product. Details in the private report.
+- **1 missing test (⚠️)**: Bangla text. I wrote it; it passes (no bug).
+
+### What I fixed
+| Commit | What |
+|---|---|
+| `10fa0ea` | api: compare a refund with the amount left, not a sum that can wrap (test `TestAdminRefundCannotOverflow`) |
+| `560f46e` | api: test Bangla names and addresses at checkout and in the admin search (test only) |
+
+### Key concepts (for a beginner)
+- **Integer overflow ("wrap around")**: an `int64` can hold numbers up to about 9.2 × 10¹⁸. If you add two big numbers and the answer is bigger, Go does not stop: the answer jumps to a huge **negative** number (like a car's odometer going from 999999 back to 000000). So `before + refund > paid` can be false even when the refund is gigantic. The safe way: `refund > paid - before`. A subtraction of two normal amounts can never overflow.
+- **Runes vs bytes**: a Bangla letter like `ক` is 1 letter (a "rune" in Go) but 3 bytes in UTF-8. Limits for people ("at most 500 letters") must count runes (`utf8.RuneCountInString`), not bytes (`len`). DRAKON already does this right.
+- **Row lock (`SELECT … FOR UPDATE`)**: while one transaction holds the lock on an order row, a second one that wants the same row waits. That is why "cancel twice at the same moment" puts the stock back only once.
+
+### How to test it yourself
+```zsh
+cd ~/Desktop/projects/Drakon/drakon/api
+go test ./internal/httpapi -run 'TestAdminRefundCannotOverflow|TestPlaceOrderBanglaText' -count=1 -v
+```
+To see the old bug: open `api/internal/orders/returns.go`, find `in.RefundPaisa > pay.AmountPaisa-before`, change it back to `before+in.RefundPaisa > pay.AmountPaisa`, run the test (FAIL, 500), then put the fix back (PASS).
