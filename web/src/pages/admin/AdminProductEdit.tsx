@@ -141,6 +141,7 @@ function EditProduct({ initial, categories, defaultLimit }: { initial: AdminProd
     clearApiCache()
     setProduct(p)
     setSaved(false)
+    setJustPublished(false) // the notice is about the last action only
   }
 
   async function onSave() {
