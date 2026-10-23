@@ -444,3 +444,87 @@ func TestAdminVariantsAndImages(t *testing.T) {
 	}
 	_ = vid
 }
+
+// Open question 19: a new variant on a live product sets a new price, so it
+// needs a written reason and leaves a PRICE_FIX record (no old price).
+func TestAdminNewVariantOnLiveProductNeedsAReason(t *testing.T) {
+	s := newTestServer(t, true)
+	c := loginOwner(t, s)
+	admin := ownerID(t)
+	id := queryInt(t, "SELECT id FROM products WHERE slug = 'card-sleeves-ember-100'") // ACTIVE
+	path := fmt.Sprintf("/api/admin/products/%d/variants", id)
+	v := map[string]any{"sku": "SLV-50", "label": "Box of 50", "pricePaisa": 20000}
+
+	if status, body := c.do("POST", path, v); status != 422 || fieldError(body, "reason") == "" {
+		t.Fatalf("no reason: %d %v", status, body)
+	}
+	v["reason"] = "ok"
+	if status, body := c.do("POST", path, v); status != 422 || fieldError(body, "reason") == "" {
+		t.Fatalf("too short: %d %v", status, body)
+	}
+	v["reason"] = "Smaller box for new players"
+	if status, body := c.do("POST", path, v); status != 201 {
+		t.Fatalf("with a reason: %d %v", status, body)
+	}
+	if n := queryInt(t, `SELECT count(*) FROM product_events WHERE product_id = $1 AND type = 'PRICE_FIX'
+	                     AND old_value IS NULL AND new_value = '20000' AND by_admin_id = $2
+	                     AND reason = 'New variant SLV-50: Smaller box for new players'`, id, admin); n != 1 {
+		t.Fatalf("PRICE_FIX records for the new variant = %d", n)
+	}
+
+	// A draft needs no reason and leaves no record (the price is checked at publish).
+	draft, _ := draftProduct(t, c, "Reason test deck")
+	if status, body := c.do("POST", fmt.Sprintf("/api/admin/products/%d/variants", draft),
+		map[string]any{"sku": "RT-2", "label": "Second", "pricePaisa": 1000}); status != 201 {
+		t.Fatalf("draft: %d %v", status, body)
+	}
+	if n := queryInt(t, "SELECT count(*) FROM product_events WHERE product_id = $1", draft); n != 0 {
+		t.Fatalf("draft events = %d", n)
+	}
+}
+
+// Open question 20: turning variants off or on re-checks "sold out".
+func TestAdminVariantOnOffRechecksSoldOut(t *testing.T) {
+	s := newTestServer(t, true)
+	c := loginOwner(t, s)
+	admin := ownerID(t)
+	drone := variantID(t, "DRN-01") // the only variant of a limited product, stock 3
+	path := fmt.Sprintf("/api/admin/variants/%d", drone)
+	body := map[string]any{"sku": "DRN-01", "label": "Standard", "note": "",
+		"pricePaisa": queryInt(t, "SELECT price_paisa FROM product_variants WHERE id = $1", drone),
+		"imageIndex": nil, "sortOrder": 0, "isActive": false}
+	status := func() string {
+		return queryString(t, "SELECT status::text FROM products WHERE slug = 'midnight-circuit-desk-drone'")
+	}
+
+	if code, res := c.do("PUT", path, body); code != 200 {
+		t.Fatalf("turn off: %d %v", code, res)
+	}
+	if st := status(); st != "SOLD_OUT" {
+		t.Fatalf("after turning the last variant off: %s, want SOLD_OUT", st)
+	}
+	body["isActive"] = true
+	if code, res := c.do("PUT", path, body); code != 200 {
+		t.Fatalf("turn on: %d %v", code, res)
+	}
+	if st := status(); st != "ACTIVE" {
+		t.Fatalf("after turning it on again: %s, want ACTIVE", st)
+	}
+	if n := queryInt(t, `SELECT count(*) FROM product_events e JOIN products p ON p.id = e.product_id
+	                     WHERE p.slug = 'midnight-circuit-desk-drone' AND e.by_admin_id = $1
+	                     AND e.type IN ('SOLD_OUT', 'REACTIVATE')`, admin); n != 2 {
+		t.Fatalf("records = %d, want SOLD_OUT and REACTIVATE", n)
+	}
+
+	// A product that is not limited never becomes SOLD_OUT.
+	ball := variantID(t, "BALL-5")
+	b := map[string]any{"sku": "BALL-5", "label": queryString(t, "SELECT label FROM product_variants WHERE id = $1", ball), "note": "",
+		"pricePaisa": queryInt(t, "SELECT price_paisa FROM product_variants WHERE id = $1", ball),
+		"imageIndex": nil, "sortOrder": 0, "isActive": false}
+	if code, res := c.do("PUT", fmt.Sprintf("/api/admin/variants/%d", ball), b); code != 200 {
+		t.Fatalf("ball off: %d %v", code, res)
+	}
+	if st := queryString(t, "SELECT status::text FROM products WHERE slug = 'night-striker-football'"); st != "ACTIVE" {
+		t.Fatalf("not limited: %s", st)
+	}
+}

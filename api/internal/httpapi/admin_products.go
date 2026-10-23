@@ -176,7 +176,7 @@ func (s *Server) handleAdminReactivate(w http.ResponseWriter, r *http.Request, a
 }
 
 // POST /api/admin/products/{id}/variants: a new variant (stock starts at 0).
-func (s *Server) handleAdminAddVariant(w http.ResponseWriter, r *http.Request, _ auth.Admin) error {
+func (s *Server) handleAdminAddVariant(w http.ResponseWriter, r *http.Request, admin auth.Admin) error {
 	id, err := idParam(r, "id")
 	if err != nil {
 		return err
@@ -185,7 +185,7 @@ func (s *Server) handleAdminAddVariant(w http.ResponseWriter, r *http.Request, _
 	if err := decodeJSON(w, r, &in); err != nil {
 		return err
 	}
-	if _, err := products.AddVariant(r.Context(), s.pool, id, in, s.now()); err != nil {
+	if _, err := products.AddVariant(r.Context(), s.pool, id, in, admin.ID, s.now()); err != nil {
 		return asAPIError(err)
 	}
 	return s.writeProduct(w, r, http.StatusCreated, id)
@@ -193,7 +193,7 @@ func (s *Server) handleAdminAddVariant(w http.ResponseWriter, r *http.Request, _
 
 // PUT /api/admin/variants/{id}: label, note, photo, order, on/off (and the
 // price while the product is a draft).
-func (s *Server) handleAdminUpdateVariant(w http.ResponseWriter, r *http.Request, _ auth.Admin) error {
+func (s *Server) handleAdminUpdateVariant(w http.ResponseWriter, r *http.Request, admin auth.Admin) error {
 	id, err := idParam(r, "id")
 	if err != nil {
 		return err
@@ -202,7 +202,7 @@ func (s *Server) handleAdminUpdateVariant(w http.ResponseWriter, r *http.Request
 	if err := decodeJSON(w, r, &in); err != nil {
 		return err
 	}
-	productID, err := products.UpdateVariant(r.Context(), s.pool, id, in, s.now())
+	productID, err := products.UpdateVariant(r.Context(), s.pool, id, in, admin.ID, s.now())
 	if err != nil {
 		return asAPIError(err)
 	}

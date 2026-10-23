@@ -137,6 +137,9 @@ function eventText(e: ProductEvent) {
   if (e.type === 'PRICE_FIX' && e.oldValue && e.newValue) {
     return `${formatTaka(Number(e.oldValue))} → ${formatTaka(Number(e.newValue))} · ${e.reason}`
   }
+  if (e.type === 'PRICE_FIX' && e.newValue) {
+    return `New price ${formatTaka(Number(e.newValue))} · ${e.reason}` // a new variant on a live product
+  }
   return e.reason
 }
 

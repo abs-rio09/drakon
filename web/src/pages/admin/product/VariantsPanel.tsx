@@ -105,13 +105,17 @@ function VariantForm({ product, variant, onDone, onCancel }: { product: AdminPro
   const [image, setImage] = useState(variant?.imageIndex ?? -1)
   const [sortOrder, setSortOrder] = useState(variant?.sortOrder ?? product.variants.length)
   const [active, setActive] = useState(variant?.isActive ?? true)
+  const [reason, setReason] = useState('')
   const { run, busy, error } = useAction()
   const pricePaisa = parseTaka(price)
+  // A new option on a live product sets a new price: it needs a reason (saved in the record).
+  const needsReason = !variant && !isDraft
+  const reasonOk = !needsReason || reason.trim().length >= 5
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
-    if (pricePaisa === null) return
-    const body = { sku, label, note, pricePaisa, imageIndex: image < 0 ? null : image, sortOrder, isActive: active }
+    if (pricePaisa === null || !reasonOk) return
+    const body = { sku, label, note, pricePaisa, imageIndex: image < 0 ? null : image, sortOrder, isActive: active, ...(needsReason ? { reason } : {}) }
     const p = await run(() => (variant ? updateVariant(variant.id, body) : addVariant(product.id, body)))
     if (p) onDone(p)
   }
@@ -153,6 +157,17 @@ function VariantForm({ product, variant, onDone, onCancel }: { product: AdminPro
           <input id={`v-order-${variant?.id ?? 'new'}`} type="number" min={0} value={sortOrder} onChange={(e) => setSortOrder(Number(e.target.value) || 0)} className={inputClass} />
         </Field>
       </div>
+      {needsReason && (
+        <Field
+          id="v-reason-new"
+          label="Reason"
+          required
+          error={f.reason}
+          hint="The product is live, so this new price is not checked by Publish. Your reason and the price are saved in the record."
+        >
+          <input id="v-reason-new" value={reason} maxLength={300} onChange={(e) => setReason(e.target.value)} placeholder="e.g. A smaller box for new players" className={inputClass} />
+        </Field>
+      )}
       {variant && (
         <label className="flex items-center gap-3 text-label font-normal text-ink">
           <input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} className="size-5 accent-ink" />
@@ -160,7 +175,7 @@ function VariantForm({ product, variant, onDone, onCancel }: { product: AdminPro
         </label>
       )}
       <div className="flex flex-wrap items-center gap-3">
-        <button type="submit" disabled={busy || pricePaisa === null} className={button('secondary')}>
+        <button type="submit" disabled={busy || pricePaisa === null || !reasonOk} className={button('secondary')}>
           {busy ? 'Saving…' : variant ? 'Save variant' : 'Add variant'}
         </button>
         <button type="button" onClick={onCancel} className={ghostButton + ' min-h-11 px-2'}>

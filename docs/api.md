@@ -365,6 +365,9 @@ curl -s -b $J -H "$O" -H "$H" -d '{"sku":"FPD2-STD","label":"Standard","note":""
 curl -s -b $J -X PUT -H "$O" -H "$H" -d '{"sku":"FPD2-STD","label":"Standard","note":"","pricePaisa":160000,"imageIndex":0,"sortOrder":0,"isActive":false}' $A/variants/31
 ```
 A new variant has stock 0. `pricePaisa` and `sku` change only while the product is a DRAFT (`409 PRICE_LOCKED` / `LOCKED`). `isActive: false` hides it from the shop (left out = unchanged).
+- A new variant on a product that is no longer a DRAFT needs a `reason` (5–300 letters, else `422` with `fields.reason`) and leaves a `PRICE_FIX` record with no old price and the new price:
+  `-d '{"sku":"SLV-50","label":"Box of 50","note":"","pricePaisa":20000,"imageIndex":null,"sortOrder":1,"reason":"A smaller box for new players"}'`
+- Turning a variant off or on re-checks the product: a limited ACTIVE product with nothing left on sale becomes SOLD_OUT, and a SOLD_OUT product with stock on sale again becomes ACTIVE (both recorded with the admin id).
 
 #### Stock: `POST /api/admin/variants/{id}/stock`
 ```zsh

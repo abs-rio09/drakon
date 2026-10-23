@@ -24,6 +24,9 @@ type VariantInput struct {
 	ImageIndex *int32 `json:"imageIndex"` // which photo shows it (0 = first)
 	SortOrder  int32  `json:"sortOrder"`
 	IsActive   *bool  `json:"isActive"` // off = hidden from the shop (never deleted); null = unchanged
+	// Reason is needed only for a new variant on a product that is no
+	// longer a draft: it sets a new price, like a price fix (open question 19).
+	Reason string `json:"reason"`
 }
 
 const (
@@ -80,10 +83,14 @@ func checkImageIndex(ctx context.Context, q *db.Queries, productID int64, idx *i
 
 // AddVariant adds a variant. It starts with stock 0: stock always comes in
 // through ChangeStock, so every piece has a line in the stock book.
-func AddVariant(ctx context.Context, pool *pgxpool.Pool, productID int64, in VariantInput, now time.Time) (int64, error) {
+// On a product that has left DRAFT the new price did not go through the
+// publish check, so it needs a written reason and leaves a PRICE_FIX
+// record (no old price, the new price) with the admin's id.
+func AddVariant(ctx context.Context, pool *pgxpool.Pool, productID int64, in VariantInput, adminID int64, now time.Time) (int64, error) {
 	if f := in.clean(); len(f) > 0 {
 		return 0, invalid(f)
 	}
+	in.Reason = strings.TrimSpace(in.Reason)
 	var id int64
 	err := pgx.BeginFunc(ctx, pool, func(tx pgx.Tx) error {
 		q := db.New(tx)
@@ -93,6 +100,15 @@ func AddVariant(ctx context.Context, pool *pgxpool.Pool, productID int64, in Var
 		}
 		if p.Status == db.ProductStatusARCHIVED {
 			return refuse("ARCHIVED", "An archived product cannot get new variants.")
+		}
+		live := p.Status != db.ProductStatusDRAFT
+		if live {
+			switch {
+			case runes(in.Reason) < minReasonRunes:
+				return invalid(map[string]string{"reason": "The product is live: write why it gets a new option at this price (at least 5 characters). It is saved in the record."})
+			case runes(in.Reason) > maxReasonRunes:
+				return invalid(map[string]string{"reason": "Keep the reason shorter."})
+			}
 		}
 		if err := checkImageIndex(ctx, q, productID, in.ImageIndex); err != nil {
 			return err
@@ -104,6 +120,12 @@ func AddVariant(ctx context.Context, pool *pgxpool.Pool, productID int64, in Var
 		if err != nil {
 			return uniqueError(err)
 		}
+		if live {
+			price := strconv.FormatInt(in.PricePaisa, 10)
+			if err := event(ctx, q, productID, db.ProductEventTypePRICEFIX, "New variant "+in.SKU+": "+in.Reason, nil, &price, adminID, now); err != nil {
+				return err
+			}
+		}
 		return q.TouchProduct(ctx, db.TouchProductParams{ID: productID, At: now})
 	})
 	return id, err
@@ -112,7 +134,10 @@ func AddVariant(ctx context.Context, pool *pgxpool.Pool, productID int64, in Var
 // UpdateVariant saves a variant's label, note, photo, order and on/off.
 // The price and the SKU can change only while the product is a DRAFT; on a
 // live product the price changes only through PriceFix.
-func UpdateVariant(ctx context.Context, pool *pgxpool.Pool, variantID int64, in VariantInput, now time.Time) (int64, error) {
+// Turning a variant off or on re-checks the product like a stock change
+// does (open question 20): a limited ACTIVE product with nothing left on
+// sale becomes SOLD_OUT, a SOLD_OUT product with stock again becomes ACTIVE.
+func UpdateVariant(ctx context.Context, pool *pgxpool.Pool, variantID int64, in VariantInput, adminID int64, now time.Time) (int64, error) {
 	if f := in.clean(); len(f) > 0 {
 		return 0, invalid(f)
 	}
@@ -149,9 +174,38 @@ func UpdateVariant(ctx context.Context, pool *pgxpool.Pool, variantID int64, in 
 		}); err != nil {
 			return uniqueError(err)
 		}
+		if active != v.IsActive {
+			if err := recheckSoldOut(ctx, q, v.ProductID, v.Sku, active, adminID, now); err != nil {
+				return err
+			}
+		}
 		return q.TouchProduct(ctx, db.TouchProductParams{ID: v.ProductID, At: now})
 	})
 	return productID, err
+}
+
+// recheckSoldOut runs after a variant was turned off (on = false) or on.
+func recheckSoldOut(ctx context.Context, q *db.Queries, productID int64, sku string, on bool, adminID int64, now time.Time) error {
+	if !on {
+		_, err := q.MarkSoldOutIfEmpty(ctx, db.MarkSoldOutIfEmptyParams{ID: productID, At: &now})
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil // still something on sale, or not a limited ACTIVE product
+		}
+		if err != nil {
+			return err
+		}
+		return event(ctx, q, productID, db.ProductEventTypeSOLDOUT, "Variant "+sku+" turned off: nothing left on sale",
+			strp(string(db.ProductStatusACTIVE)), strp(string(db.ProductStatusSOLDOUT)), adminID, now)
+	}
+	_, err := q.ReactivateIfStocked(ctx, db.ReactivateIfStockedParams{ID: productID, At: now})
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil // was not SOLD_OUT, or the variant has no stock
+	}
+	if err != nil {
+		return err
+	}
+	return event(ctx, q, productID, db.ProductEventTypeREACTIVATE, "Variant "+sku+" turned on with stock",
+		strp(string(db.ProductStatusSOLDOUT)), strp(string(db.ProductStatusACTIVE)), adminID, now)
 }
 
 // StockInput: POST /api/admin/variants/{id}/stock.

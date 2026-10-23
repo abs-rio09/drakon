@@ -270,6 +270,7 @@ export type VariantInput = {
   imageIndex: number | null
   sortOrder: number
   isActive?: boolean
+  reason?: string // a new variant on a live product (saved in the record)
 }
 
 export type ImageInput = { url: string; thumbUrl: string; shortName: string; alt: string }
