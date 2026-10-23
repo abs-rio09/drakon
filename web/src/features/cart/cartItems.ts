@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { ApiError, postQuote } from '../../lib/api'
 import type { Quote, QuoteItem } from '../../lib/types'
-import type { CartLine } from './cartStorage'
 import { useCart } from './useCart'
 
 export type CartQuoteState = (
@@ -82,8 +81,4 @@ export function splitItems(quote: Quote): { items: QuoteItem[]; unavailable: Quo
     else items.push(item)
   }
   return { items, unavailable }
-}
-
-export function lineCount(lines: CartLine[]): number {
-  return lines.reduce((sum, l) => sum + l.qty, 0)
 }
