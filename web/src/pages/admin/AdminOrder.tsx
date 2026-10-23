@@ -394,7 +394,9 @@ function ItemsPanel({ order }: { order: Order }) {
           <dd className="text-ink tabular-nums">{order.deliveryPaisa === 0 ? 'Free' : formatTaka(order.deliveryPaisa)}</dd>
         </div>
         <div className="flex justify-between gap-4 border-t border-line pt-3">
-          <dt className="font-medium text-ink-strong">Collect in cash</dt>
+          <dt className="font-medium text-ink-strong">
+            {order.status === 'DELIVERED' ? 'Collected in cash' : order.status === 'CANCELLED' ? 'Order total' : 'Collect in cash'}
+          </dt>
           <dd className="text-price text-ink-strong tabular-nums">{formatTaka(order.totalPaisa)}</dd>
         </div>
         {payment && (
