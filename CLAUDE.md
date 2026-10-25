@@ -70,7 +70,8 @@ Open decisions: `docs/open-questions.md` — **do not build anything marked 🟡
 - api: `cd api && make run` (http://localhost:8080); checks: `make check` (gofmt + vet + test)
 - sqlc: `cd api && make sqlc` after changing `api/db/queries/*.sql` or a migration
 - tests use the `drakon_test` database (auto-created, wiped per run). Never point tests at `drakon`.
-- web: `cd web && npm run dev` (http://localhost:5173); checks: `npm run build` and `npm run lint`
+- web: `cd web && npm run dev` (http://localhost:5173); checks: `npm run build`, `npm run lint` and `npm test`
+- web unit tests: `npm test` = `node --test 'src/**/*.test.ts'` (Node's own runner, no package). Tests import the file under test with its `.ts` extension; only type imports between source files (Node strips types, it does not resolve extensionless imports). Type-checked by `npm run build` via `tsconfig.test.json`.
 - Go tools live in `$(go env GOPATH)/bin` (goose, sqlc)
 - admin: `cd api && make dev-owner` (local only; password saved in repo-root `.env` as `DEV_ADMIN_PASSWORD`, never print it), `make create-owner EMAIL=…`, `make reset-password EMAIL=…` (`cmd/admin`, password typed hidden)
 - admin web: http://localhost:5173/admin (never link it from the shop). Every new `/api/admin` route goes into `api/internal/httpapi/admin_routes.go` AND the table in `TestEveryAdminRouteNeedsASession`
