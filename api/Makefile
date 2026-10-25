@@ -4,7 +4,7 @@
 GOBIN := $(shell go env GOPATH)/bin
 PSQL   = docker compose exec -T db sh -c 'psql -v ON_ERROR_STOP=1 -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"'
 
-.PHONY: db-up migrate migrate-status seed sqlc run test check dev-owner create-owner reset-password
+.PHONY: db-up migrate migrate-status seed sqlc run test check dev-owner create-owner reset-password reset-dev
 
 # Start the local PostgreSQL container and wait until it is healthy.
 db-up:
@@ -34,6 +34,11 @@ run:
 # .env as DEV_ADMIN_EMAIL / DEV_ADMIN_PASSWORD. Run again for a new password.
 dev-owner:
 	go run ./cmd/admin dev-owner
+
+# Local dev only: delete every order and reload the sample catalogue
+# (asks you to type "reset <database>"; refuses any non-localhost database).
+reset-dev:
+	go run ./cmd/admin reset-dev
 
 # The real Owner (any DATABASE_URL, e.g. Neon): make create-owner EMAIL=you@example.com
 create-owner:

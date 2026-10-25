@@ -4,6 +4,7 @@
 //	go run ./cmd/admin create-owner --email you@example.com
 //	go run ./cmd/admin reset-password --email you@example.com
 //	go run ./cmd/admin dev-owner          (your PC only, see below)
+//	go run ./cmd/admin reset-dev          (your PC only, see reset.go)
 //
 // Passwords are typed hidden (nothing shows on the screen) and asked twice.
 // They are never printed and never written to a log.
@@ -34,6 +35,7 @@ const usage = `DRAKON admin tool
   create-owner --email <email>    make the one Owner account (password typed hidden, twice)
   reset-password --email <email>  new password, ends the lockout, logs out every browser
   dev-owner                       LOCAL ONLY: owner with a random password, saved in .env
+  reset-dev                       LOCAL ONLY: delete every order, reload the sample catalogue
 
 Uses DATABASE_URL from the environment or from .env.
 `
@@ -101,6 +103,8 @@ func run(args []string) error {
 		return nil
 	case "dev-owner":
 		return devOwner(ctx, pool, dbURL, envFile)
+	case "reset-dev":
+		return resetDev(ctx, pool, dbURL, os.Stdin)
 	default:
 		fmt.Print(usage)
 		return fmt.Errorf("unknown command %q", cmd)

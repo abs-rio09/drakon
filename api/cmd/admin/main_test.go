@@ -1,10 +1,14 @@
 package main
 
 import (
+	"context"
 	"os"
 	"path/filepath"
+	"slices"
+	"strings"
 	"testing"
 
+	dbfiles "github.com/abs-rio09/drakon/api/db"
 	"github.com/abs-rio09/drakon/api/internal/auth"
 )
 
@@ -59,5 +63,72 @@ func TestCheckNewPassword(t *testing.T) {
 		if got := auth.CheckNewPassword(pw, "owner@drakon.local") == ""; got != ok {
 			t.Errorf("%q: ok = %v, want %v", pw, got, ok)
 		}
+	}
+}
+
+func TestResetDevRefusesNonLocalDatabases(t *testing.T) {
+	for _, url := range []string{
+		"postgres://u:x@ep-cool-name.aws.neon.tech/drakon?sslmode=require",
+		"postgres://u:x@db.example.com:5432/drakon",
+		"postgres://u:x@localhost.example.com/drakon", // looks local, is not
+		"not a url",
+		"postgres://u:x@localhost:5432/", // no database name
+	} {
+		if _, err := resetTarget(url); err == nil {
+			t.Errorf("resetTarget(%q) accepted", url)
+		}
+	}
+	if name, err := resetTarget("postgres://u:x@localhost:5432/drakon?sslmode=disable"); err != nil || name != "drakon" {
+		t.Fatalf("local: %q %v", name, err)
+	}
+	// Refused before it reads anything or touches a database (pool is nil).
+	err := resetDev(context.Background(), nil, "postgres://u:x@ep-x.neon.tech/drakon", strings.NewReader("reset drakon\n"))
+	if err == nil || !strings.Contains(err.Error(), "localhost") {
+		t.Fatalf("neon: %v", err)
+	}
+}
+
+func TestResetDevNeedsTheExactWords(t *testing.T) {
+	for input, ok := range map[string]bool{
+		"reset drakon\n":     true,
+		"  reset drakon  \n": true,
+		"reset drakon":       true, // Enter missing at the end of the input
+		"":                   false,
+		"\n":                 false,
+		"yes\n":              false,
+		"reset\n":            false,
+		"Reset drakon\n":     false,
+		"reset drakon_ui\n":  false,
+		"reset  drakon\n":    false,
+	} {
+		if got := confirmed(strings.NewReader(input), "drakon"); got != ok {
+			t.Errorf("%q: %v, want %v", input, got, ok)
+		}
+	}
+	// Not confirmed: stops before the database is used (pool is nil).
+	err := resetDev(context.Background(), nil, "postgres://u:x@localhost/drakon", strings.NewReader("yes\n"))
+	if err == nil || !strings.Contains(err.Error(), "nothing was changed") {
+		t.Fatalf("not confirmed: %v", err)
+	}
+}
+
+func TestResetScriptIsOneTransaction(t *testing.T) {
+	script, err := resetScript(dbfiles.DevSeed)
+	if err != nil {
+		t.Fatal(err)
+	}
+	b := strings.Index(script, "\nBEGIN;\n")
+	tr := strings.Index(script, "TRUNCATE ")
+	c := strings.LastIndex(script, "\nCOMMIT;")
+	if b < 0 || !(b < tr && tr < c) {
+		t.Fatalf("TRUNCATE must sit between BEGIN and COMMIT: %d %d %d", b, tr, c)
+	}
+	for _, kept := range []string{"admins", "admin_sessions", "settings", "delivery_zones", "delivery_areas"} {
+		if slices.Contains(resetTables, kept) {
+			t.Errorf("%s must be kept", kept)
+		}
+	}
+	if _, err := resetScript("INSERT 1;"); err == nil {
+		t.Error("a seed without BEGIN/COMMIT was accepted")
 	}
 }

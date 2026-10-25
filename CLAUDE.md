@@ -66,6 +66,7 @@ Open decisions: `docs/open-questions.md` — **do not build anything marked 🟡
 - db: `cd api && make db-up` (= `docker compose up -d --wait db`); psql: `docker compose exec db psql -U drakon -d drakon`
 - migrations: `cd api && make migrate` / `make migrate-status` (goose reads the repo-root `.env`)
 - seed: `cd api && make seed` (`api/db/seed/dev_seed.sql`, safe to run twice, never overwrites)
+- reset dev data: `cd api && make reset-dev` (localhost only; type `reset drakon` to confirm; deletes every order/return/product, reloads the seed, keeps admins, settings, delivery). Claude never runs it on `drakon`.
 - api: `cd api && make run` (http://localhost:8080); checks: `make check` (gofmt + vet + test)
 - sqlc: `cd api && make sqlc` after changing `api/db/queries/*.sql` or a migration
 - tests use the `drakon_test` database (auto-created, wiped per run). Never point tests at `drakon`.
