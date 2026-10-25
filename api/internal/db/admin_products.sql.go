@@ -647,20 +647,26 @@ func (q *Queries) ListProductMovements(ctx context.Context, productID int64) ([]
 }
 
 const lockProduct = `-- name: LockProduct :one
-SELECT id, status, is_limited FROM products WHERE id = $1 FOR UPDATE
+SELECT id, status, is_limited, variant_kind FROM products WHERE id = $1 FOR UPDATE
 `
 
 type LockProductRow struct {
-	ID        int64
-	Status    ProductStatus
-	IsLimited bool
+	ID          int64
+	Status      ProductStatus
+	IsLimited   bool
+	VariantKind string
 }
 
 // FOR UPDATE: one change to a product at a time.
 func (q *Queries) LockProduct(ctx context.Context, id int64) (LockProductRow, error) {
 	row := q.db.QueryRow(ctx, lockProduct, id)
 	var i LockProductRow
-	err := row.Scan(&i.ID, &i.Status, &i.IsLimited)
+	err := row.Scan(
+		&i.ID,
+		&i.Status,
+		&i.IsLimited,
+		&i.VariantKind,
+	)
 	return i, err
 }
 

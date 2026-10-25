@@ -1,10 +1,10 @@
-import { useState, type FormEvent } from 'react'
+import { useState, type SubmitEvent } from 'react'
 import { AdminPanel, FormMessage } from '../../../components/admin/adminUi'
 import { PlusIcon } from '../../../components/icons'
 import { Field, inputClass } from '../../../components/ui/Field'
 import { button, ghostButton } from '../../../components/ui/styles'
 import { addVariant, changeStock, priceFix, updateVariant } from '../../../features/admin/adminApi'
-import { parseTaka, takaInput } from '../../../features/admin/format'
+import { labelRepeatsKind, parseTaka, takaInput } from '../../../features/admin/format'
 import type { AdminProduct, AdminVariant } from '../../../features/admin/types'
 import { useAction } from '../../../features/admin/useAction'
 import { formatTaka } from '../../../lib/money'
@@ -111,10 +111,11 @@ function VariantForm({ product, variant, onDone, onCancel }: { product: AdminPro
   // A new option on a live product sets a new price: it needs a reason (saved in the record).
   const needsReason = !variant && !isDraft
   const reasonOk = !needsReason || reason.trim().length >= 5
+  const kindProblem = labelRepeatsKind(label, product.variantKind)
 
-  async function onSubmit(e: FormEvent) {
+  async function onSubmit(e: SubmitEvent) {
     e.preventDefault()
-    if (pricePaisa === null || !reasonOk) return
+    if (pricePaisa === null || !reasonOk || kindProblem) return
     const body = { sku, label, note, pricePaisa, imageIndex: image < 0 ? null : image, sortOrder, isActive: active, ...(needsReason ? { reason } : {}) }
     const p = await run(() => (variant ? updateVariant(variant.id, body) : addVariant(product.id, body)))
     if (p) onDone(p)
@@ -125,7 +126,7 @@ function VariantForm({ product, variant, onDone, onCancel }: { product: AdminPro
     <form onSubmit={onSubmit} noValidate className="flex flex-col gap-4">
       <p className="text-label text-ink-strong">{variant ? `Edit ${variant.label}` : 'New variant'}</p>
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field id={`v-label-${variant?.id ?? 'new'}`} label="Option name" required error={f.label} hint="M, Metal, Standard…">
+        <Field id={`v-label-${variant?.id ?? 'new'}`} label="Option name" required error={kindProblem || f.label} hint="M, Metal, Standard…">
           <input id={`v-label-${variant?.id ?? 'new'}`} value={label} maxLength={60} onChange={(e) => setLabel(e.target.value)} className={inputClass} />
         </Field>
         <Field id={`v-sku-${variant?.id ?? 'new'}`} label="SKU" required error={f.sku} hint={priceLocked ? 'Locked because the product is live.' : 'Capital letters, numbers, dashes: HD03-M.'}>
@@ -199,7 +200,7 @@ function StockForm({ variant, noRestock, onDone, onCancel }: { variant: AdminVar
   const change = direction === 'add' ? n : -n
   const after = variant.stock + (valid ? change : 0)
 
-  async function onSubmit(e: FormEvent) {
+  async function onSubmit(e: SubmitEvent) {
     e.preventDefault()
     if (!valid) return
     const p = await run(() => changeStock(variant.id, { change, reason: direction === 'remove' ? 'ADJUST' : reason, note }))
@@ -267,7 +268,7 @@ function PriceFixForm({ variant, onDone, onCancel }: { variant: AdminVariant; on
   const { run, busy, error } = useAction()
   const pricePaisa = parseTaka(price)
 
-  async function onSubmit(e: FormEvent) {
+  async function onSubmit(e: SubmitEvent) {
     e.preventDefault()
     if (pricePaisa === null) return
     const p = await run(() => priceFix(variant.id, { pricePaisa, reason }))

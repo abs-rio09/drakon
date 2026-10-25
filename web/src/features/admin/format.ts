@@ -61,3 +61,18 @@ export const productStatusNames: Record<ProductStatus, string> = {
   SOLD_OUT: 'Sold out',
   ARCHIVED: 'Archived',
 }
+
+// An option name must not start with the product's variant kind: "Size M"
+// for a Size product would show as "Size Size M" in the shop. The same rule
+// as labelRepeatsKind in Go (api/internal/products/variants.go), which
+// decides; this only gives the hint while typing. "" = fine.
+export function labelRepeatsKind(label: string, kind: string): string {
+  const k = kind.trim()
+  const text = label.trim()
+  const space = text.indexOf(' ')
+  if (k === '' || space < 0) return ''
+  const first = text.slice(0, space).replace(/[:-]+$/, '')
+  const rest = text.slice(space + 1).trim()
+  if (rest === '' || first.toLowerCase() !== k.toLowerCase()) return ''
+  return `Leave out the word “${k}”: type ${rest}. The shop already shows the kind (${k}) with it.`
+}

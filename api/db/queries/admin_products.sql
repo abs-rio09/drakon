@@ -36,7 +36,7 @@ WHERE p.id = $1;
 
 -- name: LockProduct :one
 -- FOR UPDATE: one change to a product at a time.
-SELECT id, status, is_limited FROM products WHERE id = $1 FOR UPDATE;
+SELECT id, status, is_limited, variant_kind FROM products WHERE id = $1 FOR UPDATE;
 
 -- name: ListAdminVariants :many
 SELECT id, sku, label, note, price_paisa, currency, stock, image_index, sort_order, is_active

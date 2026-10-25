@@ -67,6 +67,22 @@ func (in *VariantInput) clean() map[string]string {
 	return f
 }
 
+// labelRepeatsKind refuses an option name that starts with the product's
+// variant kind ("Size M" when the kind is Size): the shop already puts
+// the kind in front, which would show "Size Size M" (open question 21).
+func labelRepeatsKind(label, kind string) string {
+	kind = strings.TrimSpace(kind)
+	if kind == "" {
+		return ""
+	}
+	first, rest, _ := strings.Cut(label, " ")
+	if !strings.EqualFold(strings.TrimRight(first, ":-"), kind) || strings.TrimSpace(rest) == "" {
+		return ""
+	}
+	return fmt.Sprintf("Leave out the word “%s”: type %s. The shop already shows the kind (%s) with it.",
+		kind, strings.TrimSpace(rest), kind)
+}
+
 func checkImageIndex(ctx context.Context, q *db.Queries, productID int64, idx *int32) error {
 	if idx == nil {
 		return nil
@@ -100,6 +116,9 @@ func AddVariant(ctx context.Context, pool *pgxpool.Pool, productID int64, in Var
 		}
 		if p.Status == db.ProductStatusARCHIVED {
 			return refuse("ARCHIVED", "An archived product cannot get new variants.")
+		}
+		if problem := labelRepeatsKind(in.Label, p.VariantKind); problem != "" {
+			return invalid(map[string]string{"label": problem})
 		}
 		live := p.Status != db.ProductStatusDRAFT
 		if live {
@@ -152,6 +171,9 @@ func UpdateVariant(ctx context.Context, pool *pgxpool.Pool, variantID int64, in 
 		p, err := q.LockProduct(ctx, v.ProductID)
 		if err != nil {
 			return err
+		}
+		if problem := labelRepeatsKind(in.Label, p.VariantKind); problem != "" {
+			return invalid(map[string]string{"label": problem})
 		}
 		if p.Status != db.ProductStatusDRAFT {
 			if in.PricePaisa != v.PricePaisa {

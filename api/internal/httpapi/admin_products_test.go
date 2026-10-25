@@ -3,6 +3,7 @@ package httpapi
 import (
 	"fmt"
 	"net/http"
+	"strings"
 	"testing"
 )
 
@@ -526,5 +527,38 @@ func TestAdminVariantOnOffRechecksSoldOut(t *testing.T) {
 	}
 	if st := queryString(t, "SELECT status::text FROM products WHERE slug = 'night-striker-football'"); st != "ACTIVE" {
 		t.Fatalf("not limited: %s", st)
+	}
+}
+
+// Open question 21: an option name must not repeat the kind ("Size M" for
+// a Size product would show as "Size Size M").
+func TestAdminVariantLabelMustNotRepeatTheKind(t *testing.T) {
+	s := newTestServer(t, true)
+	c := loginOwner(t, s)
+	id, variant := draftProduct(t, c, "Kind Test Tee")
+	exec(t, "UPDATE products SET variant_kind = 'Size' WHERE id = $1", id)
+	path := fmt.Sprintf("/api/admin/products/%d/variants", id)
+
+	for _, label := range []string{"Size M", "size XL", "SIZE: L", "Size-  S"} {
+		status, body := c.do("POST", path, map[string]any{"sku": "KT-X", "label": label, "pricePaisa": 90000})
+		if status != 422 || !strings.Contains(fieldError(body, "label"), "Leave out the word “Size”") {
+			t.Errorf("%q: %d %v", label, status, body)
+		}
+	}
+	// Fine: the option alone, the bare word, and words that only start alike.
+	for i, label := range []string{"M", "Size", "Sizeable", "Extra Size M"} {
+		status, body := c.do("POST", path, map[string]any{"sku": fmt.Sprintf("KT-%d", i), "label": label, "pricePaisa": 90000})
+		if status != http.StatusCreated {
+			t.Errorf("%q: %d %v", label, status, body)
+		}
+	}
+	// Editing an option checks the same rule.
+	status, body := c.do("PUT", fmt.Sprintf("/api/admin/variants/%d", variant),
+		map[string]any{"sku": fmt.Sprintf("TST-%d", id), "label": "Size L", "pricePaisa": 160000})
+	if status != 422 || fieldError(body, "label") == "" {
+		t.Fatalf("edit to Size L: %d %v", status, body)
+	}
+	if n := queryInt(t, "SELECT count(*) FROM product_variants WHERE product_id = $1 AND label ILIKE 'size %'", id); n != 0 {
+		t.Fatalf("%d labels starting with the kind were saved", n)
 	}
 }
