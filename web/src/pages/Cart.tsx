@@ -1,6 +1,8 @@
+import { useEffect } from 'react'
 import { Link } from 'react-router'
 import { CashIcon, TruckIcon } from '../components/icons'
 import { LoadError, Loading } from '../components/ui/LoadState'
+import { PageMeta } from '../components/ui/PageMeta'
 import { QuantityStepper } from '../components/ui/QuantityStepper'
 import { button, container, ghostButton, panel, textLink } from '../components/ui/styles'
 import { splitItems, useCartQuote } from '../features/cart/cartItems'
@@ -9,10 +11,14 @@ import { useSite } from '../features/site/SiteContext'
 import { zoneCharge } from '../lib/delivery'
 import { formatTaka } from '../lib/money'
 import type { QuoteItem } from '../lib/types'
-import { PageMeta } from '../components/ui/PageMeta'
+import { loadCheckout } from './loadCheckout'
 
 // /cart — laid out from docs/design/screens/Cart.dc.html
 export default function Cart() {
+  // Fetch the checkout page's code now, while the buyer looks at the cart.
+  useEffect(() => {
+    void loadCheckout()
+  }, [])
   const cart = useCart()
   const { settings, delivery } = useSite()
   const priced = useCartQuote()
@@ -125,7 +131,7 @@ function CartRow({ item }: { item: QuoteItem }) {
   return (
     <li className="flex gap-5 border-b border-line py-6">
       <Link to={href} tabIndex={-1} aria-hidden="true" className="shrink-0">
-        <img src={item.thumb} alt="" className="size-21 rounded-lg bg-field object-cover sm:size-28" />
+        <img src={item.thumb} alt="" width={240} height={240} loading="lazy" decoding="async" className="size-21 rounded-lg bg-field object-cover sm:size-28" />
       </Link>
       <div className="flex min-w-0 flex-1 flex-col justify-between gap-4">
         <div className="flex items-start justify-between gap-4">

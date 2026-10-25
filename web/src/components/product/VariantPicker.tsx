@@ -72,6 +72,9 @@ export function VariantPicker({ product, selectedId, onSelect, aside }: VariantP
                     <img
                       src={thumb}
                       alt=""
+                      width={240}
+                      height={240}
+                      decoding="async"
                       className={'size-11 shrink-0 rounded-lg object-cover ' + (soldOut ? 'opacity-60 grayscale' : '')}
                     />
                   )}

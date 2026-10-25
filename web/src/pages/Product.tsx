@@ -6,6 +6,7 @@ import { ProductGrid } from '../components/product/ProductCard'
 import { ProductPhoto } from '../components/product/ProductPhoto'
 import { VariantPicker } from '../components/product/VariantPicker'
 import { Loaded } from '../components/ui/LoadState'
+import { PageMeta } from '../components/ui/PageMeta'
 import { QuantityStepper } from '../components/ui/QuantityStepper'
 import { button, container, tapArea, textLink } from '../components/ui/styles'
 import { useCart } from '../features/cart/useCart'
@@ -22,11 +23,10 @@ import {
 } from '../lib/catalog'
 import { zoneCharge } from '../lib/delivery'
 import { formatTaka } from '../lib/money'
+import { shortDescription } from '../lib/text'
 import type { Product as ProductType, PublicSettings, Variant } from '../lib/types'
 import { useApi } from '../lib/useApi'
 import NotFound from './NotFound'
-import { PageMeta } from '../components/ui/PageMeta'
-import { shortDescription } from '../lib/text'
 
 // /product/:slug — laid out from Product.dc.html (sizes) and
 // ProductCard.dc.html (materials with their own price).
@@ -117,7 +117,7 @@ function ProductView({ product, related }: { product: ProductType; related: Prod
         {/* Gallery */}
         <div className="flex flex-col gap-3">
           <div className="relative">
-            <ProductPhoto key={image.src} src={image.src} alt={image.alt} soldOut={archived} zoomOnHover={false} eager />
+            <ProductPhoto key={image.src} src={image.src} alt={image.alt} soldOut={archived} zoomOnHover={false} priority />
             {archived ? (
               <SoldOutBadge position="top-4 left-4" />
             ) : (
@@ -146,7 +146,7 @@ function ProductView({ product, related }: { product: ProductType; related: Prod
                     (i === imageIndex ? 'border-ink-strong opacity-100' : 'border-line opacity-60')
                   }
                 >
-                  <img src={img.thumb} alt="" className={'size-full object-cover ' + (archived ? 'grayscale' : '')} />
+                  <img src={img.thumb} alt="" width={240} height={240} decoding="async" className={'size-full object-cover ' + (archived ? 'grayscale' : '')} />
                 </button>
               ))}
             </div>

@@ -3,11 +3,11 @@ import { ProductGrid } from '../components/product/ProductCard'
 import { ChipLink } from '../components/ui/Chip'
 import { Loaded, ProductGridSkeleton } from '../components/ui/LoadState'
 import { PageIntro } from '../components/ui/PageIntro'
+import { PageMeta } from '../components/ui/PageMeta'
 import { container, textLink } from '../components/ui/styles'
 import { getCategories, getProducts } from '../lib/api'
 import { useApi } from '../lib/useApi'
 import NotFound from './NotFound'
-import { PageMeta } from '../components/ui/PageMeta'
 
 // The shop shows at most this many pieces per page. Far more than we sell
 // today; paging buttons come when the catalogue grows past it.

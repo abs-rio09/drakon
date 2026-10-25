@@ -3,6 +3,7 @@ import { ArrowUpRightIcon } from '../components/icons'
 import { ArchiveCard } from '../components/product/ArchiveCard'
 import { ProductGrid } from '../components/product/ProductCard'
 import { Loaded, ProductGridSkeleton } from '../components/ui/LoadState'
+import { PageMeta } from '../components/ui/PageMeta'
 import { SectionHeader } from '../components/ui/SectionHeader'
 import { button, container, secondaryButton, textLink } from '../components/ui/styles'
 import { useSite } from '../features/site/SiteContext'
@@ -11,7 +12,6 @@ import { metaLine, priceLabel, stockFact } from '../lib/catalog'
 import { zoneCharge } from '../lib/delivery'
 import { formatTaka } from '../lib/money'
 import { useApi } from '../lib/useApi'
-import { PageMeta } from '../components/ui/PageMeta'
 
 // Every product on sale, for the collection counts (the shop has under 100).
 const loadShop = () => getProducts({ limit: 100 })
@@ -49,9 +49,13 @@ function Hero() {
       {/* Photo: full-bleed behind the text on wide screens, on top on smaller ones */}
       <div className="relative aspect-[4/5] overflow-hidden md:aspect-video xl:absolute xl:inset-0 xl:aspect-auto">
         <picture>
-          <source media="(min-width: 768px)" srcSet="/img/hero-wide.webp" />
+          <source media="(min-width: 768px)" srcSet="/img/hero-wide.webp" width={1680} height={880} />
           <img
             src="/img/hero-tall.webp"
+            width={900}
+            height={1125}
+            fetchPriority="high"
+            decoding="async"
             alt="Dragon Flame playcards fanned on dark slate beside their box, lit by one warm light"
             className="size-full object-cover object-center motion-safe:animate-hero-in xl:object-right"
           />
@@ -229,7 +233,10 @@ function Collections() {
                     <img
                       src={c.image}
                       alt=""
+                      width={800}
+                      height={1000}
                       loading="lazy"
+                      decoding="async"
                       className="size-full object-cover transition-transform duration-700 ease-[cubic-bezier(0.2,0.7,0.2,1)] motion-safe:animate-fade-in motion-safe:group-hover:scale-[1.03]"
                     />
                   </span>

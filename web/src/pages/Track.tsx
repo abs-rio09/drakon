@@ -4,6 +4,7 @@ import { OrderSummaryList, OrderTimeline } from '../components/order/OrderDetail
 import { describedBy } from '../components/ui/describedBy'
 import { Field, inputClass } from '../components/ui/Field'
 import { PageIntro } from '../components/ui/PageIntro'
+import { PageMeta } from '../components/ui/PageMeta'
 import { button, ghostButton, inlineLink, panel } from '../components/ui/styles'
 import { isBdMobile } from '../features/checkout/validation'
 import { findRecentOrder, loadRecentOrders } from '../features/orders/recentOrders'
@@ -12,7 +13,6 @@ import { formatDateTime } from '../lib/dates'
 import { statusLabel } from '../lib/orderStatus'
 import type { OrderView } from '../lib/types'
 import { clearApiCache } from '../lib/useApi'
-import { PageMeta } from '../components/ui/PageMeta'
 
 // /track — look up an order with its number and the phone it was placed
 // with (POST /api/orders/track), see its timeline, and cancel it while it

@@ -5,12 +5,12 @@ import { SoldOutBadge } from '../components/product/Badge'
 import { ProductPhoto } from '../components/product/ProductPhoto'
 import { ChipButton } from '../components/ui/Chip'
 import { Loaded } from '../components/ui/LoadState'
+import { PageMeta } from '../components/ui/PageMeta'
 import { button, container, textLink } from '../components/ui/styles'
 import { getCategories, getProducts, getSoldOut } from '../lib/api'
 import { metaLine, priceLabel } from '../lib/catalog'
 import type { Product } from '../lib/types'
 import { useApi } from '../lib/useApi'
-import { PageMeta } from '../components/ui/PageMeta'
 
 const loadShop = () => getProducts({ limit: 100 })
 

@@ -22,7 +22,7 @@ export function ProductCard({ product }: { product: Product }) {
       <div className="relative z-10">
         {/* The photo repeats the title link, so screen readers and the Tab key skip it */}
         <Link to={href} tabIndex={-1} aria-hidden="true">
-          <ProductPhoto src={cover?.src ?? ''} alt="" soldOut={soldOut} />
+          <ProductPhoto src={cover?.src ?? ''} thumb={cover?.thumb} alt="" soldOut={soldOut} />
         </Link>
         {soldOut ? <SoldOutBadge /> : <QuickAdd product={product} />}
       </div>

@@ -3,12 +3,12 @@ import { SearchIcon } from '../components/icons'
 import { ProductGrid } from '../components/product/ProductCard'
 import { Loaded, ProductGridSkeleton } from '../components/ui/LoadState'
 import { PageIntro } from '../components/ui/PageIntro'
+import { PageMeta } from '../components/ui/PageMeta'
 import { container } from '../components/ui/styles'
 import { getProducts } from '../lib/api'
 import type { ProductPage } from '../lib/api'
 import { searchPageSize, searchSummary } from '../lib/search'
 import { useApi } from '../lib/useApi'
-import { PageMeta } from '../components/ui/PageMeta'
 
 const noResults: Promise<ProductPage> = Promise.resolve({ products: [], total: 0, limit: 0, offset: 0 })
 

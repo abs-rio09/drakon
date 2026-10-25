@@ -2,10 +2,10 @@ import type { ReactNode } from 'react'
 import { Link } from 'react-router'
 import { MailIcon, PhoneIcon } from '../components/icons'
 import { PageIntro } from '../components/ui/PageIntro'
+import { PageMeta } from '../components/ui/PageMeta'
 import { container, inlineLink, textLink } from '../components/ui/styles'
 import { contact } from '../mocks/contact'
 import { useSite } from '../features/site/SiteContext'
-import { PageMeta } from '../components/ui/PageMeta'
 
 // /contact — how to reach Drakon. The details are placeholders in
 // src/mocks/contact.ts until Abu Bakkar Siddik decides them.

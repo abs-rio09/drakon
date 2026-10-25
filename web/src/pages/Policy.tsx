@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { Link } from 'react-router'
-import { PageMeta } from '../components/ui/PageMeta'
 import { PageIntro } from '../components/ui/PageIntro'
+import { PageMeta } from '../components/ui/PageMeta'
 import { container, inlineLink } from '../components/ui/styles'
 import { useSite } from '../features/site/SiteContext'
 

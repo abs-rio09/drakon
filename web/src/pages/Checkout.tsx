@@ -4,6 +4,7 @@ import { CashIcon, ChevronDownIcon } from '../components/icons'
 import { describedBy } from '../components/ui/describedBy'
 import { Field, FieldError, inputClass, textareaClass } from '../components/ui/Field'
 import { LoadError, Loading } from '../components/ui/LoadState'
+import { PageMeta } from '../components/ui/PageMeta'
 import { button, container, inlineLink, panel, primaryButton } from '../components/ui/styles'
 import { splitItems, useCartQuote } from '../features/cart/cartItems'
 import { useCart } from '../features/cart/useCart'
@@ -23,7 +24,6 @@ import { getZone } from '../lib/delivery'
 import { formatTaka } from '../lib/money'
 import type { OrderView, Problem, Quote, QuoteItem } from '../lib/types'
 import { clearApiCache } from '../lib/useApi'
-import { PageMeta } from '../components/ui/PageMeta'
 
 // /checkout — the form and the order summary, from Checkout.dc.html.
 // "Place order" sends the form to POST /api/orders. The server checks
@@ -266,6 +266,9 @@ function CheckoutView({ form, setForm, quote, items, quoteIsCurrent, refreshQuot
                 key={item.variantId}
                 src={item.thumb}
                 alt=""
+                width={240}
+                height={240}
+                decoding="async"
                 className={
                   'size-10 rounded-lg border-2 border-surface-raised bg-field object-cover' + (i > 0 ? ' -ml-3' : '')
                 }
@@ -716,7 +719,7 @@ function OrderSummary(props: OrderSummaryProps) {
       <ul className="flex flex-col gap-4">
         {items.map((item) => (
           <li key={item.variantId} className="flex items-center gap-4">
-            <img src={item.thumb} alt="" className="size-16 shrink-0 rounded-lg bg-field object-cover" />
+            <img src={item.thumb} alt="" width={240} height={240} loading="lazy" decoding="async" className="size-16 shrink-0 rounded-lg bg-field object-cover" />
             <span className="flex min-w-0 flex-1 flex-col">
               <span className="truncate text-body text-ink-strong">{item.productName}</span>
               <span className="text-caption text-ink-muted tabular-nums">

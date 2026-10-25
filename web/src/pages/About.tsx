@@ -1,8 +1,8 @@
 import { Link } from 'react-router'
 import { PageIntro } from '../components/ui/PageIntro'
+import { PageMeta } from '../components/ui/PageMeta'
 import { container, primaryButton } from '../components/ui/styles'
 import { useSite } from '../features/site/SiteContext'
-import { PageMeta } from '../components/ui/PageMeta'
 
 // /about — the brand story, from docs/brand-vision.md.
 const PEOPLE = ['Night workers', 'Dream chasers', 'Gamers', 'Coders', 'Creative minds', 'Silent hardworking people']

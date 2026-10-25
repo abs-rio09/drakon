@@ -1,26 +1,35 @@
-import { lazy, Suspense } from 'react'
+import { lazy, Suspense, type ReactNode } from 'react'
 import { Outlet, Route, Routes } from 'react-router'
 import { CheckoutLayout } from './components/layout/CheckoutLayout'
 import { RootLayout } from './components/layout/RootLayout'
 import { Loading } from './components/ui/LoadState'
 import { CartProvider } from './features/cart/CartProvider'
 import { SiteProvider } from './features/site/SiteProvider'
+import { loadCheckout } from './pages/loadCheckout'
 import About from './pages/About'
 import Cart from './pages/Cart'
-import Checkout from './pages/Checkout'
 import Contact from './pages/Contact'
 import Home from './pages/Home'
 import NotFound from './pages/NotFound'
-import OrderConfirmation from './pages/OrderConfirmation'
 import { PrivacyPolicy, ReturnsPolicy, TermsPolicy } from './pages/Policy'
 import Product from './pages/Product'
 import Search from './pages/Search'
 import Shop from './pages/Shop'
 import SoldOut from './pages/SoldOut'
-import Track from './pages/Track'
 
 // The admin is a separate download: shoppers never load its code.
 const AdminApp = lazy(() => import('./pages/admin/AdminApp'))
+
+// Pages a buyer reaches later are separate downloads too, so the first
+// page opens faster. The cart page fetches the checkout code ahead
+// (pages/loadCheckout.ts), so "Checkout" opens without a wait.
+const Checkout = lazy(loadCheckout)
+const OrderConfirmation = lazy(() => import('./pages/OrderConfirmation'))
+const Track = lazy(() => import('./pages/Track'))
+
+function Later({ children }: { children: ReactNode }) {
+  return <Suspense fallback={<Loading label="Opening the page" />}>{children}</Suspense>
+}
 
 // The shop needs the settings, delivery charges and the cart; the admin does not.
 function ShopProviders() {
@@ -57,8 +66,8 @@ function App() {
           <Route path="search" element={<Search />} />
           <Route path="sold-out" element={<SoldOut />} />
           <Route path="cart" element={<Cart />} />
-          <Route path="order/:number" element={<OrderConfirmation />} />
-          <Route path="track" element={<Track />} />
+          <Route path="order/:number" element={<Later><OrderConfirmation /></Later>} />
+          <Route path="track" element={<Later><Track /></Later>} />
           <Route path="about" element={<About />} />
           <Route path="contact" element={<Contact />} />
           <Route path="policies/returns" element={<ReturnsPolicy />} />
@@ -69,7 +78,7 @@ function App() {
 
         {/* Checkout has its own quiet header */}
         <Route element={<CheckoutLayout />}>
-          <Route path="checkout" element={<Checkout />} />
+          <Route path="checkout" element={<Later><Checkout /></Later>} />
         </Route>
       </Route>
     </Routes>

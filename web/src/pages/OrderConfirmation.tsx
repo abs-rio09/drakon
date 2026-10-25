@@ -2,6 +2,7 @@ import { Link, useLocation, useParams } from 'react-router'
 import { CopyButton } from '../components/order/CopyButton'
 import { OrderSummaryList, OrderTimeline } from '../components/order/OrderDetails'
 import { Loaded } from '../components/ui/LoadState'
+import { PageMeta } from '../components/ui/PageMeta'
 import { button, container, inlineLink, panel, textLink } from '../components/ui/styles'
 import { findRecentOrder } from '../features/orders/recentOrders'
 import { trackOrder } from '../lib/api'
@@ -10,7 +11,6 @@ import { statusLabel } from '../lib/orderStatus'
 import type { OrderView } from '../lib/types'
 import { useApi } from '../lib/useApi'
 import type { JustPlacedState } from './Checkout'
-import { PageMeta } from '../components/ui/PageMeta'
 
 // /order/:number — the confirmation after ordering (Confirmation.dc.html).
 // Right after checkout the order comes with the navigation. Later visits
