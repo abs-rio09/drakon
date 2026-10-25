@@ -141,3 +141,9 @@ UPDATE products
 SET status = 'ARCHIVED', archived_at = sqlc.arg('at'), updated_at = sqlc.arg('at')
 WHERE status = 'SOLD_OUT' AND sold_out_at < sqlc.arg('cutoff')
 RETURNING id;
+
+-- name: VoidPendingPayments :exec
+-- A cancelled COD order has nothing to collect. Only PENDING changes;
+-- COLLECTED and REFUNDED stay as they are.
+UPDATE payments SET status = 'VOID'
+WHERE order_id = $1 AND method = 'COD' AND status = 'PENDING';

@@ -273,6 +273,7 @@ const (
 	PaymentStatusPENDING   PaymentStatus = "PENDING"
 	PaymentStatusCOLLECTED PaymentStatus = "COLLECTED"
 	PaymentStatusREFUNDED  PaymentStatus = "REFUNDED"
+	PaymentStatusVOID      PaymentStatus = "VOID"
 )
 
 func (e *PaymentStatus) Scan(src interface{}) error {

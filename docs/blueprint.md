@@ -157,7 +157,7 @@ Neon (ফ্রি) ── PostgreSQL
 | `orders` | id, order_number (unique, যেমন DRK-7K3Q9P, এলোমেলো), track_token_hash, customer_id (খালি = guest), name, phone, email (ঐচ্ছিক), district, area, address, courier_note, zone_code + delivery_paisa (snapshot), subtotal_paisa, total_paisa, currency, payment_method ('COD'), status, is_gift, gift_receiver_name, gift_receiver_phone, gift_note, courier_name, courier_tracking, created_at, confirmed_at, cancelled_at, cancel_reason | Order number এলোমেলো রাখা হবে, যাতে কেউ মোট order সংখ্যা আন্দাজ করতে না পারে |
 | `order_items` | id, order_id, variant_id, product_name, variant_label, unit_price_paisa, qty, line_total_paisa | নাম আর দাম order-এর সময়ের কপি (snapshot) |
 | `order_status_history` | id, order_id, from_status, to_status, by (CUSTOMER/ADMIN/SYSTEM), note, created_at | Tracking timeline এখান থেকে দেখানো হবে |
-| `payments` | id, order_id, method (COD), amount_paisa, status (PENDING/COLLECTED/REFUNDED), collected_at, ref | পরে bKash/Nagad এলে নতুন method যোগ হবে, table বদলাতে হবে না |
+| `payments` | id, order_id, method (COD), amount_paisa, status (PENDING/COLLECTED/REFUNDED/VOID; cancel হলে PENDING → VOID), collected_at, ref | পরে bKash/Nagad এলে নতুন method যোগ হবে, table বদলাতে হবে না |
 | `returns` | id, order_id, reason_type (COMPANY_FAULT/OTHER), note, delivery_paid_by, refund_paisa, refund_method (BKASH/NAGAD/CASH), refund_ref, status, created_at | |
 | `blocked_phones` | phone (PK), reason, created_at | |
 | `notifications` | id, order_id, channel (EMAIL/SITE/SMS), status, sent_at, error | Email পাঠানো গেল কিনা তার রেকর্ড |

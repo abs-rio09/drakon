@@ -111,6 +111,9 @@ func TestCancelPutsStockBack(t *testing.T) {
 	if n := queryInt(t, "SELECT count(*) FROM orders WHERE cancelled_at IS NOT NULL"); n != 1 {
 		t.Error("cancelled_at not set")
 	}
+	if st := paymentStatus(t, number); st != "VOID" {
+		t.Errorf("payment after the buyer's cancel = %s, want VOID", st)
+	}
 
 	// Cancelling twice: refused, and the stock is not added a second time.
 	status, body = do(t, s, http.MethodPost, "/api/orders/cancel", map[string]any{"orderNumber": number, "phone": "01712345678"})
@@ -203,4 +206,10 @@ func TestCancelReasonTooLong(t *testing.T) {
 	if status != 422 || errorCode(body) != "VALIDATION" {
 		t.Fatalf("%d %v", status, body)
 	}
+}
+
+// paymentStatus is the status of the order's (only) payment row.
+func paymentStatus(t *testing.T, number string) string {
+	t.Helper()
+	return queryString(t, "SELECT p.status::text FROM payments p JOIN orders o ON o.id = p.order_id WHERE o.order_number = $1", number)
 }

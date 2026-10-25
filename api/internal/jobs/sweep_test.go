@@ -116,6 +116,13 @@ func TestAutoCancelOldPendingOrders(t *testing.T) {
 	if n := queryInt(t, "SELECT stock FROM product_variants WHERE sku = 'BALL-5'"); n != 18 {
 		t.Errorf("stock after = %d, want 18 (2 back)", n)
 	}
+	pay := "SELECT p.status::text FROM payments p JOIN orders o ON o.id = p.order_id WHERE o.order_number = $1"
+	if st := queryString(t, pay, old); st != "VOID" {
+		t.Errorf("payment of the auto-cancelled order = %s, want VOID", st)
+	}
+	if st := queryString(t, pay, fresh); st != "PENDING" {
+		t.Errorf("payment of the fresh order = %s, want PENDING", st)
+	}
 	if r := queryString(t, "SELECT cancel_reason FROM orders WHERE order_number = $1", old); r != "Not confirmed by phone within 48 hours" {
 		t.Errorf("reason = %q", r)
 	}

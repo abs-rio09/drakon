@@ -154,6 +154,9 @@ func TestAdminCancelPutsStockBackWithAdminID(t *testing.T) {
 	if n := queryInt(t, "SELECT stock FROM product_variants WHERE sku = 'DRN-01'"); n != 3 {
 		t.Fatalf("stock = %d, want 3 back", n)
 	}
+	if st := paymentStatus(t, number); st != "VOID" {
+		t.Fatalf("payment after the admin's cancel = %s, want VOID", st)
+	}
 	if n := queryInt(t, `SELECT count(*) FROM inventory_movements WHERE reason = 'CANCEL' AND change = 3 AND by_admin_id = $1`, admin); n != 1 {
 		t.Fatalf("CANCEL movements with admin id = %d", n)
 	}
@@ -357,4 +360,44 @@ func jsonString(v any) (string, error) {
 	var b strings.Builder
 	_, err := fmt.Fprintf(&b, "%v", v)
 	return b.String(), err
+}
+
+// A cancel turns only a PENDING payment into VOID. A payment that is
+// already COLLECTED or REFUNDED keeps its status, and the dashboard counts
+// neither the cancelled order nor its void payment.
+func TestCancelVoidsOnlyPendingPayments(t *testing.T) {
+	s := newTestServer(t, true)
+	c := loginOwner(t, s)
+	ball := variantID(t, "BALL-5")
+	pending, _ := placeTestOrder(t, s, "01711111111", line(ball, 1))
+	collected, _ := placeTestOrder(t, s, "01822222222", line(ball, 1))
+	refunded, _ := placeTestOrder(t, s, "01933333333", line(ball, 1))
+	// Odd states made by hand, to prove the cancel never touches them.
+	exec(t, "UPDATE payments p SET status = 'COLLECTED', collected_at = now() FROM orders o WHERE o.id = p.order_id AND o.order_number = $1", collected)
+	exec(t, "UPDATE payments p SET status = 'REFUNDED' FROM orders o WHERE o.id = p.order_id AND o.order_number = $1", refunded)
+
+	for _, number := range []string{pending, collected, refunded} {
+		if status, body := move(c, number, "CANCELLED"); status != 200 {
+			t.Fatalf("cancel %s: %d %v", number, status, body)
+		}
+	}
+	for number, want := range map[string]string{pending: "VOID", collected: "COLLECTED", refunded: "REFUNDED"} {
+		if st := paymentStatus(t, number); st != want {
+			t.Errorf("%s payment = %s, want %s", number, st, want)
+		}
+	}
+
+	_, body := c.do("GET", "/api/admin/orders/"+pending, nil)
+	pays := orderOf(body)["payments"].([]any)
+	if len(pays) != 1 || pays[0].(map[string]any)["status"] != "VOID" {
+		t.Fatalf("admin order payments = %v", pays)
+	}
+
+	_, body = c.do("GET", "/api/admin/dashboard", nil)
+	if m := body["placedToday"].(map[string]any); num(m["orders"]) != 0 || num(m["totalPaisa"]) != 0 {
+		t.Fatalf("placedToday counts cancelled orders: %v", m)
+	}
+	if m := body["deliveredToday"].(map[string]any); num(m["orders"]) != 0 {
+		t.Fatalf("deliveredToday = %v", m)
+	}
 }

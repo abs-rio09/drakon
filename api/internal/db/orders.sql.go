@@ -656,3 +656,15 @@ func (q *Queries) SetOrderCancelled(ctx context.Context, arg SetOrderCancelledPa
 	_, err := q.db.Exec(ctx, setOrderCancelled, arg.At, arg.Reason, arg.ID)
 	return err
 }
+
+const voidPendingPayments = `-- name: VoidPendingPayments :exec
+UPDATE payments SET status = 'VOID'
+WHERE order_id = $1 AND method = 'COD' AND status = 'PENDING'
+`
+
+// A cancelled COD order has nothing to collect. Only PENDING changes;
+// COLLECTED and REFUNDED stay as they are.
+func (q *Queries) VoidPendingPayments(ctx context.Context, orderID int64) error {
+	_, err := q.db.Exec(ctx, voidPendingPayments, orderID)
+	return err
+}

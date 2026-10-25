@@ -137,6 +137,8 @@ func Cancel(ctx context.Context, pool *pgxpool.Pool, l Lookup, reason string, no
 //   - locks the order row (FOR UPDATE) and re-reads its status
 //   - does nothing (false) if allowed(status) says no, so it is safe to run twice
 //   - sets CANCELLED with the reason, adds a history row
+//   - a PENDING COD payment becomes VOID (nothing to collect); COLLECTED
+//     and REFUNDED payments are never touched
 //   - puts every item's stock back (inventory_movements CANCEL)
 //   - a SOLD_OUT product that has stock again becomes ACTIVE (product_events)
 //
@@ -153,6 +155,9 @@ func CancelLocked(ctx context.Context, q *db.Queries, orderID int64, allowed fun
 		return false, nil
 	}
 	if err := q.SetOrderCancelled(ctx, db.SetOrderCancelledParams{ID: orderID, At: &now, Reason: &reason}); err != nil {
+		return false, err
+	}
+	if err := q.VoidPendingPayments(ctx, orderID); err != nil {
 		return false, err
 	}
 	from := o.Status

@@ -117,7 +117,7 @@ export type AdminOrder = {
     method: string
     amountPaisa: number
     currency: string
-    status: 'PENDING' | 'COLLECTED' | 'REFUNDED'
+    status: 'PENDING' | 'COLLECTED' | 'REFUNDED' | 'VOID'
     collectedAt: string | null
     ref: string | null
   }[]

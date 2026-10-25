@@ -407,7 +407,9 @@ function ItemsPanel({ order }: { order: Order }) {
                 ? `Collected${payment.collectedAt ? ` ${formatDateTime(payment.collectedAt)}` : ''}`
                 : payment.status === 'REFUNDED'
                   ? 'Refunded'
-                  : 'Not collected yet'}
+                  : payment.status === 'VOID'
+                    ? 'Cancelled, nothing to collect'
+                    : 'Not collected yet'}
             </dd>
           </div>
         )}

@@ -305,7 +305,7 @@ curl -s -b $J $A/orders/DRK-7K3Q9P
 | CONFIRMED | SHIPPED (`courierName` + `trackingCode` required), CANCELLED |
 | SHIPPED | DELIVERED (the COD payment becomes COLLECTED), CANCELLED |
 
-Every cancel needs a `reason`, puts the stock back (`inventory_movements` CANCEL) and makes a SOLD_OUT product with stock again ACTIVE. Each move is one transaction with a history row that keeps the admin id. Anything else → `409 BAD_TRANSITION`. Answers like `GET /orders/{number}`.
+Every cancel needs a `reason`, puts the stock back (`inventory_movements` CANCEL), makes a SOLD_OUT product with stock again ACTIVE, and turns a PENDING COD payment into `VOID` (nothing to collect; COLLECTED and REFUNDED never change). The buyer's cancel and the auto-cancel sweep do the same. Each move is one transaction with a history row that keeps the admin id. Anything else → `409 BAD_TRANSITION`. Answers like `GET /orders/{number}`.
 ```zsh
 curl -s -b $J -H "$O" -H "$H" -d '{"to":"CONFIRMED"}' $A/orders/DRK-7K3Q9P/status
 curl -s -b $J -H "$O" -H "$H" -d '{"to":"SHIPPED","courierName":"Steadfast","trackingCode":"SF-4471029"}' $A/orders/DRK-7K3Q9P/status
