@@ -73,7 +73,7 @@ export function SiteHeader({ cartCount = 0, overPhoto = false }: SiteHeaderProps
     >
       <div className="relative mx-auto max-w-page px-4 sm:px-6 lg:px-8">
         <nav aria-label="Main" className="flex min-h-18 items-center justify-between gap-4">
-          <Link to="/" className="inline-flex items-center gap-2">
+          <Link to="/" className="inline-flex min-h-11 items-center gap-2">
             <LogoContent />
           </Link>
 

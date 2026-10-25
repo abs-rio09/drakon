@@ -68,12 +68,12 @@ function PhoneList({ phones, onChange }: { phones: BlockedPhone[]; onChange: (p:
                   <button type="button" onClick={() => unblock(p.phone)} className={button('secondary')}>
                     Yes, unblock
                   </button>
-                  <button type="button" onClick={() => setAsking(null)} className={ghostButton + ' min-h-11 px-2'}>
+                  <button type="button" onClick={() => setAsking(null)} className={ghostButton + ' min-h-11 min-w-11 px-2'}>
                     Keep blocked
                   </button>
                 </div>
               ) : (
-                <button type="button" onClick={() => setAsking(p.phone)} className={ghostButton + ' min-h-11 self-start'}>
+                <button type="button" onClick={() => setAsking(p.phone)} className={ghostButton + ' min-h-11 min-w-11 self-start'}>
                   Unblock
                 </button>
               )}

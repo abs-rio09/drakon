@@ -125,7 +125,7 @@ export function RulesPanel({ form, setForm, errors, locked, defaultLimit }: Form
           disabled={locked}
           onClick={() => set({ isLimited: !form.isLimited })}
           className={
-            "relative h-7 w-12 shrink-0 rounded-full border transition-colors duration-150 ease-out after:absolute after:-inset-2 after:content-[''] disabled:opacity-60 " +
+            "relative h-7 w-12 shrink-0 rounded-full border transition-colors duration-150 ease-out after:absolute after:-inset-x-2 after:-inset-y-3 after:content-[''] disabled:opacity-60 " +
             (form.isLimited ? 'border-ink bg-ink' : 'border-line-strong bg-field')
           }
         >

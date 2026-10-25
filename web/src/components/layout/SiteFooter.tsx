@@ -34,7 +34,7 @@ export function SiteFooter() {
       <div className="mx-auto flex max-w-page flex-col gap-14 px-4 pt-20 pb-8 sm:px-6 lg:px-8">
         <div className="grid grid-cols-2 gap-x-8 gap-y-10 lg:grid-cols-[minmax(0,2fr)_repeat(3,minmax(0,1fr))]">
           <div className="col-span-2 flex flex-col gap-4 lg:col-span-1">
-            <Link to="/" className="inline-flex items-center gap-2 self-start">
+            <Link to="/" className="inline-flex min-h-11 items-center gap-2 self-start">
               <LogoContent />
             </Link>
             <p className="max-w-75 text-label font-normal text-ink-subtle">
@@ -45,12 +45,13 @@ export function SiteFooter() {
           {FOOTER_GROUPS.map((group) => (
             <nav key={group.title} aria-label={group.title} className="flex flex-col gap-3">
               <h2 className="text-label text-ink-strong">{group.title}</h2>
-              <ul className="flex flex-col gap-3">
+              {/* Phones: each link is a 44px row (easy to tap). From md up the rows keep the design's 12px gaps. */}
+              <ul className="flex flex-col md:gap-3">
                 {group.links.map((link) => (
                   <li key={link.href}>
                     <Link
                       to={link.href}
-                      className="text-label font-normal text-ink-muted transition-colors duration-150 ease-out hover:text-ink-strong"
+                      className="flex min-h-11 items-center text-label font-normal text-ink-muted transition-colors duration-150 ease-out hover:text-ink-strong md:inline md:min-h-0"
                     >
                       {link.label}
                     </Link>

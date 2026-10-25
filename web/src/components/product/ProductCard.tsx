@@ -16,8 +16,10 @@ export function ProductCard({ product }: { product: Product }) {
   const cover = product.images[0]
 
   return (
-    <article className="group flex flex-col gap-4">
-      <div className="relative">
+    // relative: the name link's invisible box covers the whole card (below);
+    // the photo part sits above it (z-10), so Quick add stays its own button.
+    <article className="group relative flex flex-col gap-4">
+      <div className="relative z-10">
         {/* The photo repeats the title link, so screen readers and the Tab key skip it */}
         <Link to={href} tabIndex={-1} aria-hidden="true">
           <ProductPhoto src={cover?.src ?? ''} alt="" soldOut={soldOut} />
@@ -26,7 +28,7 @@ export function ProductCard({ product }: { product: Product }) {
       </div>
       <GalleryLabel
         name={
-          <Link to={href} className="transition-colors duration-150 ease-out hover:text-ink">
+          <Link to={href} className="transition-colors duration-150 ease-out after:absolute after:inset-0 after:content-[''] hover:text-ink">
             {product.name}
           </Link>
         }

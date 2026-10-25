@@ -82,7 +82,3 @@ export function FormMessage({ error, children }: { error?: boolean; children: Re
   )
 }
 
-// Makes a small inline link (an order number, a breadcrumb) easy to tap
-// on a phone: an invisible box around it, 44px tall, adds to the tap area
-// without moving anything on the page.
-export const tapArea = "relative after:absolute after:-inset-x-1 after:-inset-y-3 after:content-['']"

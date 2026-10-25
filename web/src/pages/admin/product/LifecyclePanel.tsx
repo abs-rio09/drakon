@@ -72,7 +72,7 @@ function ArchiveNow({ product, onChange }: Props) {
         >
           {busy ? 'Archiving…' : 'Yes, archive'}
         </button>
-        <button type="button" onClick={() => setAsking(false)} className={ghostButton + ' min-h-11 px-2'}>
+        <button type="button" onClick={() => setAsking(false)} className={ghostButton + ' min-h-11 min-w-11 px-2'}>
           Not now
         </button>
       </div>
@@ -95,7 +95,7 @@ function BringBack({ product, onChange }: Props) {
 
   if (!open) {
     return (
-      <button type="button" onClick={() => setOpen(true)} className={ghostButton + ' min-h-11 self-start'}>
+      <button type="button" onClick={() => setOpen(true)} className={ghostButton + ' min-h-11 min-w-11 self-start'}>
         Bring back on sale (Owner)…
       </button>
     )
@@ -116,7 +116,7 @@ function BringBack({ product, onChange }: Props) {
         <button type="submit" disabled={busy || reason.trim().length < 10} className={button('secondary')}>
           {busy ? 'Saving…' : 'Yes, bring it back'}
         </button>
-        <button type="button" onClick={() => setOpen(false)} className={ghostButton + ' min-h-11 px-2'}>
+        <button type="button" onClick={() => setOpen(false)} className={ghostButton + ' min-h-11 min-w-11 px-2'}>
           Cancel
         </button>
       </div>

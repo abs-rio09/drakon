@@ -240,7 +240,7 @@ function ReturnForm({ answer, onDone, onCancel }: { answer: AdminOrderAnswer; on
         <button type="submit" disabled={busy || !valid} className={button('secondary', 'md')}>
           {busy ? 'Saving…' : 'Save the return'}
         </button>
-        <button type="button" onClick={onCancel} className={ghostButton + ' min-h-11 px-2'}>
+        <button type="button" onClick={onCancel} className={ghostButton + ' min-h-11 min-w-11 px-2'}>
           Cancel
         </button>
       </div>

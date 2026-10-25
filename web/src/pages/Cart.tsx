@@ -164,7 +164,7 @@ function CartRow({ item }: { item: QuoteItem }) {
           </div>
           <button
             type="button"
-            className={ghostButton + ' min-h-11 px-1'}
+            className={ghostButton + ' min-h-11 min-w-11 px-1'}
             aria-label={`Remove ${item.productName}`}
             onClick={() => cart.remove(item.variantId)}
           >

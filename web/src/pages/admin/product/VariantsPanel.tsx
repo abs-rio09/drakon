@@ -53,14 +53,14 @@ export function VariantsPanel({ product, onChange }: Props) {
                 </span>
               </div>
               <div className="flex flex-wrap gap-x-4 gap-y-1">
-                <button type="button" className={ghostButton + ' min-h-11'} onClick={() => setOpen({ id: v.id, what: 'stock' })}>
+                <button type="button" className={ghostButton + ' min-h-11 min-w-11'} onClick={() => setOpen({ id: v.id, what: 'stock' })}>
                   Change stock
                 </button>
-                <button type="button" className={ghostButton + ' min-h-11'} onClick={() => setOpen({ id: v.id, what: 'edit' })}>
+                <button type="button" className={ghostButton + ' min-h-11 min-w-11'} onClick={() => setOpen({ id: v.id, what: 'edit' })}>
                   Edit
                 </button>
                 {product.status === 'ACTIVE' && (
-                  <button type="button" className={ghostButton + ' min-h-11'} onClick={() => setOpen({ id: v.id, what: 'price' })}>
+                  <button type="button" className={ghostButton + ' min-h-11 min-w-11'} onClick={() => setOpen({ id: v.id, what: 'price' })}>
                     Owner price fix…
                   </button>
                 )}
@@ -179,7 +179,7 @@ function VariantForm({ product, variant, onDone, onCancel }: { product: AdminPro
         <button type="submit" disabled={busy || pricePaisa === null || !reasonOk} className={button('secondary')}>
           {busy ? 'Saving…' : variant ? 'Save variant' : 'Add variant'}
         </button>
-        <button type="button" onClick={onCancel} className={ghostButton + ' min-h-11 px-2'}>
+        <button type="button" onClick={onCancel} className={ghostButton + ' min-h-11 min-w-11 px-2'}>
           Cancel
         </button>
       </div>
@@ -250,7 +250,7 @@ function StockForm({ variant, noRestock, onDone, onCancel }: { variant: AdminVar
         <button type="submit" disabled={busy || !valid || after < 0 || note.trim().length < 5} className={button('secondary')}>
           {busy ? 'Saving…' : 'Save stock change'}
         </button>
-        <button type="button" onClick={onCancel} className={ghostButton + ' min-h-11 px-2'}>
+        <button type="button" onClick={onCancel} className={ghostButton + ' min-h-11 min-w-11 px-2'}>
           Cancel
         </button>
       </div>
@@ -298,7 +298,7 @@ function PriceFixForm({ variant, onDone, onCancel }: { variant: AdminVariant; on
         <button type="submit" disabled={busy || !sure || pricePaisa === null || reason.trim().length < 5} className={button('secondary')}>
           {busy ? 'Saving…' : 'Fix the price'}
         </button>
-        <button type="button" onClick={onCancel} className={ghostButton + ' min-h-11 px-2'}>
+        <button type="button" onClick={onCancel} className={ghostButton + ' min-h-11 min-w-11 px-2'}>
           Cancel
         </button>
       </div>

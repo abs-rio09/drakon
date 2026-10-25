@@ -1,8 +1,8 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
-import { FormMessage, LimitedTag, ProductStatusBadge, tapArea } from '../../components/admin/adminUi'
+import { FormMessage, LimitedTag, ProductStatusBadge } from '../../components/admin/adminUi'
 import { Loaded } from '../../components/ui/LoadState'
-import { button, ghostButton } from '../../components/ui/styles'
+import { button, ghostButton, tapArea } from '../../components/ui/styles'
 import { createProduct, getAdminCategories, getAdminProduct, publishProduct, updateProduct } from '../../features/admin/adminApi'
 import type { AdminCategory, AdminProduct, ProductInput } from '../../features/admin/types'
 import { useAction } from '../../features/admin/useAction'
@@ -238,7 +238,7 @@ function EditProduct({ initial, categories, defaultLimit }: { initial: AdminProd
             <button type="button" disabled={pub.busy || product.publishProblems.length > 0} onClick={onPublish} className={button('primary', 'md')}>
               {pub.busy ? 'Publishing…' : 'Yes, publish at these prices'}
             </button>
-            <button type="button" onClick={() => setConfirming(false)} className={ghostButton + ' min-h-11 px-2'}>
+            <button type="button" onClick={() => setConfirming(false)} className={ghostButton + ' min-h-11 min-w-11 px-2'}>
               Go back
             </button>
           </div>

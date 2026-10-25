@@ -76,7 +76,7 @@ function Zones({ data, onChange }: ChangeProps) {
                 setEditing(null)
               }} onCancel={() => setEditing(null)} />
             ) : (
-              <button type="button" onClick={() => setEditing(z.id)} className={ghostButton + ' min-h-11 self-start'}>
+              <button type="button" onClick={() => setEditing(z.id)} className={ghostButton + ' min-h-11 min-w-11 self-start'}>
                 Edit
               </button>
             )}
@@ -128,7 +128,7 @@ function ZoneForm({ zone, onDone, onCancel }: { zone: AdminZone; onDone: (d: Del
         <button type="submit" disabled={busy || !valid} className={button('secondary')}>
           {busy ? 'Saving…' : 'Save zone'}
         </button>
-        <button type="button" onClick={onCancel} className={ghostButton + ' min-h-11 px-2'}>
+        <button type="button" onClick={onCancel} className={ghostButton + ' min-h-11 min-w-11 px-2'}>
           Cancel
         </button>
       </div>
@@ -238,7 +238,7 @@ function Areas({ data, onChange }: ChangeProps) {
                         <span className="text-caption text-ink-muted">
                           {zoneById[a.zoneId]?.name} · {zoneById[a.zoneId] ? formatTaka(zoneById[a.zoneId].chargePaisa) : ''}
                         </span>
-                        <button type="button" onClick={() => setEditing(a.id)} className={ghostButton + ' min-h-11'}>
+                        <button type="button" onClick={() => setEditing(a.id)} className={ghostButton + ' min-h-11 min-w-11'}>
                           Edit
                         </button>
                       </span>
@@ -258,7 +258,7 @@ function Areas({ data, onChange }: ChangeProps) {
                 setAdding(null)
               }} onCancel={() => setAdding(null)} />
               ) : (
-                <button type="button" onClick={() => setAdding(district)} className={ghostButton + ' min-h-11 self-start text-caption'}>
+                <button type="button" onClick={() => setAdding(district)} className={ghostButton + ' min-h-11 min-w-11 self-start text-caption'}>
                   Split {district}: add an area
                 </button>
               )}
@@ -333,7 +333,7 @@ function AreaForm({
         <button type="submit" disabled={busy} className={button('secondary')}>
           {busy ? 'Saving…' : area ? 'Save area' : 'Add area'}
         </button>
-        <button type="button" onClick={onCancel} className={ghostButton + ' min-h-11 px-2'}>
+        <button type="button" onClick={onCancel} className={ghostButton + ' min-h-11 min-w-11 px-2'}>
           Cancel
         </button>
       </div>

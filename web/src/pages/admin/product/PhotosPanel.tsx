@@ -53,25 +53,25 @@ export function PhotosPanel({ product, onChange }: Props) {
             {removing === img.id ? (
               <span className="flex flex-wrap items-center gap-2 text-caption">
                 Remove this photo?
-                <button type="button" disabled={busy} onClick={() => remove(img.id)} className={ghostButton + ' min-h-11 text-ink-strong'}>
+                <button type="button" disabled={busy} onClick={() => remove(img.id)} className={ghostButton + ' min-h-11 min-w-11 text-ink-strong'}>
                   Yes, remove
                 </button>
-                <button type="button" onClick={() => setRemoving(null)} className={ghostButton + ' min-h-11'}>
+                <button type="button" onClick={() => setRemoving(null)} className={ghostButton + ' min-h-11 min-w-11'}>
                   Keep
                 </button>
               </span>
             ) : (
               <span className="flex flex-wrap gap-x-3">
-                <button type="button" aria-label={`Move photo ${i + 1} earlier`} disabled={i === 0 || busy} onClick={() => move(i, -1)} className={ghostButton + ' min-h-11 min-w-11 disabled:opacity-30'}>
+                <button type="button" aria-label={`Move photo ${i + 1} earlier`} disabled={i === 0 || busy} onClick={() => move(i, -1)} className={ghostButton + ' min-h-11 min-w-11 min-w-11 disabled:opacity-30'}>
                   ←
                 </button>
-                <button type="button" aria-label={`Move photo ${i + 1} later`} disabled={i === imgs.length - 1 || busy} onClick={() => move(i, 1)} className={ghostButton + ' min-h-11 min-w-11 disabled:opacity-30'}>
+                <button type="button" aria-label={`Move photo ${i + 1} later`} disabled={i === imgs.length - 1 || busy} onClick={() => move(i, 1)} className={ghostButton + ' min-h-11 min-w-11 min-w-11 disabled:opacity-30'}>
                   →
                 </button>
-                <button type="button" onClick={() => setEditing(img.id)} className={ghostButton + ' min-h-11'}>
+                <button type="button" onClick={() => setEditing(img.id)} className={ghostButton + ' min-h-11 min-w-11'}>
                   Edit
                 </button>
-                <button type="button" onClick={() => setRemoving(img.id)} className={ghostButton + ' min-h-11'}>
+                <button type="button" onClick={() => setRemoving(img.id)} className={ghostButton + ' min-h-11 min-w-11'}>
                   Remove
                 </button>
               </span>
@@ -140,7 +140,7 @@ function ImageForm({ product, image, onDone, onCancel }: { product: AdminProduct
         <button type="submit" disabled={busy} className={button('secondary')}>
           {busy ? 'Saving…' : image ? 'Save photo' : 'Add photo'}
         </button>
-        <button type="button" onClick={onCancel} className={ghostButton + ' min-h-11 px-2'}>
+        <button type="button" onClick={onCancel} className={ghostButton + ' min-h-11 min-w-11 px-2'}>
           Cancel
         </button>
       </div>

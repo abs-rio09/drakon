@@ -1,10 +1,10 @@
 import { useState, type FormEvent, type ReactNode } from 'react'
 import { Link, useParams } from 'react-router'
-import { AdminPanel, StatusBadge, tapArea } from '../../components/admin/adminUi'
+import { AdminPanel, StatusBadge } from '../../components/admin/adminUi'
 import { AlertIcon, BanIcon, ClockIcon, PhoneIcon } from '../../components/icons'
 import { FieldError, inputClass, textareaClass } from '../../components/ui/Field'
 import { Loaded } from '../../components/ui/LoadState'
-import { button, ghostButton, inlineLink } from '../../components/ui/styles'
+import { button, ghostButton, inlineLink, tapArea } from '../../components/ui/styles'
 import {
   blockPhone,
   getAdminOrder,
@@ -146,7 +146,7 @@ function NextStep({ order, onChange }: { order: Order; onChange: ChangeHandler }
     return <CancelForm order={order} send={send} sending={sending} error={error} onBack={() => setCancelling(false)} />
   }
   const cancelButton = canCancel && (
-    <button type="button" onClick={() => setCancelling(true)} className={ghostButton + ' min-h-11 px-2'}>
+    <button type="button" onClick={() => setCancelling(true)} className={ghostButton + ' min-h-11 min-w-11 px-2'}>
       Cancel order
     </button>
   )
@@ -295,7 +295,7 @@ function DeliverStep({ order, send, sending, error, cancelButton }: SendProps & 
             <button type="button" disabled={sending} onClick={() => send({ to: 'DELIVERED' })} className={button('primary', 'md')}>
               {sending ? 'Saving…' : 'Yes, delivered and paid'}
             </button>
-            <button type="button" onClick={() => setAsking(false)} className={ghostButton + ' min-h-11 px-2'}>
+            <button type="button" onClick={() => setAsking(false)} className={ghostButton + ' min-h-11 min-w-11 px-2'}>
               Not yet
             </button>
           </div>
@@ -347,7 +347,7 @@ function CancelForm({ order, send, sending, error, onBack }: SendProps & { onBac
           <button type="submit" disabled={sending || reason.trim() === ''} className={button('primary', 'md')}>
             {sending ? 'Cancelling…' : 'Yes, cancel the order'}
           </button>
-          <button type="button" onClick={onBack} className={ghostButton + ' min-h-11 px-2'}>
+          <button type="button" onClick={onBack} className={ghostButton + ' min-h-11 min-w-11 px-2'}>
             Keep the order
           </button>
         </div>
@@ -534,7 +534,7 @@ function BlockPhone({ order, onChange }: { order: Order; onChange: ChangeHandler
         <button type="submit" disabled={sending || reason.trim() === ''} className={button('secondary')}>
           {sending ? 'Blocking…' : 'Yes, block this phone'}
         </button>
-        <button type="button" onClick={() => setOpen(false)} className={ghostButton + ' min-h-11 px-2'}>
+        <button type="button" onClick={() => setOpen(false)} className={ghostButton + ' min-h-11 min-w-11 px-2'}>
           Never mind
         </button>
       </div>

@@ -78,7 +78,7 @@ function CategoryList({ categories, onChange }: { categories: AdminCategory[]; o
                 onCancel={() => setEditing(null)}
               />
             ) : (
-              <button type="button" onClick={() => setEditing(c.id)} className={ghostButton + ' min-h-11 self-start'}>
+              <button type="button" onClick={() => setEditing(c.id)} className={ghostButton + ' min-h-11 min-w-11 self-start'}>
                 Edit
               </button>
             )}
@@ -128,7 +128,7 @@ function EditCategory({ category, onDone, onCancel }: { category: AdminCategory;
         <button type="submit" disabled={busy} className={button('secondary')}>
           {busy ? 'Saving…' : 'Save'}
         </button>
-        <button type="button" onClick={onCancel} className={ghostButton + ' min-h-11 px-2'}>
+        <button type="button" onClick={onCancel} className={ghostButton + ' min-h-11 min-w-11 px-2'}>
           Cancel
         </button>
       </div>

@@ -7,7 +7,7 @@ import { ProductPhoto } from '../components/product/ProductPhoto'
 import { VariantPicker } from '../components/product/VariantPicker'
 import { Loaded } from '../components/ui/LoadState'
 import { QuantityStepper } from '../components/ui/QuantityStepper'
-import { button, container, textLink } from '../components/ui/styles'
+import { button, container, tapArea, textLink } from '../components/ui/styles'
 import { useCart } from '../features/cart/useCart'
 import { useSite } from '../features/site/SiteContext'
 import { ApiError, getCategories, getProduct } from '../lib/api'
@@ -89,7 +89,7 @@ function ProductView({ product, related }: { product: ProductType; related: Prod
           <li>
             <Link
               to="/shop"
-              className="text-ink-muted transition-colors duration-150 ease-out hover:text-ink-strong hover:underline"
+              className={tapArea + ' text-ink-muted transition-colors duration-150 ease-out hover:text-ink-strong hover:underline'}
             >
               Shop
             </Link>
@@ -98,7 +98,7 @@ function ProductView({ product, related }: { product: ProductType; related: Prod
             <>
               <li aria-hidden="true">/</li>
               <li>
-                <Link to={`/shop/${category.slug}`} className="text-ink-muted transition-colors duration-150 ease-out hover:text-ink-strong hover:underline">
+                <Link to={`/shop/${category.slug}`} className={tapArea + ' text-ink-muted transition-colors duration-150 ease-out hover:text-ink-strong hover:underline'}>
                   {category.name}
                 </Link>
               </li>

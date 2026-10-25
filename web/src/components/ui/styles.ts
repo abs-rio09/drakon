@@ -44,12 +44,21 @@ export const secondaryButton = button('secondary')
 export const ghostButton =
   'text-label text-ink-muted underline-offset-4 transition-colors duration-150 ease-out hover:text-ink-strong hover:underline'
 
+// Makes a small link (a breadcrumb, an order number, a product name) easy
+// to tap on a phone: an invisible box, exactly 44px tall and at least 44px
+// wide, centred on the link. Nothing on the page moves or looks different.
+// Do not use it where links sit closer than 44px above each other: the
+// boxes would overlap (give those links min-h-11 instead).
+export const tapArea =
+  "relative after:absolute after:-inset-x-1 after:top-1/2 after:h-11 after:min-w-11 after:-translate-y-1/2 after:content-['']"
+
 // Underlined text link with a steel underline, for links next to content.
 export const textLink =
-  'underline decoration-line-strong underline-offset-[5px] transition-colors duration-150 ease-out hover:text-ink-strong hover:decoration-ink-strong'
+  tapArea +
+  ' underline decoration-line-strong underline-offset-[5px] transition-colors duration-150 ease-out hover:text-ink-strong hover:decoration-ink-strong'
 
 // Orange link, only for links inside a sentence.
-export const inlineLink = 'text-accent-text underline underline-offset-4 hover:text-ink-strong'
+export const inlineLink = tapArea + ' text-accent-text underline underline-offset-4 hover:text-ink-strong'
 
 // Page gutters and max width: 16px on phones, 24px to 1023px, 32px above.
 export const container = 'mx-auto w-full max-w-page px-4 sm:px-6 lg:px-8'
