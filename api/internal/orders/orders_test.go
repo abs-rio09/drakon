@@ -40,6 +40,11 @@ func TestNormalizePhone(t *testing.T) {
 		"+880 1712-345678": "01712345678",
 		"8801712345678":    "01712345678",
 		" 017 1234 5678 ":  "01712345678",
+		// Phones often paste a no-break space (U+00A0) or a line break; the
+		// website removes every kind of space (JS \s), so the server must too.
+		"01712\u00a0345678":    "01712345678",
+		"+880\u00a01712345678": "01712345678",
+		"01712345678\n":        "01712345678",
 	}
 	for in, want := range cases {
 		if got := NormalizePhone(in); got != want {

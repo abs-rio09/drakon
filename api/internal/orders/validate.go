@@ -4,6 +4,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"unicode"
 	"unicode/utf8"
 
 	"github.com/abs-rio09/drakon/api/internal/settings"
@@ -44,7 +45,14 @@ var (
 // NormalizePhone cleans what people type: "+880 1712-345678" -> "01712345678".
 // Same rule as the website's normalizePhone.
 func NormalizePhone(input string) string {
-	digits := strings.NewReplacer(" ", "", "-", "", "\t", "").Replace(strings.TrimSpace(input))
+	// Drop every kind of space (also the no-break space phones paste) and
+	// dashes, like the website does (normalizePhone, JS \s).
+	digits := strings.Map(func(r rune) rune {
+		if r == '-' || unicode.IsSpace(r) {
+			return -1
+		}
+		return r
+	}, input)
 	switch {
 	case strings.HasPrefix(digits, "+880"):
 		digits = "0" + digits[4:]
