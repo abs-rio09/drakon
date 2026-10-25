@@ -46,6 +46,7 @@ The admin panel is at http://localhost:5173/admin (log in with `DEV_ADMIN_EMAIL`
 | `make dev-owner` | local only: the dev Owner with a new random password, saved in the repo-root `.env` |
 | `make create-owner EMAIL=you@example.com` | the real Owner, on any `DATABASE_URL` (password typed hidden, twice) |
 | `make reset-password EMAIL=you@example.com` | new password, ends the lockout, logs out every browser |
+| `make reset-dev` | local only: delete every order and product, reload the sample catalogue, keep the admin (type `reset drakon` to confirm) |
 
 ## Checks
 
@@ -56,9 +57,10 @@ The admin panel is at http://localhost:5173/admin (log in with `DEV_ADMIN_EMAIL`
 | `api/` | `make migrate-status` | which migrations ran |
 | `web/` | `npm run build` | type-check and production build into `web/dist/` |
 | `web/` | `npm run lint` | oxlint |
+| `web/` | `npm test` | unit tests with Node's own test runner (`src/**/*.test.ts`) |
 
 Open the database: `docker compose exec db psql -U drakon -d drakon`
 
 ## Status
 
-Roadmap steps 1–10 are done: frontend, database, Go API, real Cash on Delivery checkout, tracking and cancel, auto-cancel and auto-archive, and the admin panel (login with lockout, orders with the call list, products with the price lock and stock book, categories, settings, delivery zones, blocked phones, returns). The deploy files are ready (`docs/deploy.md`); nothing is deployed. See `docs/blueprint.md` (part 10), `docs/api.md` and `docs/progress/`.
+Roadmap steps 1–10 are done: frontend, database, Go API, real Cash on Delivery checkout, tracking and cancel, auto-cancel and auto-archive, and the admin panel (login with lockout, orders with the call list, products with the price lock and stock book, categories, settings, delivery zones, blocked phones, returns), per-IP rate limits on login, orders, track and cancel, and the VOID payment status for cancelled orders. The deploy files are ready (`docs/deploy.md`); nothing is deployed. See `docs/blueprint.md` (part 10), `docs/api.md` and `docs/progress/`.

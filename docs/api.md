@@ -248,7 +248,7 @@ curl -s -c $J -H "$O" -H "$H" -d "{\"email\":\"owner@drakon.local\",\"password\"
 unset PW
 # {"admin":{"id":1,"email":"owner@drakon.local","role":"OWNER"}}   + Set-Cookie: drakon_admin=...
 ```
-A wrong email, a wrong password and a paused account all answer the same `401 INVALID_LOGIN` ("Wrong email or password. After 5 wrong tries in a row, login pauses for 15 minutes."). The numbers are the settings `login_max_failures` and `login_lockout_minutes`.
+A wrong email, a wrong password and a paused account all answer the same `401 INVALID_LOGIN` ("Wrong email or password. After 5 wrong tries in a row, login pauses for 15 minutes."). The numbers are the settings `login_max_failures` and `login_lockout_minutes`. Before the password is checked, the per-IP limit counts the try (`rate_login_tries` per `rate_login_minutes`, see Rate limits): over it, `429 TOO_MANY_TRIES`, and the try does not count towards the lockout.
 
 #### `GET /api/admin/me` · `POST /api/admin/logout`
 ```zsh
@@ -433,7 +433,7 @@ curl -s -b $J $A/settings
 #   "description":"…","updatedAt":"…"}, …]}
 curl -s -b $J -X PUT -H "$O" -H "$H" -d '{"values":{"cod_confirm_hours":36,"home_hero_product_slug":"night-striker-football"}}' $A/settings
 ```
-All or nothing (`422` with one message per bad key). Limits: `cod_confirm_hours` 1–168, `default_purchase_limit` 1–50, `return_days` 0–30, `archive_after_days` 0–90, `low_stock_threshold` 0–100, note limits 20–500, `login_max_failures` 3–20, `login_lockout_minutes` 1–1440, `free_delivery_enabled` true/false, `home_hero_product_slug` a published product or `""`.
+All or nothing (`422` with one message per bad key). Limits: `cod_confirm_hours` 1–168, `default_purchase_limit` 1–50, `return_days` 0–30, `archive_after_days` 0–90, `low_stock_threshold` 0–100, note limits 20–500, `login_max_failures` 3–20, `login_lockout_minutes` 1–1440, `rate_login_tries` 1–100, `rate_order_tries` / `rate_track_tries` / `rate_cancel_tries` 1–1000, every `rate_*_minutes` 1–1440, `free_delivery_enabled` true/false, `home_hero_product_slug` a published product or `""`.
 
 ### Delivery
 
@@ -448,4 +448,4 @@ A zone that still has areas cannot be turned off (`409 ZONE_IN_USE`). A district
 
 ## Not built yet (on purpose)
 
-Customer accounts, email, rate limiting, online payments, a VOID payment status, photo uploads (Cloudflare R2). See `docs/open-questions.md`.
+Customer accounts, email, online payments, photo uploads (Cloudflare R2), a Turnstile check. See `docs/open-questions.md`.
