@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { startTransition, useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { CashIcon, ChevronDownIcon } from '../components/icons'
 import { describedBy } from '../components/ui/describedBy'
@@ -204,7 +204,6 @@ function CheckoutView({ form, setForm, quote, items, quoteIsCurrent, refreshQuot
           hidePrices: form.hidePrices,
         })
         rememberOrder({ orderNumber: placed.orderNumber, token: placed.trackToken, placedAt: placed.order.placedAt })
-        cart.clear()
         clearApiCache() // stock changed; pages load fresh numbers
         const state: JustPlacedState = {
           justPlaced: true,
@@ -215,7 +214,13 @@ function CheckoutView({ form, setForm, quote, items, quoteIsCurrent, refreshQuot
             address: [form.address, form.area, form.district].filter(Boolean).join(', '),
           },
         }
-        navigate(`/order/${placed.orderNumber}`, { state, replace: true })
+        // One transition for both: the router changes pages in a transition,
+        // so emptying the cart on its own would first show "Your cart is
+        // empty" here for a moment.
+        startTransition(() => {
+          cart.clear()
+          navigate(`/order/${placed.orderNumber}`, { state, replace: true })
+        })
       } catch (err) {
         setPlacing(false)
         if (err instanceof ApiError && err.code === 'VALIDATION') {
