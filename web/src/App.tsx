@@ -11,6 +11,9 @@ import Cart from './pages/Cart'
 import Contact from './pages/Contact'
 import Home from './pages/Home'
 import NotFound from './pages/NotFound'
+// Not lazy: the checkout clears the cart and opens it in the same moment,
+// so it must be ready at once (a download would flash "Your cart is empty").
+import OrderConfirmation from './pages/OrderConfirmation'
 import { PrivacyPolicy, ReturnsPolicy, TermsPolicy } from './pages/Policy'
 import Product from './pages/Product'
 import Search from './pages/Search'
@@ -20,11 +23,10 @@ import SoldOut from './pages/SoldOut'
 // The admin is a separate download: shoppers never load its code.
 const AdminApp = lazy(() => import('./pages/admin/AdminApp'))
 
-// Pages a buyer reaches later are separate downloads too, so the first
+// Pages a buyer reaches later (checkout, track) are separate downloads too, so the first
 // page opens faster. The cart page fetches the checkout code ahead
 // (pages/loadCheckout.ts), so "Checkout" opens without a wait.
 const Checkout = lazy(loadCheckout)
-const OrderConfirmation = lazy(() => import('./pages/OrderConfirmation'))
 const Track = lazy(() => import('./pages/Track'))
 
 function Later({ children }: { children: ReactNode }) {
@@ -66,7 +68,7 @@ function App() {
           <Route path="search" element={<Search />} />
           <Route path="sold-out" element={<SoldOut />} />
           <Route path="cart" element={<Cart />} />
-          <Route path="order/:number" element={<Later><OrderConfirmation /></Later>} />
+          <Route path="order/:number" element={<OrderConfirmation />} />
           <Route path="track" element={<Later><Track /></Later>} />
           <Route path="about" element={<About />} />
           <Route path="contact" element={<Contact />} />
