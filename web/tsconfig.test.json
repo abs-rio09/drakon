@@ -1,0 +1,26 @@
+{
+  // Web unit tests (src/**/*.test.ts), run by Node's own test runner:
+  // npm test = node --test. Node strips the types itself (no new package),
+  // so tests import the file under test with its .ts extension.
+  // This config only lets `npm run build` type-check them.
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.test.tsbuildinfo",
+    "target": "es2023",
+    "lib": ["ES2023", "DOM"],
+    "types": ["node"],
+    "skipLibCheck": true,
+
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "erasableSyntaxOnly": true,
+    "noFallthroughCasesInSwitch": true
+  },
+  "include": ["src/**/*.test.ts"]
+}
