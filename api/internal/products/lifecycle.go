@@ -2,7 +2,6 @@ package products
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"time"
 
@@ -10,6 +9,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/abs-rio09/drakon/api/internal/db"
+	"github.com/abs-rio09/drakon/api/internal/money"
 )
 
 // ConfirmedPrice is one price the admin saw on the "check the prices" screen.
@@ -67,12 +67,14 @@ func Publish(ctx context.Context, pool *pgxpool.Pool, productID int64, confirmed
 	})
 }
 
-// priceList: "Published at HD02-S 245000, HD02-M 245000" (kept in the event).
+// priceList: "Published at HD02-S ৳2,450, HD02-M ৳2,450" (kept in the event,
+// in taka like the PRICE_FIX record; rows from before 2026-10-25 keep
+// their raw paisa text).
 func priceList(p *Product) string {
 	parts := []string{}
 	for _, v := range p.Variants {
 		if v.IsActive {
-			parts = append(parts, fmt.Sprintf("%s %d", v.SKU, v.PricePaisa))
+			parts = append(parts, v.SKU+" "+money.Taka(v.PricePaisa))
 		}
 	}
 	return "Published at " + strings.Join(parts, ", ")

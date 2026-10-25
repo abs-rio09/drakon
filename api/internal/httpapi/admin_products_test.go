@@ -161,6 +161,10 @@ func TestAdminPublishRules(t *testing.T) {
 	if n := queryInt(t, "SELECT count(*) FROM product_events WHERE product_id = $1 AND type = 'PUBLISH' AND actor = 'ADMIN' AND by_admin_id = $2", id, admin); n != 1 {
 		t.Fatalf("PUBLISH events = %d", n)
 	}
+	// The record shows the prices in taka, like a price fix (not "160000").
+	if r := queryString(t, "SELECT reason FROM product_events WHERE product_id = $1 AND type = 'PUBLISH'", id); r != fmt.Sprintf("Published at TST-%d ৳1,600", id) {
+		t.Fatalf("PUBLISH reason = %q", r)
+	}
 	if status, _ := do(t, s, "GET", "/api/products/publish-test-deck", nil); status != 200 {
 		t.Fatalf("published product not in the shop: %d", status)
 	}
