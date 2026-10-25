@@ -62,7 +62,11 @@ func run(logger *slog.Logger) error {
 
 	api := httpapi.NewServer(pool, logger, httpapi.Options{
 		CookieSecure: cfg.CookieSecure, AllowedOrigins: cfg.AllowedOrigins,
+		TrustedProxy: cfg.TrustedProxy, ProxySecret: cfg.ProxySecret,
 	})
+	if cfg.TrustedProxy == "" {
+		logger.Info("rate limits count the direct connection IP (TRUSTED_PROXY not set). Behind the Cloudflare Worker, set TRUSTED_PROXY=cloudflare and PROXY_SECRET.")
+	}
 	if !cfg.CookieSecure {
 		logger.Warn("COOKIE_SECURE=false: the admin cookie also travels over plain http. Use this only for local testing.")
 	}

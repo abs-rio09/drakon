@@ -20,6 +20,19 @@ const groups: { title: string; keys: string[]; note?: string }[] = [
   { title: 'Delivery', keys: ['free_delivery_enabled'], note: 'delivery' },
   { title: 'Home page', keys: ['home_hero_product_slug'] },
   { title: 'Admin login', keys: ['login_max_failures', 'login_lockout_minutes'] },
+  {
+    title: 'Too many tries (per IP address)',
+    keys: [
+      'rate_login_tries',
+      'rate_login_minutes',
+      'rate_order_tries',
+      'rate_order_minutes',
+      'rate_track_tries',
+      'rate_track_minutes',
+      'rate_cancel_tries',
+      'rate_cancel_minutes',
+    ],
+  },
 ]
 
 // /admin/settings: every business number, with sane limits. The shop

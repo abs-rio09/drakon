@@ -23,6 +23,15 @@ type Settings struct {
 	HomeHeroProductSlug  string
 	LoginMaxFailures     int
 	LoginLockoutMinutes  int
+	// Per-IP rate limits: tries per window of N minutes (httpapi/ratelimit.go).
+	RateLoginTries    int
+	RateLoginMinutes  int
+	RateOrderTries    int
+	RateOrderMinutes  int
+	RateTrackTries    int
+	RateTrackMinutes  int
+	RateCancelTries   int
+	RateCancelMinutes int
 }
 
 // Querier is the one sqlc method Load needs. *db.Queries has it, inside or
@@ -57,6 +66,14 @@ func Load(ctx context.Context, q Querier) (Settings, error) {
 		{"home_hero_product_slug", &s.HomeHeroProductSlug},
 		{"login_max_failures", &s.LoginMaxFailures},
 		{"login_lockout_minutes", &s.LoginLockoutMinutes},
+		{"rate_login_tries", &s.RateLoginTries},
+		{"rate_login_minutes", &s.RateLoginMinutes},
+		{"rate_order_tries", &s.RateOrderTries},
+		{"rate_order_minutes", &s.RateOrderMinutes},
+		{"rate_track_tries", &s.RateTrackTries},
+		{"rate_track_minutes", &s.RateTrackMinutes},
+		{"rate_cancel_tries", &s.RateCancelTries},
+		{"rate_cancel_minutes", &s.RateCancelMinutes},
 	}
 	for _, f := range fields {
 		value, ok := raw[f.key]

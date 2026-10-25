@@ -31,6 +31,14 @@ var Rules = []Rule{
 	{Key: "home_hero_product_slug", Label: "Product under the home page photo", Kind: "text"},
 	{Key: "login_max_failures", Label: "Wrong admin passwords before login pauses", Kind: "int", Min: 3, Max: 20, Unit: "tries"},
 	{Key: "login_lockout_minutes", Label: "Minutes the admin login pauses", Kind: "int", Min: 1, Max: 1440, Unit: "minutes"},
+	{Key: "rate_login_tries", Label: "Admin login tries per IP address", Kind: "int", Min: 1, Max: 100, Unit: "tries"},
+	{Key: "rate_login_minutes", Label: "Admin login: window", Kind: "int", Min: 1, Max: 1440, Unit: "minutes"},
+	{Key: "rate_order_tries", Label: "Orders per IP address", Kind: "int", Min: 1, Max: 1000, Unit: "tries"},
+	{Key: "rate_order_minutes", Label: "Orders: window", Kind: "int", Min: 1, Max: 1440, Unit: "minutes"},
+	{Key: "rate_track_tries", Label: "Order lookups (track) per IP address", Kind: "int", Min: 1, Max: 1000, Unit: "tries"},
+	{Key: "rate_track_minutes", Label: "Order lookups (track): window", Kind: "int", Min: 1, Max: 1440, Unit: "minutes"},
+	{Key: "rate_cancel_tries", Label: "Customer cancels per IP address", Kind: "int", Min: 1, Max: 1000, Unit: "tries"},
+	{Key: "rate_cancel_minutes", Label: "Customer cancels: window", Kind: "int", Min: 1, Max: 1440, Unit: "minutes"},
 }
 
 // RuleFor returns the rule of a key.

@@ -17,6 +17,7 @@ import (
 	"github.com/abs-rio09/drakon/api/internal/auth"
 	"github.com/abs-rio09/drakon/api/internal/db"
 	"github.com/abs-rio09/drakon/api/internal/images"
+	"github.com/abs-rio09/drakon/api/internal/ratelimit"
 )
 
 type Server struct {
@@ -29,17 +30,24 @@ type Server struct {
 	images images.Store
 	// now returns the current time. Tests can replace it.
 	now func() time.Time
+	// limiter counts tries per IP for login, orders, track and cancel
+	// (ratelimit.go). In memory: fine for one server process.
+	limiter *ratelimit.Limiter
 }
 
 // Options are the security settings from the config (internal/config).
 type Options struct {
 	CookieSecure   bool     // "Secure" flag on the admin cookie
 	AllowedOrigins []string // sites allowed to send admin changes
+	TrustedProxy   string   // "" or "cloudflare": who may tell us the visitor's IP
+	ProxySecret    string   // proves a request came through our Worker
 }
 
 func NewServer(pool *pgxpool.Pool, logger *slog.Logger, opts Options) *Server {
 	auth.WarmUp()
-	return &Server{pool: pool, q: db.New(pool), log: logger, opts: opts, images: images.Links{}, now: time.Now}
+	s := &Server{pool: pool, q: db.New(pool), log: logger, opts: opts, images: images.Links{}, now: time.Now}
+	s.limiter = ratelimit.New(func() time.Time { return s.now() })
+	return s
 }
 
 // handlerFunc is like http.HandlerFunc but may return an error. An *apiError
@@ -95,12 +103,13 @@ func (s *Server) routes(mux *http.ServeMux) {
 
 	// Checkout and orders (Cash on Delivery only)
 	mux.HandleFunc("POST /api/checkout/quote", s.wrap(s.handleQuote))
-	mux.HandleFunc("POST /api/orders", s.wrap(s.handlePlaceOrder))
-	mux.HandleFunc("POST /api/orders/track", s.wrap(s.handleTrackOrder))
-	mux.HandleFunc("POST /api/orders/cancel", s.wrap(s.handleCancelOrder))
+	// Rate limited per IP (ratelimit.go, limits in settings).
+	mux.HandleFunc("POST /api/orders", s.wrap(s.limited("order", orderLimit, s.handlePlaceOrder)))
+	mux.HandleFunc("POST /api/orders/track", s.wrap(s.limited("track", trackLimit, s.handleTrackOrder)))
+	mux.HandleFunc("POST /api/orders/cancel", s.wrap(s.limited("cancel", cancelLimit, s.handleCancelOrder)))
 
 	// Admin (admin_routes.go). Every route except login needs a session.
-	mux.HandleFunc("POST /api/admin/login", s.wrap(s.handleAdminLogin))
+	mux.HandleFunc("POST /api/admin/login", s.wrap(s.limited("login", loginLimit, s.handleAdminLogin)))
 	for _, rt := range s.adminRoutes() {
 		mux.HandleFunc(rt.Method+" "+rt.Path, s.adminOnly(rt.Handler))
 	}

@@ -81,3 +81,32 @@ func TestParseOriginsRefusesPaths(t *testing.T) {
 		}
 	}
 }
+
+func TestLoadTrustedProxy(t *testing.T) {
+	t.Setenv("DATABASE_URL", "postgres://x")
+	t.Setenv("TRUSTED_PROXY", "")
+	t.Setenv("PROXY_SECRET", "")
+	cfg, err := Load()
+	if err != nil || cfg.TrustedProxy != "" {
+		t.Fatalf("default: %q, %v (want nobody trusted)", cfg.TrustedProxy, err)
+	}
+
+	t.Setenv("TRUSTED_PROXY", "cloudflare")
+	if _, err := Load(); err == nil {
+		t.Fatal("cloudflare without PROXY_SECRET was accepted")
+	}
+	t.Setenv("PROXY_SECRET", "too-short")
+	if _, err := Load(); err == nil {
+		t.Fatal("a short PROXY_SECRET was accepted")
+	}
+	t.Setenv("PROXY_SECRET", "0123456789abcdef0123456789abcdef")
+	cfg, err = Load()
+	if err != nil || cfg.TrustedProxy != TrustedProxyCloudflare || cfg.ProxySecret == "" {
+		t.Fatalf("cloudflare: %q, %v", cfg.TrustedProxy, err)
+	}
+
+	t.Setenv("TRUSTED_PROXY", "everyone")
+	if _, err := Load(); err == nil {
+		t.Fatal("an unknown TRUSTED_PROXY was accepted")
+	}
+}

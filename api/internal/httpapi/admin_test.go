@@ -108,6 +108,13 @@ func loginOwner(t *testing.T, s *Server) *adminClient {
 	return c
 }
 
+// allowManyLogins lifts the per-IP login limit for a test that is about
+// something else (the account lockout, odd input) and needs many tries.
+func allowManyLogins(t *testing.T) {
+	t.Helper()
+	exec(t, `UPDATE settings SET value = '100' WHERE key = 'rate_login_tries'`)
+}
+
 func TestAdminLoginWorks(t *testing.T) {
 	s := newTestServer(t, false)
 	useClock(s, adminStart)
@@ -179,6 +186,7 @@ func TestAdminWrongPasswordAndUnknownEmailLookTheSame(t *testing.T) {
 func TestAdminLockoutAndUnlock(t *testing.T) {
 	s := newTestServer(t, false)
 	clock := useClock(s, adminStart)
+	allowManyLogins(t)
 	createTestOwner(t)
 	c := newAdminClient(t, s)
 	wrong := map[string]any{"email": ownerEmail, "password": "not the password"}

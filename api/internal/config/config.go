@@ -27,7 +27,23 @@ type Config struct {
 	// AllowedOrigins: the websites allowed to send admin changes (CSRF
 	// guard). ALLOWED_ORIGINS="https://a.example,https://b.example".
 	AllowedOrigins []string
+	// TrustedProxy says which proxy in front of the API may tell us the
+	// visitor's IP address (for the per-IP rate limits). "" = nobody: the
+	// direct connection address is used, and forwarded-IP headers are
+	// ignored, because any visitor can type them. "cloudflare" = our Worker
+	// (web/worker/index.ts), proven by ProxySecret on every request.
+	TrustedProxy string
+	// ProxySecret is shared by the Worker and the API (TRUSTED_PROXY=cloudflare
+	// only). A request that does not carry it is treated like a direct one.
+	ProxySecret string
 }
+
+// TrustedProxyCloudflare is the only proxy we know today.
+const TrustedProxyCloudflare = "cloudflare"
+
+// minProxySecret is the shortest PROXY_SECRET we accept (openssl rand -hex 32
+// gives 64 characters).
+const minProxySecret = 32
 
 // Load reads the config. Call LoadDotEnv first in local development.
 func Load() (Config, error) {
@@ -54,6 +70,17 @@ func Load() (Config, error) {
 		return cfg, err
 	}
 	cfg.AllowedOrigins = origins
+	switch proxy := strings.ToLower(strings.TrimSpace(os.Getenv("TRUSTED_PROXY"))); proxy {
+	case "":
+	case TrustedProxyCloudflare:
+		cfg.TrustedProxy = proxy
+		cfg.ProxySecret = strings.TrimSpace(os.Getenv("PROXY_SECRET"))
+		if len(cfg.ProxySecret) < minProxySecret {
+			return cfg, fmt.Errorf("TRUSTED_PROXY=cloudflare needs PROXY_SECRET (at least %d characters, the same as the Worker's secret)", minProxySecret)
+		}
+	default:
+		return cfg, errors.New(`TRUSTED_PROXY must be empty or "cloudflare"`)
+	}
 	return cfg, nil
 }
 

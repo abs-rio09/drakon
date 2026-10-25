@@ -201,6 +201,7 @@ func TestTwoReturnsAtTheSameMoment(t *testing.T) {
 
 func TestAdminLoginOddInput(t *testing.T) {
 	s := newTestServer(t, false)
+	allowManyLogins(t)
 	createTestOwner(t)
 	c := newAdminClient(t, s)
 	for name, body := range map[string]any{

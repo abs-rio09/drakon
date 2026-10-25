@@ -80,7 +80,7 @@ func TestAdminSettings(t *testing.T) {
 
 	status, body := c.do("GET", "/api/admin/settings", nil)
 	list := body["settings"].([]any)
-	if status != 200 || len(list) != 11 {
+	if status != 200 || len(list) != 19 {
 		t.Fatalf("settings: %d %d", status, len(list))
 	}
 	first := list[0].(map[string]any)
