@@ -8,6 +8,7 @@ import { getProducts } from '../lib/api'
 import type { ProductPage } from '../lib/api'
 import { searchPageSize, searchSummary } from '../lib/search'
 import { useApi } from '../lib/useApi'
+import { PageMeta } from '../components/ui/PageMeta'
 
 const noResults: Promise<ProductPage> = Promise.resolve({ products: [], total: 0, limit: 0, offset: 0 })
 
@@ -26,7 +27,7 @@ export default function Search() {
 
   return (
     <div className={container + ' flex flex-col gap-10 py-16 sm:py-20'}>
-      <title>Search: Drakon</title>
+      <PageMeta title={query ? `Search: ${query}: Drakon` : 'Search: Drakon'} description="Search the DRAKON shop by product name." noindex />
       <PageIntro title="Search" />
 
       <form role="search" onSubmit={onSubmit} className="flex max-w-form gap-2">

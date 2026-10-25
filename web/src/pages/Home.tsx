@@ -11,6 +11,7 @@ import { metaLine, priceLabel, stockFact } from '../lib/catalog'
 import { zoneCharge } from '../lib/delivery'
 import { formatTaka } from '../lib/money'
 import { useApi } from '../lib/useApi'
+import { PageMeta } from '../components/ui/PageMeta'
 
 // Every product on sale, for the collection counts (the shop has under 100).
 const loadShop = () => getProducts({ limit: 100 })
@@ -19,7 +20,7 @@ const loadShop = () => getProducts({ limit: 100 })
 export default function Home() {
   return (
     <>
-      <title>Drakon: made once, never again</title>
+      <PageMeta title="Drakon: made once, never again" />
       <Hero />
       <Facts />
       <CurrentDrop />

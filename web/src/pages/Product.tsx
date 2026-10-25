@@ -25,6 +25,8 @@ import { formatTaka } from '../lib/money'
 import type { Product as ProductType, PublicSettings, Variant } from '../lib/types'
 import { useApi } from '../lib/useApi'
 import NotFound from './NotFound'
+import { PageMeta } from '../components/ui/PageMeta'
+import { shortDescription } from '../lib/text'
 
 // /product/:slug — laid out from Product.dc.html (sizes) and
 // ProductCard.dc.html (materials with their own price).
@@ -81,7 +83,7 @@ function ProductView({ product, related }: { product: ProductType; related: Prod
 
   return (
     <>
-      <title>{`${product.name}: Drakon`}</title>
+      <PageMeta title={`${product.name}: Drakon`} description={shortDescription(product.summary)} />
 
       {/* Breadcrumb */}
       <nav aria-label="Breadcrumb" className={container + ' pt-8 pb-6'}>

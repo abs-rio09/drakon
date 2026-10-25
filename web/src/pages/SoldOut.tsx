@@ -10,6 +10,7 @@ import { getCategories, getProducts, getSoldOut } from '../lib/api'
 import { metaLine, priceLabel } from '../lib/catalog'
 import type { Product } from '../lib/types'
 import { useApi } from '../lib/useApi'
+import { PageMeta } from '../components/ui/PageMeta'
 
 const loadShop = () => getProducts({ limit: 100 })
 
@@ -25,7 +26,7 @@ export default function SoldOut() {
 
   return (
     <div className="flex flex-col">
-      <title>The archive: Drakon</title>
+      <PageMeta title="The archive: Drakon" description="The DRAKON archive: every sold-out run, kept on record. These pieces are never made again." />
       <section className={container + ' flex flex-col gap-5 pt-16 pb-16 sm:pt-24'}>
         <h1 className="text-heading-1 text-ink-strong sm:text-display-md">The archive</h1>
         <p className="max-w-text text-body-lg text-ink-muted">

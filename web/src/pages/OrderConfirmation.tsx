@@ -10,6 +10,7 @@ import { statusLabel } from '../lib/orderStatus'
 import type { OrderView } from '../lib/types'
 import { useApi } from '../lib/useApi'
 import type { JustPlacedState } from './Checkout'
+import { PageMeta } from '../components/ui/PageMeta'
 
 // /order/:number — the confirmation after ordering (Confirmation.dc.html).
 // Right after checkout the order comes with the navigation. Later visits
@@ -40,7 +41,7 @@ function SavedOrder({ orderNumber, token }: { orderNumber: string; token: string
 function NotOnThisDevice({ orderNumber }: { orderNumber: string }) {
   return (
     <div className={container + ' flex flex-col items-center gap-6 py-24 text-center sm:py-32'}>
-      <title>Order: Drakon</title>
+      <PageMeta title="Order: Drakon" noindex />
       <h1 className="text-heading-2 text-ink-strong sm:text-heading-1">Find your order on the Track page</h1>
       <p className="max-w-text text-body-lg text-ink-muted">
         This browser has no saved order {orderNumber ? <span className="tabular-nums">{orderNumber}</span> : ''}. Enter the
@@ -68,7 +69,7 @@ function Confirmation({ order, deliverTo, justPlaced = false }: ConfirmationProp
   const cancelled = order.status === 'CANCELLED'
   return (
     <div className="mx-auto flex w-full max-w-190 flex-col gap-12 px-4 pt-16 pb-32 sm:px-8 sm:pt-20">
-      <title>{`Order ${order.orderNumber}: Drakon`}</title>
+      <PageMeta title={`Order ${order.orderNumber}: Drakon`} noindex />
 
       <header className="flex flex-col gap-3">
         <h1 className="text-heading-2 text-ink-strong sm:text-heading-1">

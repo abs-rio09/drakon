@@ -23,6 +23,7 @@ import { getZone } from '../lib/delivery'
 import { formatTaka } from '../lib/money'
 import type { OrderView, Problem, Quote, QuoteItem } from '../lib/types'
 import { clearApiCache } from '../lib/useApi'
+import { PageMeta } from '../components/ui/PageMeta'
 
 // /checkout — the form and the order summary, from Checkout.dc.html.
 // "Place order" sends the form to POST /api/orders. The server checks
@@ -69,7 +70,7 @@ export default function Checkout() {
   if (priced.status === 'error' && !quote) {
     return (
       <div className={container}>
-        <title>Checkout: Drakon</title>
+        <PageMeta title="Checkout: Drakon" noindex />
         <LoadError error={priced.error} onRetry={priced.retry} />
       </div>
     )
@@ -77,7 +78,7 @@ export default function Checkout() {
   if (priced.status === 'loading' && !quote) {
     return (
       <div className={container}>
-        <title>Checkout: Drakon</title>
+        <PageMeta title="Checkout: Drakon" noindex />
         <Loading label="Checking prices and stock" />
       </div>
     )
@@ -87,7 +88,7 @@ export default function Checkout() {
   if (!quote || items.length === 0) {
     return (
       <div className={container + ' flex flex-col items-center gap-6 py-24 text-center'}>
-        <title>Checkout: Drakon</title>
+        <PageMeta title="Checkout: Drakon" noindex />
         <h1 className="text-heading-2 text-ink-strong">Your cart is empty</h1>
         <p className="max-w-text text-body text-ink-muted">Add something to your cart first, then come back here.</p>
         <Link to="/shop" className={primaryButton}>
@@ -247,7 +248,7 @@ function CheckoutView({ form, setForm, quote, items, quoteIsCurrent, refreshQuot
 
   return (
     <div className={container + ' flex flex-col gap-10 pt-14 pb-0 lg:pb-32'}>
-      <title>Checkout: Drakon</title>
+      <PageMeta title="Checkout: Drakon" noindex />
       <div className="flex flex-col gap-2">
         <h1 className="text-heading-2 text-ink-strong sm:text-heading-1">Checkout</h1>
         <p className="text-body-lg text-ink-muted">No account needed. Pay in cash when your order arrives.</p>

@@ -2,6 +2,7 @@ import { Link } from 'react-router'
 import { PageIntro } from '../components/ui/PageIntro'
 import { container, primaryButton } from '../components/ui/styles'
 import { useSite } from '../features/site/SiteContext'
+import { PageMeta } from '../components/ui/PageMeta'
 
 // /about — the brand story, from docs/brand-vision.md.
 const PEOPLE = ['Night workers', 'Dream chasers', 'Gamers', 'Coders', 'Creative minds', 'Silent hardworking people']
@@ -10,7 +11,7 @@ export default function About() {
   const { settings } = useSite()
   return (
     <div className="flex flex-col">
-      <title>About: Drakon</title>
+      <PageMeta title="About: Drakon" description="Why DRAKON makes every piece once: limited runs of playcards, toys, tech and clothes, designed and sold in Bangladesh." />
       <section className={container + ' flex flex-col gap-10 pt-16 pb-20 sm:pt-20 lg:pb-32'}>
         <PageIntro title="Made for the night shift">
           <p>Drakon makes limited playcards, sports toys, tech toys and clothes in Bangladesh.</p>

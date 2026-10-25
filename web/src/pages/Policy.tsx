@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { Link } from 'react-router'
+import { PageMeta } from '../components/ui/PageMeta'
 import { PageIntro } from '../components/ui/PageIntro'
 import { container, inlineLink } from '../components/ui/styles'
 import { useSite } from '../features/site/SiteContext'
@@ -12,6 +13,7 @@ type Section = { heading: string; body: ReactNode }
 function PolicyPage({ title, intro, sections }: { title: string; intro: string; sections: Section[] }) {
   return (
     <div className={container + ' flex flex-col gap-14 py-16 sm:py-20'}>
+      <PageMeta title={`${title}: Drakon`} description={intro} />
       <PageIntro title={title}>
         <p>{intro}</p>
         <p className="mt-2 text-caption text-ink-subtle">Draft text. The final policy will replace it before launch.</p>

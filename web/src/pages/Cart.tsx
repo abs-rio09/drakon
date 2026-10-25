@@ -9,6 +9,7 @@ import { useSite } from '../features/site/SiteContext'
 import { zoneCharge } from '../lib/delivery'
 import { formatTaka } from '../lib/money'
 import type { QuoteItem } from '../lib/types'
+import { PageMeta } from '../components/ui/PageMeta'
 
 // /cart — laid out from docs/design/screens/Cart.dc.html
 export default function Cart() {
@@ -26,7 +27,7 @@ export default function Cart() {
 
   return (
     <div className={container + ' flex flex-col gap-10 pt-14 pb-32'}>
-      <title>Your cart: Drakon</title>
+      <PageMeta title="Your cart: Drakon" noindex />
       <div className="flex flex-wrap items-baseline gap-4">
         <h1 className="text-heading-2 text-ink-strong sm:text-heading-1">Your cart</h1>
         {items.length > 0 && <span className="text-body text-ink-subtle tabular-nums">{countLabel}</span>}

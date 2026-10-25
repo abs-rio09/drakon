@@ -1,0 +1,6 @@
+# DRAKON: search engines may read the shop, not the admin or the API.
+# No Sitemap line yet: there is no final domain (open question 2).
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /api/

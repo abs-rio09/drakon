@@ -5,6 +5,7 @@ import { PageIntro } from '../components/ui/PageIntro'
 import { container, inlineLink, textLink } from '../components/ui/styles'
 import { contact } from '../mocks/contact'
 import { useSite } from '../features/site/SiteContext'
+import { PageMeta } from '../components/ui/PageMeta'
 
 // /contact — how to reach Drakon. The details are placeholders in
 // src/mocks/contact.ts until Abu Bakkar Siddik decides them.
@@ -12,7 +13,7 @@ export default function Contact() {
   const { settings } = useSite()
   return (
     <div className={container + ' flex flex-col gap-14 py-16 sm:py-20'}>
-      <title>Contact: Drakon</title>
+      <PageMeta title="Contact: Drakon" description="Call, email or message DRAKON about an order, a return or a question." />
       <PageIntro title="Contact">
         <p>Questions about an order, a return or a piece? Reach us here.</p>
       </PageIntro>

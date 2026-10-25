@@ -7,6 +7,7 @@ import { container, textLink } from '../components/ui/styles'
 import { getCategories, getProducts } from '../lib/api'
 import { useApi } from '../lib/useApi'
 import NotFound from './NotFound'
+import { PageMeta } from '../components/ui/PageMeta'
 
 // The shop shows at most this many pieces per page. Far more than we sell
 // today; paging buttons come when the catalogue grows past it.
@@ -30,7 +31,14 @@ export default function Shop() {
 
   return (
     <div className={container + ' flex flex-col gap-10 py-16 sm:py-20'}>
-      <title>{title ? `${title}: Drakon` : 'Drakon'}</title>
+      <PageMeta
+        title={title ? `${title}: Drakon` : 'Drakon'}
+        description={
+          category
+            ? `${category.name} from DRAKON: limited runs, made once and never restocked. Cash on Delivery across Bangladesh.`
+            : 'Every DRAKON piece on sale now: limited playcards, sports toys, tech toys and clothes. Cash on Delivery across Bangladesh.'
+        }
+      />
       <PageIntro title={title || 'Collection'}>
         <p>
           {category

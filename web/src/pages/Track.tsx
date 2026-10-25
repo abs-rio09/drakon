@@ -12,6 +12,7 @@ import { formatDateTime } from '../lib/dates'
 import { statusLabel } from '../lib/orderStatus'
 import type { OrderView } from '../lib/types'
 import { clearApiCache } from '../lib/useApi'
+import { PageMeta } from '../components/ui/PageMeta'
 
 // /track — look up an order with its number and the phone it was placed
 // with (POST /api/orders/track), see its timeline, and cancel it while it
@@ -97,7 +98,7 @@ export default function Track() {
 
   return (
     <div className="mx-auto flex w-full max-w-form flex-col gap-10 px-4 pt-16 pb-32 sm:px-8 sm:pt-20">
-      <title>Track your order: Drakon</title>
+      <PageMeta title="Track your order: Drakon" description="Track a DRAKON order with your order number and phone number." noindex />
       <PageIntro title="Track your order">
         <p>Enter the order number from your confirmation and the phone number you ordered with.</p>
       </PageIntro>
