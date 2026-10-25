@@ -27,10 +27,23 @@ Some errors add more:
 | 413 | `BODY_TOO_LARGE` (bodies are limited to 1 MB) |
 | 415 | `UNSUPPORTED_MEDIA_TYPE` (send `Content-Type: application/json`) |
 | 422 | `VALIDATION`, `UNKNOWN_AREA`, `BAD_LOOKUP` |
+| 429 | `TOO_MANY_TRIES` (per-IP rate limit, see below), with a `Retry-After: <seconds>` header |
 | 500 | `INTERNAL` (details only in the server log, never in the answer) |
 | 503 | `DATABASE_DOWN` |
 
 Unknown JSON fields are refused (`UNKNOWN_FIELD`). That is how a `pricePaisa` sent by a browser is stopped.
+
+### Rate limits (per IP address)
+
+`POST /api/admin/login`, `POST /api/orders`, `POST /api/orders/track` and `POST /api/orders/cancel` count tries per IP address in a fixed window. The numbers are settings (Admin > Settings > "Too many tries"): `rate_<login|order|track|cancel>_tries` per `rate_<…>_minutes`. Defaults: login 4 per 15 min, orders 30 per 10 min, track 30 per 10 min, cancel 10 per 10 min. Over the limit:
+
+```zsh
+# HTTP/1.1 429 Too Many Requests
+# Retry-After: 540
+# {"error":{"code":"TOO_MANY_TRIES","message":"Too many tries. Please wait 9 minutes and try again."}}
+```
+
+A refused try never reaches the handler (a refused login does not count towards the account lockout). The IP is the direct connection address; `X-Forwarded-For` and friends are ignored unless `TRUSTED_PROXY=cloudflare` and the request carries the Worker's `PROXY_SECRET` (`docs/deploy.md`).
 
 ---
 

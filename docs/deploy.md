@@ -89,6 +89,8 @@ Close the terminal when you are done (that forgets `$NEON_URL`).
 | `DATABASE_URL` | the Neon string from step 1 | where the data is (secret) |
 | `ALLOWED_ORIGINS` | `https://drakon.<your-subdomain>.workers.dev` | only your site may send admin changes (CSRF guard). Fill in after step 5, then redeploy |
 | `COOKIE_SECURE` | `true` | the admin cookie only travels over HTTPS |
+| `TRUSTED_PROXY` | `cloudflare` | the per-IP rate limits use the visitor's IP that the Worker passes on |
+| `PROXY_SECRET` | a long random text: `openssl rand -hex 32` (secret) | proves a request really came through your Worker. The **same** value goes into the Worker in step 5 |
 
    Do **not** set `PORT`: Render sets it, and the server listens on it.
 5. Create the service. The first build takes a few minutes. When it is "Live", open `https://drakon-api.onrender.com/api/health`: you should see `{"database":"ok","status":"ok"}`.
@@ -109,6 +111,11 @@ The background sweep (auto-cancel after 48 h, auto-archive after 7 days) runs in
    ```
    (`npx wrangler` downloads the Cloudflare tool the first time. It is Cloudflare's official tool.)
 4. Go back to Render and set `ALLOWED_ORIGINS` to exactly the address wrangler printed (with `https://`, no slash at the end). Save; Render restarts the API.
+5. Give the Worker the same `PROXY_SECRET` as Render (a Worker secret, never in `wrangler.jsonc`, never in git):
+   ```zsh
+   npx wrangler secret put PROXY_SECRET   # 🔑 paste the value from Render when it asks
+   ```
+   Why: behind the Worker, every request reaches Render from a Cloudflare address, so without the visitor's real IP all buyers would share one rate limit. But the Render address is public too, and anyone can send a fake `X-Forwarded-For` header to it. So the API believes the visitor IP only from a request that carries this secret.
 
 ## 6. Check that everything works
 
@@ -127,6 +134,8 @@ If login does not stick (you land on the login page again): `ALLOWED_ORIGINS` or
 | `DATABASE_URL` | Render (and your PC's `.env`) | `postgresql://...neon.tech/drakon?sslmode=require` | **yes** |
 | `ALLOWED_ORIGINS` | Render | `https://drakon.<sub>.workers.dev` | no |
 | `COOKIE_SECURE` | Render | `true` | no |
+| `TRUSTED_PROXY` | Render | `cloudflare` (empty on your PC) | no |
+| `PROXY_SECRET` | Render **and** the Worker (`npx wrangler secret put PROXY_SECRET`) | `openssl rand -hex 32` | **yes** |
 | `PORT` | set by Render itself | `10000` | no |
 | `API_ORIGIN` | `web/wrangler.jsonc` (`vars`) | `https://drakon-api.onrender.com` | no |
 | `DEV_ADMIN_EMAIL`, `DEV_ADMIN_PASSWORD` | only your PC's `.env` (dev) | made by `make dev-owner` | yes, never on a server |
