@@ -6,6 +6,7 @@ import { PageIntro } from '../components/ui/PageIntro'
 import { container } from '../components/ui/styles'
 import { getProducts } from '../lib/api'
 import type { ProductPage } from '../lib/api'
+import { searchPageSize, searchSummary } from '../lib/search'
 import { useApi } from '../lib/useApi'
 
 const noResults: Promise<ProductPage> = Promise.resolve({ products: [], total: 0, limit: 0, offset: 0 })
@@ -15,9 +16,9 @@ const noResults: Promise<ProductPage> = Promise.resolve({ products: [], total: 0
 export default function Search() {
   const [params, setParams] = useSearchParams()
   const query = (params.get('q') ?? '').trim().slice(0, 100)
-  const search = useApi(`search:${query}`, () => (query === '' ? noResults : getProducts({ q: query, limit: 48 })))
+  const search = useApi(`search:${query}`, () => (query === '' ? noResults : getProducts({ q: query, limit: searchPageSize })))
 
-  function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+  function onSubmit(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault()
     const q = new FormData(e.currentTarget).get('q')
     setParams(typeof q === 'string' && q.trim() !== '' ? { q: q.trim() } : {})
@@ -57,9 +58,7 @@ export default function Search() {
           {({ products: results, total }) => (
             <>
               <p className="text-body text-ink-muted" aria-live="polite">
-                {total === 0
-                  ? `Nothing found for "${query}".`
-                  : `${total} ${total === 1 ? 'result' : 'results'} for "${query}"`}
+                {searchSummary(query, results.length, total)}
               </p>
               {results.length > 0 && (
                 <section aria-labelledby="results-title">

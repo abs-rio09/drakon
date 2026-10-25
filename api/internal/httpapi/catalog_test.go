@@ -83,7 +83,17 @@ func TestProductsFilterSearchAndPaging(t *testing.T) {
 	if body["total"].(float64) != 7 {
 		t.Errorf("total with paging = %v, want 7", body["total"])
 	}
+	// Search: total counts every match, not only the page (the web shows
+	// "Showing 1 of N", open question 24).
+	all := len(list(must(do(t, s, http.MethodGet, "/api/products?q=e&limit=100", nil)), "products"))
+	_, body = do(t, s, http.MethodGet, "/api/products?q=e&limit=1", nil)
+	if all < 2 || len(list(body, "products")) != 1 || int(body["total"].(float64)) != all {
+		t.Errorf("search total = %v with 1 shown, want %d", body["total"], all)
+	}
 }
+
+// must drops the status of do (for a request that is known to work).
+func must(_ int, body map[string]any) map[string]any { return body }
 
 func TestProductsRejectsBadPaging(t *testing.T) {
 	s := newTestServer(t, true)
