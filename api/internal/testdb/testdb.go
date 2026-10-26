@@ -38,12 +38,12 @@ var appTables = []string{
 	"product_events", "inventory_movements", "blocked_phones", "payments",
 	"order_status_history", "order_items", "orders",
 	"product_variants", "product_images", "product_details", "products", "categories",
-	"delivery_areas", "delivery_zones", "settings",
+	"area_suggestions", "delivery_areas", "delivery_zones", "settings",
 }
 
 // tables whose starting rows come from the migrations. Setup copies them
 // into the test_snapshot schema, and Reset puts them back.
-var migrationDataTables = []string{"settings", "delivery_zones", "delivery_areas"}
+var migrationDataTables = []string{"settings", "delivery_zones", "delivery_areas", "area_suggestions"}
 
 type DB struct {
 	Pool *pgxpool.Pool
@@ -125,6 +125,7 @@ func (d *DB) Reset(ctx context.Context, withSeed bool) error {
 	// Identity counters must continue after the restored ids.
 	sqlText += " SELECT setval(pg_get_serial_sequence('delivery_zones', 'id'), (SELECT max(id) FROM delivery_zones));"
 	sqlText += " SELECT setval(pg_get_serial_sequence('delivery_areas', 'id'), (SELECT max(id) FROM delivery_areas));"
+	sqlText += " SELECT setval(pg_get_serial_sequence('area_suggestions', 'id'), (SELECT max(id) FROM area_suggestions));"
 	if _, err := d.Pool.Exec(ctx, sqlText); err != nil {
 		return err
 	}

@@ -122,16 +122,21 @@ curl -s localhost:8080/api/delivery/areas
     {"code": "OUTSIDE_DHAKA", "name": "Outside Dhaka", "chargePaisa": 10000, "freeOverPaisa": null, "currency": "BDT"}
   ],
   "districts": [
-    {"name": "Bagerhat", "areas": [{"id": 65, "label": "Bagerhat", "hint": "", "zoneCode": "OUTSIDE_DHAKA"}]},
+    {"name": "Bagerhat", "areas": [{"id": 65, "label": "Bagerhat", "hint": "", "zoneCode": "OUTSIDE_DHAKA",
+      "suggestions": ["Bagerhat Sadar", "Chitalmari", "Fakirhat", "…"]}]},
     {"name": "Dhaka", "areas": [
-      {"id": 1, "label": "Dhaka city", "hint": "Inside Dhaka zone", "zoneCode": "INSIDE_DHAKA"},
-      {"id": 52, "label": "Outside Dhaka city", "hint": "Savar, Keraniganj and others", "zoneCode": "OUTSIDE_DHAKA"}
+      {"id": 1, "label": "Dhaka city", "hint": "Inside Dhaka zone", "zoneCode": "INSIDE_DHAKA",
+       "suggestions": ["Adabor", "Airport", "Badda", "…"]},
+      {"id": 52, "label": "Outside Dhaka city", "hint": "Savar, Keraniganj and others", "zoneCode": "OUTSIDE_DHAKA",
+       "suggestions": ["Dhamrai", "Dohar", "Keraniganj", "Nawabganj", "Savar"]}
     ]}
   ],
   "freeDeliveryEnabled": false
 }
 ```
 A district with more than one area asks the buyer to choose. The `id` of the chosen area is the `deliveryAreaId` for the quote and the order. Ids are just numbers given by the database (on your PC Dhaka city happens to be `1`); always read them from this endpoint.
+
+`suggestions` (A to Z) are the Area / Thana names the checkout offers for that area, from the `area_suggestions` table (migration 00010; sources in `docs/data-sources.md`): the district's upazilas, and for Dhaka the 50 DMP thanas (Dhaka city) or the 5 upazilas (Outside Dhaka city). They only help: the order's `area` stays free text. A row with `is_active = false` is not sent. There is no admin page for them yet; change them with SQL (`docker compose exec db psql -U drakon -d drakon`).
 
 ### `GET /api/settings/public`
 Only the numbers the website shows.

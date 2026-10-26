@@ -45,6 +45,41 @@ func (q *Queries) GetDeliveryArea(ctx context.Context, id int64) (GetDeliveryAre
 	return i, err
 }
 
+const listAreaSuggestions = `-- name: ListAreaSuggestions :many
+SELECT district, city_area_id, name
+FROM area_suggestions
+WHERE is_active
+ORDER BY district, name
+`
+
+type ListAreaSuggestionsRow struct {
+	District   string
+	CityAreaID *int64
+	Name       string
+}
+
+// Area / Thana names the checkout suggests. city_area_id NULL = for the
+// whole district; set = only for that delivery area (Dhaka city).
+func (q *Queries) ListAreaSuggestions(ctx context.Context) ([]ListAreaSuggestionsRow, error) {
+	rows, err := q.db.Query(ctx, listAreaSuggestions)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListAreaSuggestionsRow
+	for rows.Next() {
+		var i ListAreaSuggestionsRow
+		if err := rows.Scan(&i.District, &i.CityAreaID, &i.Name); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listDeliveryAreas = `-- name: ListDeliveryAreas :many
 SELECT a.id, a.district, a.area_label, a.hint, z.code AS zone_code
 FROM delivery_areas a

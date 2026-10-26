@@ -545,6 +545,14 @@ type AdminSession struct {
 	ExpiresAt  time.Time
 }
 
+type AreaSuggestion struct {
+	ID         int64
+	District   string
+	Name       string
+	CityAreaID *int64
+	IsActive   bool
+}
+
 type BlockedPhone struct {
 	Phone            string
 	Reason           string

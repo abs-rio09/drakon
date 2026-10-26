@@ -23,3 +23,11 @@ SELECT a.id, a.district, a.area_label, z.code AS zone_code,
 FROM delivery_areas a
 JOIN delivery_zones z ON z.id = a.zone_id
 WHERE a.id = $1 AND a.is_active AND z.is_active;
+
+-- name: ListAreaSuggestions :many
+-- Area / Thana names the checkout suggests. city_area_id NULL = for the
+-- whole district; set = only for that delivery area (Dhaka city).
+SELECT district, city_area_id, name
+FROM area_suggestions
+WHERE is_active
+ORDER BY district, name;

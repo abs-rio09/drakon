@@ -19,6 +19,9 @@ type areaJSON struct {
 	Label    string `json:"label"`
 	Hint     string `json:"hint"`
 	ZoneCode string `json:"zoneCode"`
+	// Area / Thana names the checkout suggests for this area. Only help:
+	// the buyer may type any area.
+	Suggestions []string `json:"suggestions"`
 }
 
 type districtJSON struct {
@@ -27,7 +30,8 @@ type districtJSON struct {
 }
 
 // GET /api/delivery/areas: districts A to Z, each with its areas. A district
-// with more than one area (Dhaka) asks the buyer to choose one.
+// with more than one area (Dhaka) asks the buyer to choose one. Each area
+// carries its Area / Thana suggestions (area_suggestions table).
 func (s *Server) handleDeliveryAreas(w http.ResponseWriter, r *http.Request) error {
 	zoneRows, err := s.q.ListDeliveryZones(r.Context())
 	if err != nil {
@@ -42,13 +46,27 @@ func (s *Server) handleDeliveryAreas(w http.ResponseWriter, r *http.Request) err
 	if err != nil {
 		return err
 	}
+	suggestionRows, err := s.q.ListAreaSuggestions(r.Context())
+	if err != nil {
+		return err
+	}
+	forDistrict := map[string][]string{} // city_area_id NULL
+	forArea := map[int64][]string{}      // only for one delivery area
+	for _, sg := range suggestionRows {
+		if sg.CityAreaID != nil {
+			forArea[*sg.CityAreaID] = append(forArea[*sg.CityAreaID], sg.Name)
+		} else {
+			forDistrict[sg.District] = append(forDistrict[sg.District], sg.Name)
+		}
+	}
 	districts := []districtJSON{}
 	for _, a := range areaRows { // already sorted by district
 		if len(districts) == 0 || districts[len(districts)-1].Name != a.District {
 			districts = append(districts, districtJSON{Name: a.District, Areas: []areaJSON{}})
 		}
 		d := &districts[len(districts)-1]
-		d.Areas = append(d.Areas, areaJSON{ID: a.ID, Label: a.AreaLabel, Hint: a.Hint, ZoneCode: a.ZoneCode})
+		suggestions := append(append([]string{}, forDistrict[a.District]...), forArea[a.ID]...)
+		d.Areas = append(d.Areas, areaJSON{ID: a.ID, Label: a.AreaLabel, Hint: a.Hint, ZoneCode: a.ZoneCode, Suggestions: suggestions})
 	}
 
 	set, err := settings.Load(r.Context(), s.q)
