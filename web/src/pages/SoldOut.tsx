@@ -6,6 +6,7 @@ import { ProductPhoto } from '../components/product/ProductPhoto'
 import { ChipButton } from '../components/ui/Chip'
 import { Loaded } from '../components/ui/LoadState'
 import { PageMeta } from '../components/ui/PageMeta'
+import { useStagger } from '../components/ui/stagger'
 import { button, container, textLink } from '../components/ui/styles'
 import { getCategories, getProducts, getSoldOut } from '../lib/api'
 import { metaLine, priceLabel } from '../lib/catalog'
@@ -23,6 +24,7 @@ export default function SoldOut() {
   const archive = state.data ?? []
   const latest = archive[0]
   const shown = archive.filter((p) => filter === 'all' || p.categorySlug === filter)
+  const item = useStagger(state.status)
 
   return (
     <div className="flex flex-col">
@@ -68,8 +70,8 @@ export default function SoldOut() {
         </p>
         {state.status !== 'ready' ? null : shown.length > 0 ? (
           <ul className="grid gap-y-10 sm:grid-cols-2 sm:gap-x-6 sm:gap-y-14 lg:grid-cols-3 lg:gap-x-10">
-            {shown.map((p) => (
-              <li key={p.id}>
+            {shown.map((p, i) => (
+              <li key={p.id} {...item(i)}>
                 <ArchiveCard product={p} layout="grid" />
               </li>
             ))}

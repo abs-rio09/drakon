@@ -157,6 +157,7 @@
   --duration-fast: 150ms; /* press, hover, colour */
   --duration-base: 250ms; /* menus, chips, cart pop */
   --duration-slow: 400ms; /* page change, sheets, image fly, fade-in */
+  --stagger-step: 40ms; /* list items rising one after another */
 }
 
 @utility duration-fast {

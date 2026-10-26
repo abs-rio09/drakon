@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react'
 import { Link } from 'react-router'
 import { useSite } from '../../features/site/SiteContext'
 import { getProduct } from '../../lib/api'
@@ -65,11 +66,18 @@ export function ProductCard({ product }: { product: Product }) {
 }
 
 // Grid for product cards: 2 columns on phones, 3 from 640px, 4 from 1024px.
-export function ProductGrid({ products }: { products: Product[] }) {
+// `item` (from useStagger) lets the first cards rise in on first load.
+export function ProductGrid({
+  products,
+  item = () => ({}),
+}: {
+  products: Product[]
+  item?: (index: number) => { className?: string; style?: CSSProperties }
+}) {
   return (
     <ul className="grid grid-cols-2 gap-x-4 gap-y-10 sm:grid-cols-3 sm:gap-x-6 sm:gap-y-12 lg:grid-cols-4 lg:gap-x-10 lg:gap-y-16">
-      {products.map((p) => (
-        <li key={p.id}>
+      {products.map((p, i) => (
+        <li key={p.id} {...item(i)}>
           <ProductCard product={p} />
         </li>
       ))}

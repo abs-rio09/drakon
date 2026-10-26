@@ -46,7 +46,7 @@ Calm, fast, soft. Better animation, not more. If unsure, leave it still.
 - Dim backdrop (`bg-scrim`), Esc and tap outside close, focus moves in, Tab is trapped, focus returns to the button that opened it, page scroll is locked while open.
 
 ## Lists
-- Stagger only on the first load of a list (shop grid, archive): at most the first 6 items, 40 ms apart, `animate-rise`. Never on scroll, filter change or coming back to a cached page.
+- Stagger only on the first load of a list (shop grid, archive): at most the first 6 items, `--stagger-step` (40 ms) apart, `animate-rise`. Use `useStagger(state.status)` from `components/ui/stagger.ts`; it already skips cached lists, filter changes and reduced motion. Never on scroll.
 
 ## Check before you commit
 1. `cd web && npm run build && npm run lint && npm test`.

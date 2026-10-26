@@ -2,6 +2,7 @@ import { Link, useParams } from 'react-router'
 import { ProductGrid } from '../components/product/ProductCard'
 import { ChipLink } from '../components/ui/Chip'
 import { Loaded, ProductGridSkeleton } from '../components/ui/LoadState'
+import { useStagger } from '../components/ui/stagger'
 import { PageIntro } from '../components/ui/PageIntro'
 import { PageMeta } from '../components/ui/PageMeta'
 import { container, textLink } from '../components/ui/styles'
@@ -21,6 +22,7 @@ export default function Shop() {
     getProducts({ category: categorySlug, limit: PAGE_SIZE }),
   )
 
+  const item = useStagger(products.status)
   const categories = cats.data ?? []
   const category = categorySlug ? categories.find((c) => c.slug === categorySlug) : undefined
 
@@ -86,7 +88,7 @@ export default function Shop() {
 
             <h2 className="sr-only">Products</h2>
             {items.length > 0 ? (
-              <ProductGrid products={items} />
+              <ProductGrid products={items} item={item} />
             ) : (
               <div className="flex flex-col items-center gap-4 py-16 text-center">
                 <p className="text-body-lg text-ink-muted">Nothing in this collection is on sale right now.</p>
