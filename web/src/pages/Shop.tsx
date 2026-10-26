@@ -65,7 +65,19 @@ export default function Shop() {
         </ul>
       </nav>
 
-      <Loaded state={products} loading={<ProductGridSkeleton count={8} />}>
+      <Loaded
+        state={products}
+        loading={
+          // The "N pieces" line's place too, so the grid does not move down
+          // when the products arrive.
+          <>
+            <span aria-hidden="true" className="flex h-4.5 items-center">
+              <span className="block h-3 w-16 rounded bg-field" />
+            </span>
+            <ProductGridSkeleton count={8} />
+          </>
+        }
+      >
         {({ products: items, total }) => (
           <>
             <p className="text-caption text-ink-subtle tabular-nums" aria-live="polite">

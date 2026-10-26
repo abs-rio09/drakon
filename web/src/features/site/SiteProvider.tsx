@@ -22,7 +22,7 @@ export function SiteProvider({ children }: { children: ReactNode }) {
           <LoadError error={site.error} onRetry={site.reload} />
         ) : (
           // The free API server sleeps when nobody visits, so the first visit can take a while.
-          <p role="status" className="text-body text-ink-subtle motion-safe:animate-pulse">
+          <p role="status" className="text-body text-ink-subtle">
             Opening the shop…
           </p>
         )}
