@@ -113,6 +113,8 @@
   --animate-fade-in: fade-in var(--duration-slow) var(--ease-out-drakon) both;
   --animate-hero-in: hero-in var(--duration-slow) var(--ease-out-drakon) both;
   --animate-rise: rise var(--duration-slow) var(--ease-out-drakon) both;
+  --animate-check-in: check-in var(--duration-base) var(--ease-out-drakon) both;
+  --animate-pop: pop var(--duration-base) var(--ease-out-drakon);
 
   @keyframes fade-in {
     from {
@@ -129,6 +131,19 @@
     from {
       opacity: 0;
       transform: translateY(12px);
+    }
+  }
+  /* "Added" check on a button */
+  @keyframes check-in {
+    from {
+      opacity: 0;
+      scale: 0.8;
+    }
+  }
+  /* The cart count, once when it grows: up a little and back, no bounce */
+  @keyframes pop {
+    50% {
+      scale: 1.2;
     }
   }
 }

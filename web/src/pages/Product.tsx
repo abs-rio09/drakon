@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useLocation, useParams } from 'react-router'
 import { CashIcon, CheckIcon, LockIcon, ReturnIcon, TruckIcon } from '../components/icons'
 import { LimitedBadge, SoldOutBadge } from '../components/product/Badge'
@@ -92,6 +92,14 @@ function ProductView({ product, related }: { product: ProductType; related: Prod
   const [imageIndex, setImageIndex] = useState(0)
   // What was just added, for the "Added to your cart" message.
   const [added, setAdded] = useState<{ qty: number; name: string } | null>(null)
+  // The button shows a check for a moment after each add (a new number
+  // each time, so a second add restarts it).
+  const [addedTick, setAddedTick] = useState(0)
+  useEffect(() => {
+    if (addedTick === 0) return
+    const timer = window.setTimeout(() => setAddedTick(0), 1600)
+    return () => window.clearTimeout(timer)
+  }, [addedTick])
   const cart = useCart()
 
   const variant = product.variants.find((v) => v.id === variantId) ?? firstInStock
@@ -265,11 +273,19 @@ function ProductView({ product, related }: { product: ProductType; related: Prod
                     const n = Math.min(qty, remaining)
                     cart.add(variant.id, n)
                     setAdded({ qty: n, name: variantName(product, variant) })
+                    setAddedTick((t) => t + 1)
                     setQty(1)
                   }}
                   className={button('primary', 'xl', { spread: true }) + ' w-full'}
                 >
-                  <span>{!canBuy ? 'Out of stock' : canAdd ? 'Add to cart' : 'Limit reached in your cart'}</span>
+                  {addedTick > 0 ? (
+                    <span key={addedTick} className="inline-flex items-center gap-2">
+                      <CheckIcon size={18} className="motion-safe:animate-check-in" />
+                      Added
+                    </span>
+                  ) : (
+                    <span>{!canBuy ? 'Out of stock' : canAdd ? 'Add to cart' : 'Limit reached in your cart'}</span>
+                  )}
                   {canAdd && (
                     <span className="tabular-nums">{formatTaka(variant.pricePaisa * Math.min(qty, remaining))}</span>
                   )}

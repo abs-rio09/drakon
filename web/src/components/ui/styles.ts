@@ -5,8 +5,13 @@
 // gets exactly ONE size class set. (Adding a second min-h-* or px-* on top
 // does not work reliably: when two Tailwind classes set the same property,
 // the order in the generated CSS wins, not the order in the string.)
+// Anything you press: colours fade and it scales to 0.97 while held
+// (not when disabled, not under reduced motion). drakon-motion skill.
+export const pressable =
+  'transition-[color,background-color,border-color,opacity,scale] duration-fast ease-out-drakon motion-safe:not-disabled:active:scale-[0.97]'
+
 const buttonBase =
-  'inline-flex items-center gap-2 rounded-xl transition-colors duration-fast ease-out-drakon disabled:cursor-not-allowed disabled:opacity-40'
+  'inline-flex items-center gap-2 rounded-xl ' + pressable + ' disabled:cursor-not-allowed disabled:opacity-40'
 
 const buttonVariants = {
   // One primary button per screen: the thing the page is for.

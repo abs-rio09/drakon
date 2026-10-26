@@ -1,4 +1,5 @@
 import { MinusIcon, PlusIcon } from '../icons'
+import { pressable } from './styles'
 
 type QuantityStepperProps = {
   value: number
@@ -14,7 +15,9 @@ type QuantityStepperProps = {
 export function QuantityStepper({ value, min = 1, max, onChange, label, size = 'md' }: QuantityStepperProps) {
   const stepButton =
     (size === 'md' ? 'h-11.5 w-12' : 'h-10.5 w-11') +
-    ' grid place-items-center text-ink transition-colors duration-fast ease-out-drakon enabled:hover:bg-field disabled:cursor-not-allowed disabled:opacity-40'
+    ' grid place-items-center text-ink ' +
+    pressable +
+    ' enabled:hover:bg-field disabled:cursor-not-allowed disabled:opacity-40'
   return (
     <div role="group" aria-label={label} className="inline-flex items-center rounded-xl border border-line-strong">
       <button

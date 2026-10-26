@@ -2,6 +2,7 @@ import { useEffect, useId, useState } from 'react'
 import { Link, useLocation } from 'react-router'
 import { LogoContent } from '../Logo'
 import { BagIcon, CloseIcon, MenuIcon, SearchIcon } from '../icons'
+import { pressable } from '../ui/styles'
 
 // The four main links. Keep it to four (NavBar README).
 const NAV_LINKS = [
@@ -30,7 +31,7 @@ function currentLink(pathname: string, hash: string): string | undefined {
 }
 
 const iconButton =
-  'relative grid size-11 place-items-center rounded-full text-ink-muted transition-colors duration-fast ease-out-drakon hover:bg-field hover:text-ink-strong'
+  'relative grid size-11 place-items-center rounded-full text-ink-muted hover:bg-field hover:text-ink-strong ' + pressable
 
 export function SiteHeader({ cartCount = 0, overPhoto = false }: SiteHeaderProps) {
   const [menuOpen, setMenuOpen] = useState(false)
@@ -38,6 +39,14 @@ export function SiteHeader({ cartCount = 0, overPhoto = false }: SiteHeaderProps
   const { pathname, hash } = useLocation()
   const current = currentLink(pathname, hash)
   const menuId = useId()
+  // The count pops once each time it grows (not on page load, not when it
+  // goes down): a new key replays the animation.
+  const [pops, setPops] = useState(0)
+  const [lastCount, setLastCount] = useState(cartCount)
+  if (cartCount !== lastCount) {
+    setLastCount(cartCount)
+    if (cartCount > lastCount) setPops((n) => n + 1)
+  }
 
   // Remember whether the page has scrolled, so the bar can turn glass.
   useEffect(() => {
@@ -119,8 +128,12 @@ export function SiteHeader({ cartCount = 0, overPhoto = false }: SiteHeaderProps
               <BagIcon />
               {cartCount > 0 && (
                 <span
+                  key={pops}
                   aria-hidden="true"
-                  className="absolute top-1 right-0.5 grid h-4.5 min-w-4.5 place-items-center rounded-full bg-ink-strong px-1 text-micro font-semibold text-on-accent tabular-nums"
+                  className={
+                    'absolute top-1 right-0.5 grid h-4.5 min-w-4.5 place-items-center rounded-full bg-ink-strong px-1 text-micro font-semibold text-on-accent tabular-nums ' +
+                    (pops > 0 ? 'motion-safe:animate-pop' : '')
+                  }
                 >
                   {cartCount}
                 </span>
