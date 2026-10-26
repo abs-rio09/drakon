@@ -189,6 +189,18 @@
   }
 }
 
+/* A product photo flying from its card into its page and back
+   (ProductPhoto shareName). Same picture on both sides, so the two
+   snapshots cross-fade while the group moves and resizes. */
+::view-transition-group(.photo-fly) {
+  animation-duration: var(--duration-slow);
+  animation-timing-function: var(--ease-out-drakon);
+}
+::view-transition-old(.photo-fly),
+::view-transition-new(.photo-fly) {
+  animation-duration: var(--duration-slow);
+}
+
 /* Reduced motion: nothing moves or flies; pages only fade, quickly. */
 @media (prefers-reduced-motion: reduce) {
   ::view-transition-group(*) {

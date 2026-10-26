@@ -9,6 +9,19 @@ export function clearApiCache() {
   cache.clear()
 }
 
+// Starts loading an answer before the page asks for it (a product card
+// under the pointer), so the next page can often open with its data.
+// Errors are ignored: the page loads again itself and shows them.
+const pending = new Set<string>()
+export function prefetchApi<T>(key: string, load: () => Promise<T>) {
+  if (cache.has(key) || pending.has(key)) return
+  pending.add(key)
+  load()
+    .then((data) => cache.set(key, data))
+    .catch(() => {})
+    .finally(() => pending.delete(key))
+}
+
 export type ApiState<T> =
   | { status: 'loading'; data: undefined; error: undefined; reload: () => void }
   | { status: 'error'; data: undefined; error: Error; reload: () => void }

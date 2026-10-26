@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { Link, useParams } from 'react-router'
+import { Link, useLocation, useParams } from 'react-router'
 import { CashIcon, CheckIcon, LockIcon, ReturnIcon, TruckIcon } from '../components/icons'
 import { LimitedBadge, SoldOutBadge } from '../components/product/Badge'
-import { ProductGrid } from '../components/product/ProductCard'
+import { ProductGrid, type ProductLinkState } from '../components/product/ProductCard'
+import { productPhotoName } from '../components/product/photoName'
 import { ProductPhoto } from '../components/product/ProductPhoto'
 import { VariantPicker } from '../components/product/VariantPicker'
 import { Loaded } from '../components/ui/LoadState'
@@ -33,18 +34,50 @@ import NotFound from './NotFound'
 export default function Product() {
   const { slug = '' } = useParams()
   const page = useApi(`product:${slug}`, () => getProduct(slug))
+  // The photo of the card that was tapped, if we came from one.
+  const from = useLocation().state as ProductLinkState | null
 
   // Unknown slug, or a DRAFT product (the API hides those).
   if (page.status === 'error' && page.error instanceof ApiError && page.error.status === 404) return <NotFound />
 
   return (
-    <Loaded state={page}>
+    <Loaded state={page} loading={<ProductSkeleton slug={slug} photo={from?.photo} />}>
       {/* `key` makes React start fresh (new state) when we move to another product. */}
       {({ product, related }) =>
         // A product needs at least one variant (price) to be shown.
         product.variants.length === 0 ? <NotFound /> : <ProductView key={product.id} product={product} related={related} />
       }
     </Loaded>
+  )
+}
+
+// The product page's shape while it loads: the same grid, with the card's
+// photo already in place (it flies in from the card) and quiet blocks for
+// the text. Nothing moves when the real page replaces it.
+function ProductSkeleton({ slug, photo }: { slug: string; photo?: { src: string; thumb?: string } }) {
+  const block = 'block rounded-lg bg-field'
+  return (
+    <div role="status" aria-label="Loading the product">
+      <div aria-hidden="true">
+        <div className={container + ' pt-8 pb-6'}>
+          <span className={block + ' h-4.5 w-40'} />
+        </div>
+        <section className={container + ' grid items-start gap-10 pb-20 sm:pb-24 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:gap-20'}>
+          {photo ? (
+            <ProductPhoto src={photo.src} alt="" zoomOnHover={false} priority shareName={productPhotoName(slug)} />
+          ) : (
+            <span className="block aspect-square rounded-2xl bg-field" />
+          )}
+          <div className="flex flex-col gap-4 lg:pt-2">
+            <span className={block + ' h-12 w-4/5'} />
+            <span className={block + ' h-6 w-1/2'} />
+            <span className={block + ' mt-4 h-8 w-1/3'} />
+            <span className={block + ' mt-4 h-24 w-full'} />
+            <span className={block + ' mt-4 h-14 w-full rounded-xl'} />
+          </div>
+        </section>
+      </div>
+    </div>
   )
 }
 
@@ -117,7 +150,15 @@ function ProductView({ product, related }: { product: ProductType; related: Prod
         {/* Gallery */}
         <div className="flex flex-col gap-3">
           <div className="relative">
-            <ProductPhoto key={image.src} src={image.src} alt={image.alt} soldOut={archived} zoomOnHover={false} priority />
+            <ProductPhoto
+              key={image.src}
+              src={image.src}
+              alt={image.alt}
+              soldOut={archived}
+              zoomOnHover={false}
+              priority
+              shareName={productPhotoName(product.slug)}
+            />
             {archived ? (
               <SoldOutBadge position="top-4 left-4" />
             ) : (

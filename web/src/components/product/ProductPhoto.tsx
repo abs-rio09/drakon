@@ -1,5 +1,12 @@
+import { useState, ViewTransition } from 'react'
+
 // A product photo in a rounded frame. The empty frame shows the `field`
-// colour until the image loads, then the image fades in once.
+// colour until the image loads, then the image fades in once. A photo the
+// browser already showed (same file) appears at once, without a new fade:
+// that keeps the photo still when it moves from a card to its page.
+const shownPhotos = new Set<string>() // absolute URLs (img.currentSrc)
+const absolute = (src: string) => new URL(src, window.location.href).href
+
 type ProductPhotoProps = {
   src: string
   alt: string
@@ -18,6 +25,8 @@ type ProductPhotoProps = {
   // Tailwind radius class; photos use 2xl, small thumbnails lg.
   rounded?: string
   className?: string
+  // productPhotoName(slug) (photoName.ts): this photo flies between the card and the page.
+  shareName?: string
 }
 
 export function ProductPhoto({
@@ -32,8 +41,10 @@ export function ProductPhoto({
   sizes = '(min-width: 1024px) 25vw, 50vw',
   rounded = 'rounded-2xl',
   className = '',
+  shareName,
 }: ProductPhotoProps) {
-  return (
+  const [loaded, setLoaded] = useState(() => src !== '' && shownPhotos.has(absolute(src)))
+  const photo = (
     <span className={`relative block overflow-hidden bg-field ${rounded} ${aspect} ${className}`}>
       <img
         src={src}
@@ -43,14 +54,23 @@ export function ProductPhoto({
         loading={eager || priority ? 'eager' : 'lazy'}
         fetchPriority={priority ? 'high' : undefined}
         decoding="async"
+        onLoad={(e) => {
+          shownPhotos.add(e.currentTarget.currentSrc)
+          setLoaded(true)
+        }}
         className={
-          'size-full object-cover motion-safe:animate-fade-in ' +
-          (zoomOnHover
-            ? 'transition-transform duration-slow ease-out-drakon motion-safe:group-hover:scale-[1.03] '
-            : '') +
-          (soldOut ? 'opacity-60 grayscale' : '')
+          'size-full object-cover transition-[opacity,scale] duration-slow ease-out-drakon motion-reduce:duration-fast ' +
+          (zoomOnHover ? 'motion-safe:group-hover:scale-[1.03] ' : '') +
+          (soldOut ? 'grayscale ' : '') +
+          (!loaded ? 'opacity-0' : soldOut ? 'opacity-60' : '')
         }
       />
     </span>
+  )
+  if (!shareName) return photo
+  return (
+    <ViewTransition name={shareName} share="photo-fly" default="none">
+      {photo}
+    </ViewTransition>
   )
 }
