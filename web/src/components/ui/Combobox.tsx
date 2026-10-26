@@ -173,7 +173,10 @@ export function Combobox({
           if (!freeText) e.currentTarget.select()
         }}
         onClick={(e) => {
-          if (!freeText && textRef.current === null) e.currentTarget.select()
+          // A click inside text that is already selected collapses the
+          // selection after this handler, so select one frame later.
+          const input = e.currentTarget
+          if (!freeText && textRef.current === null) requestAnimationFrame(() => input.select())
           if (!open) openList()
         }}
         onKeyDown={onKeyDown}
