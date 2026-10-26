@@ -2,6 +2,7 @@ import { Link, Outlet } from 'react-router'
 import { LogoContent } from '../Logo'
 import { ArrowLeftIcon } from '../icons'
 import { container, textLink } from '../ui/styles'
+import { PageTransition } from './PageTransition'
 import { ScrollManager } from './ScrollManager'
 
 // Checkout gets a quiet header: only the logo and a way back to the cart,
@@ -29,7 +30,9 @@ export function CheckoutLayout() {
       </header>
       {/* tabIndex -1 lets the skip link move keyboard focus here */}
       <main id="main" tabIndex={-1} className="flex-1 focus:outline-none">
-        <Outlet />
+        <PageTransition>
+          <Outlet />
+        </PageTransition>
       </main>
     </div>
   )

@@ -164,6 +164,48 @@
   );
 }
 
+/* Page change (components/layout/PageTransition.tsx). The header and the
+   footer stay still (root: no animation); the old page fades out, the new
+   one fades in with an 8px rise. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+}
+::view-transition-old(.page-exit) {
+  animation: page-out var(--duration-base) var(--ease-in-drakon) both;
+}
+::view-transition-new(.page-enter) {
+  animation: page-in var(--duration-slow) var(--ease-out-drakon) both;
+}
+@keyframes page-out {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes page-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+/* Reduced motion: nothing moves or flies; pages only fade, quickly. */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*) {
+    animation: none;
+  }
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation-duration: var(--duration-fast);
+  }
+  ::view-transition-old(.page-exit) {
+    animation: page-out var(--duration-fast) linear both;
+  }
+  ::view-transition-new(.page-enter) {
+    animation: fade-in var(--duration-fast) linear both;
+  }
+}
+
 @layer base {
   html {
     color-scheme: dark;

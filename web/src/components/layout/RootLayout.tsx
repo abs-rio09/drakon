@@ -1,5 +1,6 @@
 import { Outlet, useLocation } from 'react-router'
 import { useCart } from '../../features/cart/useCart'
+import { PageTransition } from './PageTransition'
 import { ScrollManager } from './ScrollManager'
 import { SiteFooter } from './SiteFooter'
 import { SiteHeader } from './SiteHeader'
@@ -21,7 +22,9 @@ export function RootLayout() {
       <SiteHeader cartCount={count} overPhoto={pathname === '/'} />
       {/* tabIndex -1 lets the skip link move keyboard focus here */}
       <main id="main" tabIndex={-1} className="flex-1 focus:outline-none">
-        <Outlet />
+        <PageTransition>
+          <Outlet />
+        </PageTransition>
       </main>
       <SiteFooter />
     </div>
