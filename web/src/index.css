@@ -233,6 +233,13 @@
   }
 }
 
+/* While a sheet is open (components/ui/Sheet.tsx) the page behind stays
+   still. The phone menu only exists below 768px, where scrollbars take no
+   room, so nothing shifts. */
+html:has(dialog.sheet[open]) {
+  overflow: hidden;
+}
+
 @layer base {
   html {
     color-scheme: dark;

@@ -1,7 +1,8 @@
 import { useEffect, useId, useState } from 'react'
 import { Link, useLocation } from 'react-router'
 import { LogoContent } from '../Logo'
-import { BagIcon, CloseIcon, MenuIcon, SearchIcon } from '../icons'
+import { BagIcon, MenuIcon, SearchIcon } from '../icons'
+import { Sheet } from '../ui/Sheet'
 import { pressable } from '../ui/styles'
 
 // The four main links. Keep it to four (NavBar README).
@@ -58,14 +59,17 @@ export function SiteHeader({ cartCount = 0, overPhoto = false }: SiteHeaderProps
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
-  // Close the phone menu with the Escape key.
+  // The phone menu is for phones: if the window grows to the desktop
+  // layout while it is open, close it (an open sheet makes the page inert).
   useEffect(() => {
     if (!menuOpen) return
-    function onKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') setMenuOpen(false)
+    const desktop = window.matchMedia('(min-width: 768px)')
+    function onChange() {
+      if (desktop.matches) setMenuOpen(false)
     }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
+    onChange()
+    desktop.addEventListener('change', onChange)
+    return () => desktop.removeEventListener('change', onChange)
   }, [menuOpen])
 
   const cartLabel = cartCount > 0 ? `Cart, ${cartCount} ${cartCount === 1 ? 'item' : 'items'}` : 'Cart, empty'
@@ -141,45 +145,42 @@ export function SiteHeader({ cartCount = 0, overPhoto = false }: SiteHeaderProps
             </Link>
             <button
               type="button"
-              aria-label={menuOpen ? 'Close menu' : 'Menu'}
+              aria-label="Menu"
+              aria-haspopup="dialog"
               aria-expanded={menuOpen}
               aria-controls={menuId}
-              onClick={() => setMenuOpen((open) => !open)}
+              onClick={() => setMenuOpen(true)}
               className={iconButton + ' md:hidden'}
             >
-              {menuOpen ? <CloseIcon /> : <MenuIcon />}
+              <MenuIcon />
             </button>
           </div>
         </nav>
 
-        {/* Phone menu sheet */}
-        {menuOpen && (
-          <div
-            id={menuId}
-            className="absolute inset-x-4 top-full mt-2 rounded-2xl border border-line bg-surface-raised p-2 shadow-overlay sm:inset-x-6 md:hidden"
-          >
-            <ul className="flex flex-col">
-              {[...NAV_LINKS, { label: 'Search', href: '/search' }].map((link) => {
-                const isCurrent = current === link.href
-                return (
-                  <li key={link.href}>
-                    <Link
-                      to={link.href}
-                      aria-current={isCurrent ? 'page' : undefined}
-                      onClick={() => setMenuOpen(false)}
-                      className={
-                        'block rounded-xl px-4 py-3 text-body transition-colors duration-fast ease-out-drakon hover:bg-field hover:text-ink-strong ' +
-                        (isCurrent ? 'bg-field text-ink-strong' : 'text-ink')
-                      }
-                    >
-                      {link.label}
-                    </Link>
-                  </li>
-                )
-              })}
-            </ul>
-          </div>
-        )}
+        {/* Phone menu: a sheet from the right (Esc, tap outside or the
+            close button close it; focus stays inside while open). */}
+        <Sheet id={menuId} title="Menu" open={menuOpen} onClose={() => setMenuOpen(false)}>
+          <ul className="flex flex-col">
+            {[...NAV_LINKS, { label: 'Search', href: '/search' }].map((link) => {
+              const isCurrent = current === link.href
+              return (
+                <li key={link.href}>
+                  <Link
+                    to={link.href}
+                    aria-current={isCurrent ? 'page' : undefined}
+                    onClick={() => setMenuOpen(false)}
+                    className={
+                      'flex min-h-12 items-center rounded-xl px-4 text-body-lg transition-colors duration-fast ease-out-drakon hover:bg-field hover:text-ink-strong ' +
+                      (isCurrent ? 'bg-field text-ink-strong' : 'text-ink')
+                    }
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              )
+            })}
+          </ul>
+        </Sheet>
       </div>
     </header>
   )
