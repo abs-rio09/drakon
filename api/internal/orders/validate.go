@@ -40,24 +40,29 @@ const (
 var (
 	bdMobile = regexp.MustCompile(`^01[3-9][0-9]{8}$`)
 	emailRe  = regexp.MustCompile(`^[^\s@]+@[^\s@]+\.[^\s@]+$`)
+
+	countryCode   = regexp.MustCompile(`^880[0-9]{10}$`)
+	noLeadingZero = regexp.MustCompile(`^1[0-9]{9}$`)
 )
 
-// NormalizePhone cleans what people type: "+880 1712-345678" -> "01712345678".
+// NormalizePhone cleans what people (and Chrome autofill) type:
+// "+880 1712-345678" and "(171) 234-5678" both become "01712345678".
 // Same rule as the website's normalizePhone.
 func NormalizePhone(input string) string {
-	// Drop every kind of space (also the no-break space phones paste) and
-	// dashes, like the website does (normalizePhone, JS \s).
+	// Drop every kind of space (also the no-break space phones paste),
+	// dashes, dots, brackets and the + sign, like the website does
+	// (normalizePhone, JS \s).
 	digits := strings.Map(func(r rune) rune {
-		if r == '-' || unicode.IsSpace(r) {
+		if strings.ContainsRune("-.()+", r) || unicode.IsSpace(r) {
 			return -1
 		}
 		return r
 	}, input)
 	switch {
-	case strings.HasPrefix(digits, "+880"):
-		digits = "0" + digits[4:]
-	case strings.HasPrefix(digits, "880"):
+	case countryCode.MatchString(digits): // 880 + 10 digits
 		digits = "0" + digits[3:]
+	case noLeadingZero.MatchString(digits): // 1 + 9 digits
+		digits = "0" + digits
 	}
 	return digits
 }

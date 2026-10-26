@@ -45,13 +45,26 @@ func TestNormalizePhone(t *testing.T) {
 		"01712\u00a0345678":    "01712345678",
 		"+880\u00a01712345678": "01712345678",
 		"01712345678\n":        "01712345678",
+		// Chrome autofill formats. Same table as the website's
+		// validation.test.ts: the server must clean exactly like the browser.
+		"(182) 967-9208":   "01829679208",
+		"1829679208":       "01829679208",
+		"+880 1829-679208": "01829679208",
+		"8801829679208":    "01829679208",
+		"01829679208":      "01829679208",
+		"018 2967 9208":    "01829679208",
+		"01829.679.208":    "01829679208",
 	}
 	for in, want := range cases {
 		if got := NormalizePhone(in); got != want {
 			t.Errorf("NormalizePhone(%q) = %q, want %q", in, got, want)
 		}
+		if !IsBDMobile(in) {
+			t.Errorf("%q should be a valid mobile", in)
+		}
 	}
-	for _, bad := range []string{"", "0171234567", "01212345678", "abc", "+8801712345678999"} {
+	for _, bad := range []string{"", "0171234567", "01212345678", "abc", "+8801712345678999",
+		"12345", "02829679208", "01229679208", "+1 (182) 967-9208 1", "+880 01712345678"} {
 		if IsBDMobile(bad) {
 			t.Errorf("%q should not be a valid mobile", bad)
 		}

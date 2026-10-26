@@ -42,12 +42,14 @@ export const emptyCheckoutForm: CheckoutForm = {
 }
 
 // Bangladesh mobile numbers: 11 digits, 01 then 3–9, e.g. 01712345678.
-// People also type spaces, dashes or the +880 country code, so we clean
-// those first: "+880 1712-345678" becomes "01712345678".
+// People (and Chrome autofill) also write spaces, dashes, dots, brackets,
+// the +880 country code or drop the leading 0, so we clean those first:
+// "+880 1712-345678" and "(171) 234-5678" both become "01712345678".
+// The Go server cleans with the same rule (api/internal/orders/validate.go).
 export function normalizePhone(input: string): string {
-  let digits = input.replace(/[\s-]/g, '')
-  if (digits.startsWith('+880')) digits = '0' + digits.slice(4)
-  else if (digits.startsWith('880')) digits = '0' + digits.slice(3)
+  let digits = input.replace(/[\s\-.()+]/g, '')
+  if (/^880\d{10}$/.test(digits)) digits = '0' + digits.slice(3)
+  else if (/^1\d{9}$/.test(digits)) digits = '0' + digits
   return digits
 }
 

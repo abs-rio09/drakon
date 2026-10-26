@@ -11,7 +11,9 @@ import { useCart } from '../features/cart/useCart'
 import {
   emptyCheckoutForm,
   findDistrict,
+  isBdMobile,
   needsAreaChoice,
+  normalizePhone,
   selectedArea,
   validateCheckout,
   type CheckoutForm,
@@ -162,6 +164,16 @@ function CheckoutView({ form, setForm, quote, items, quoteIsCurrent, refreshQuot
     setTouched((prev) => new Set(prev).add(name))
   }
 
+  // On leaving a phone field, show a valid number in its clean form:
+  // autofill's "(171) 234-5678" becomes "01712345678". A wrong number is
+  // left as typed so the buyer can fix it.
+  function cleanPhone(name: 'phone' | 'giftPhone') {
+    setForm((prev) => {
+      const clean = normalizePhone(prev[name])
+      return isBdMobile(clean) && clean !== prev[name] ? { ...prev, [name]: clean } : prev
+    })
+  }
+
   // Props every text input needs: value, change, leave (blur) and the a11y links.
   function textProps(name: TextFieldName, hint?: unknown) {
     const error = errorFor(name)
@@ -170,7 +182,10 @@ function CheckoutView({ form, setForm, quote, items, quoteIsCurrent, refreshQuot
       name,
       value: form[name],
       onChange: (e: { target: { value: string } }) => update(name, e.target.value),
-      onBlur: () => touch(name),
+      onBlur: () => {
+        touch(name)
+        if (name === 'phone' || name === 'giftPhone') cleanPhone(name)
+      },
       'aria-invalid': error ? true : undefined,
       'aria-describedby': describedBy(fieldId(name), hint, error),
     }
@@ -323,7 +338,7 @@ function CheckoutView({ form, setForm, quote, items, quoteIsCurrent, refreshQuot
                   type="tel"
                   required
                   inputMode="tel"
-                  autoComplete="tel"
+                  autoComplete="tel-national"
                   placeholder="01XXXXXXXXX"
                   className={inputClass + ' tabular-nums'}
                 />

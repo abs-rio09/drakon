@@ -10,8 +10,20 @@ test('normalizePhone: the ways people type a Bangladesh mobile number', () => {
   }
 })
 
+// The same table is in api/internal/orders/orders_test.go (TestNormalizePhone):
+// the server must clean phone numbers exactly like the browser.
+test('normalizePhone: Chrome autofill formats (brackets, missing leading 0)', () => {
+  for (const typed of ['(182) 967-9208', '1829679208', '+880 1829-679208', '8801829679208', '01829679208', '018 2967 9208', '01829.679.208']) {
+    assert.equal(normalizePhone(typed), '01829679208', typed)
+    assert.equal(isBdMobile(typed), true, typed)
+  }
+  for (const bad of ['12345', '02829679208', '01229679208', '+1 (182) 967-9208 1', '']) {
+    assert.equal(isBdMobile(bad), false, bad)
+  }
+})
+
 test('isBdMobile refuses numbers that are not BD mobiles', () => {
-  for (const bad of ['', '0171234567', '017123456789', '01212345678', '02712345678', '1712345678', '+881712345678', '০১৭১২৩৪৫৬৭৮', '0171234567a', '+880 01712345678']) {
+  for (const bad of ['', '0171234567', '017123456789', '01212345678', '02712345678', '+881712345678', '০১৭১২৩৪৫৬৭৮', '0171234567a', '+880 01712345678']) {
     assert.equal(isBdMobile(bad), false, bad)
   }
 })
