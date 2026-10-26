@@ -1,6 +1,7 @@
 import { startTransition, useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router'
-import { CashIcon, ChevronDownIcon } from '../components/icons'
+import { CashIcon } from '../components/icons'
+import { Combobox } from '../components/ui/Combobox'
 import { describedBy } from '../components/ui/describedBy'
 import { Field, FieldError, inputClass, textareaClass } from '../components/ui/Field'
 import { LoadError, Loading } from '../components/ui/LoadState'
@@ -19,6 +20,7 @@ import {
   type CheckoutForm,
   type FieldName,
 } from '../features/checkout/validation'
+import { districtAliases } from '../features/checkout/districtAliases'
 import { rememberOrder } from '../features/orders/recentOrders'
 import { useSite } from '../features/site/SiteContext'
 import { ApiError, placeOrder } from '../lib/api'
@@ -263,6 +265,7 @@ function CheckoutView({ form, setForm, quote, items, quoteIsCurrent, refreshQuot
 
   const district = findDistrict(delivery, form.district)
   const hasChoice = needsAreaChoice(district)
+  const districtOptions = delivery.districts.map((d) => ({ value: d.name, label: d.name, aliases: districtAliases[d.name] }))
   const choiceAreas = hasChoice && district ? district.areas : []
 
   return (
@@ -378,28 +381,22 @@ function CheckoutView({ form, setForm, quote, items, quoteIsCurrent, refreshQuot
               }
               error={errorFor('district')}
             >
-              <div className="relative">
-                <select
-                  {...textProps('district', true)}
-                  onChange={(e) => {
-                    // Keep the Dhaka choice: if the buyer switches away and back,
-                    // their answer and the charge come back instead of a blank.
-                    update('district', e.target.value)
-                    touch('district')
-                  }}
-                  required
-                  autoComplete="address-level1"
-                  className={inputClass + ' appearance-none pr-12'}
-                >
-                  <option value="">Select your district</option>
-                  {delivery.districts.map((d) => (
-                    <option key={d.name} value={d.name}>
-                      {d.name}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDownIcon className="pointer-events-none absolute top-1/2 right-4 -translate-y-1/2 text-ink-muted" />
-              </div>
+              <Combobox
+                id={fieldId('district')}
+                name="district"
+                listLabel="Districts"
+                value={form.district}
+                options={districtOptions}
+                // Keep the Dhaka choice: if the buyer switches away and back,
+                // their answer and the charge come back instead of a blank.
+                onChange={(name) => update('district', name)}
+                onBlur={() => touch('district')}
+                placeholder="Search your district"
+                noMatchText="No district matches"
+                required
+                aria-invalid={errorFor('district') ? true : undefined}
+                aria-describedby={describedBy(fieldId('district'), true, errorFor('district'))}
+              />
             </Field>
 
             {/* Always in the page, so it can slide open instead of popping in.
