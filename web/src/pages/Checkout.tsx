@@ -404,61 +404,52 @@ function CheckoutView({ form, setForm, quote, items, quoteIsCurrent, refreshQuot
               />
             </Field>
 
-            {/* Always in the page, so it can slide open instead of popping in.
-                While closed it is inert: no focus, hidden from screen readers.
-                The 4px padding (p-1, cancelled by -mx-1 / -my-1) keeps the
-                focus ring from being cut off by overflow-hidden. */}
-            <div
-              className={
-                '-mx-1 grid transition-[grid-template-rows,opacity,margin] duration-base ease-out-drakon motion-reduce:transition-none ' +
-                (hasChoice ? '-my-1 grid-rows-[1fr] opacity-100' : '-mt-6 mb-0 grid-rows-[0fr] opacity-0')
-              }
-              inert={!hasChoice}
-            >
-              <div className="min-h-0 overflow-hidden">
-                <fieldset
-                  className="flex flex-col gap-3 p-1"
-                  aria-describedby={errorFor('districtArea') ? `${fieldId('districtArea')}-error` : undefined}
-                >
-                  <legend className="mb-3 text-label text-ink-muted">
-                    Where in {district?.name ?? 'the'} district?
-                    <span aria-hidden="true" className="ml-1 text-accent-text">
-                      *
-                    </span>
-                  </legend>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    {choiceAreas.map((a) => {
-                      const z = getZone(delivery, a.zoneCode)
-                      const id = String(a.id)
-                      return (
-                        <ChoiceCard key={a.id} checked={form.districtArea === id}>
-                          <input
-                            type="radio"
-                            name="districtArea"
-                            value={id}
-                            checked={form.districtArea === id}
-                            onChange={() => {
-                              update('districtArea', id)
-                              touch('districtArea')
-                            }}
-                            className="mt-0.5 size-4.5 shrink-0 accent-ink-strong"
-                          />
-                          <span className="flex flex-col">
-                            <span className="text-body font-medium text-ink-strong">{a.label}</span>
-                            <span className="text-caption text-ink-subtle tabular-nums">
-                              {[a.hint, z ? formatTaka(z.chargePaisa) : ''].filter(Boolean).join(', ')}
-                            </span>
+            {/* Only for districts with a choice (Dhaka). It appears and rises
+                in (opacity and transform only: drakon-motion skill); the
+                fields below move down at once, after the buyer's own choice. */}
+            {hasChoice && (
+              <fieldset
+                className="flex flex-col gap-3 motion-safe:animate-rise"
+                aria-describedby={errorFor('districtArea') ? `${fieldId('districtArea')}-error` : undefined}
+              >
+                <legend className="mb-3 text-label text-ink-muted">
+                  Where in {district?.name ?? 'the'} district?
+                  <span aria-hidden="true" className="ml-1 text-accent-text">
+                    *
+                  </span>
+                </legend>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {choiceAreas.map((a) => {
+                    const z = getZone(delivery, a.zoneCode)
+                    const id = String(a.id)
+                    return (
+                      <ChoiceCard key={a.id} checked={form.districtArea === id}>
+                        <input
+                          type="radio"
+                          name="districtArea"
+                          value={id}
+                          checked={form.districtArea === id}
+                          onChange={() => {
+                            update('districtArea', id)
+                            touch('districtArea')
+                          }}
+                          className="mt-0.5 size-4.5 shrink-0 accent-ink-strong"
+                        />
+                        <span className="flex flex-col">
+                          <span className="text-body font-medium text-ink-strong">{a.label}</span>
+                          <span className="text-caption text-ink-subtle tabular-nums">
+                            {[a.hint, z ? formatTaka(z.chargePaisa) : ''].filter(Boolean).join(', ')}
                           </span>
-                        </ChoiceCard>
-                      )
-                    })}
-                  </div>
-                  {errorFor('districtArea') && (
-                    <FieldError id={`${fieldId('districtArea')}-error`}>{errorFor('districtArea')}</FieldError>
-                  )}
-                </fieldset>
-              </div>
-            </div>
+                        </span>
+                      </ChoiceCard>
+                    )
+                  })}
+                </div>
+                {errorFor('districtArea') && (
+                  <FieldError id={`${fieldId('districtArea')}-error`}>{errorFor('districtArea')}</FieldError>
+                )}
+              </fieldset>
+            )}
 
             <Field
               id={fieldId('area')}

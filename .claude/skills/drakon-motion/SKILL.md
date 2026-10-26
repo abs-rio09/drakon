@@ -38,12 +38,14 @@ Calm, fast, soft. Better animation, not more. If unsure, leave it still.
 ## Page changes and the shared photo
 - React 19.3 `<ViewTransition>` (from `react`) + the router: `BrowserRouter` wraps every navigation in `startTransition`, so a keyed `<ViewTransition>` around the page in `RootLayout` animates route changes. Do not use react-router's `viewTransition` prop (framework/data mode only).
 - Browsers without the View Transitions API change page instantly. Never polyfill.
-- Shared element: wrap the photo in `<ViewTransition name={productPhotoName(slug)}>` on both sides. A name must be on the page **once**: only the first card for a slug and only the product page's main photo get it.
-- The receiving side must render the named element in the same commit (no loading state in between), or there is no fly, only the page fade. That is fine; never block navigation to make it fly.
+- Shared element: `<ProductPhoto shareName={productPhotoName(slug)}>` (`components/product/photoName.ts`) on both sides; it wraps a named `<ViewTransition share="photo-fly">`. A name must be on the page **once** (ProductCard and the product page's main photo only).
+- The receiving side must render the named element in the same commit. The card passes its photo in the link state (`ProductLinkState`) and the product page's skeleton shows it at once; keep that pattern for any new shared element. Never block navigation to make it fly.
+- React does not animate: the browser Back/Forward buttons (popstate is finished synchronously for scroll restoration, so the change is instant) and shared elements that are off screen. Both are correct; do not work around them.
+- Scroll changes that must be in the "new page" picture run in `useLayoutEffect` (see `ScrollManager`).
 
-## Sheets (phone menu)
+## Sheets (phone menu): `components/ui/Sheet.tsx`
 - Enter: `translate` from the edge + backdrop `opacity`, `duration-slow ease-out-drakon`. Leave: `duration-base ease-in-drakon`.
-- Dim backdrop (`bg-scrim`), Esc and tap outside close, focus moves in, Tab is trapped, focus returns to the button that opened it, page scroll is locked while open.
+- Dim backdrop (`bg-scrim`), Esc and tap outside close, focus moves in, Tab is trapped, focus returns to the button that opened it, page scroll is locked while open. Native `<dialog>` + `showModal()` with Tailwind `starting:` and `transition-discrete`; reuse it instead of building another overlay.
 
 ## Lists
 - Stagger only on the first load of a list (shop grid, archive): at most the first 6 items, `--stagger-step` (40 ms) apart, `animate-rise`. Use `useStagger(state.status)` from `components/ui/stagger.ts`; it already skips cached lists, filter changes and reduced motion. Never on scroll.

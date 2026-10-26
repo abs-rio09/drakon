@@ -129,7 +129,7 @@ export function RulesPanel({ form, setForm, errors, locked, defaultLimit }: Form
             (form.isLimited ? 'border-ink bg-ink' : 'border-line-strong bg-field')
           }
         >
-          <span aria-hidden="true" className={'absolute top-[3px] size-5 rounded-full transition-[left] duration-fast ease-out-drakon ' + (form.isLimited ? 'left-[23px] bg-surface' : 'left-[3px] bg-ink-muted')} />
+          <span aria-hidden="true" className={'absolute top-[3px] left-[3px] size-5 rounded-full transition-[translate,background-color] duration-fast ease-out-drakon ' + (form.isLimited ? 'translate-x-5 bg-surface' : 'bg-ink-muted')} />
         </button>
       </div>
       {errors.isLimited && <p className="text-caption text-danger-text">{errors.isLimited}</p>}
