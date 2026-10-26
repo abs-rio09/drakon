@@ -30,7 +30,7 @@ function currentLink(pathname: string, hash: string): string | undefined {
 }
 
 const iconButton =
-  'relative grid size-11 place-items-center rounded-full text-ink-muted transition-colors duration-150 ease-out hover:bg-field hover:text-ink-strong'
+  'relative grid size-11 place-items-center rounded-full text-ink-muted transition-colors duration-fast ease-out-drakon hover:bg-field hover:text-ink-strong'
 
 export function SiteHeader({ cartCount = 0, overPhoto = false }: SiteHeaderProps) {
   const [menuOpen, setMenuOpen] = useState(false)
@@ -65,7 +65,7 @@ export function SiteHeader({ cartCount = 0, overPhoto = false }: SiteHeaderProps
   return (
     <header
       className={
-        'sticky top-0 z-30 border-b transition-[background-color,border-color] duration-150 ease-out ' +
+        'sticky top-0 z-30 border-b transition-[background-color,border-color] duration-fast ease-out-drakon ' +
         (overPhoto && !scrolled && !menuOpen
           ? 'border-transparent bg-transparent'
           : 'border-line bg-surface-glass backdrop-blur-xl')
@@ -87,7 +87,7 @@ export function SiteHeader({ cartCount = 0, overPhoto = false }: SiteHeaderProps
                   to={link.href}
                   aria-current={isCurrent ? 'page' : undefined}
                   className={
-                    'py-2 text-label transition-colors duration-150 ease-out hover:text-ink-strong ' +
+                    'py-2 text-label transition-colors duration-fast ease-out-drakon hover:text-ink-strong ' +
                     (isCurrent ? 'text-ink-strong shadow-[inset_0_-2px_0_var(--color-ink-strong)]' : 'text-ink-muted')
                   }
                 >
@@ -151,7 +151,7 @@ export function SiteHeader({ cartCount = 0, overPhoto = false }: SiteHeaderProps
                       aria-current={isCurrent ? 'page' : undefined}
                       onClick={() => setMenuOpen(false)}
                       className={
-                        'block rounded-xl px-4 py-3 text-body transition-colors duration-150 ease-out hover:bg-field hover:text-ink-strong ' +
+                        'block rounded-xl px-4 py-3 text-body transition-colors duration-fast ease-out-drakon hover:bg-field hover:text-ink-strong ' +
                         (isCurrent ? 'bg-field text-ink-strong' : 'text-ink')
                       }
                     >

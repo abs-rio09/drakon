@@ -138,7 +138,7 @@ function CartRow({ item }: { item: QuoteItem }) {
           <div className="flex min-w-0 flex-col gap-1">
             <Link
               to={href}
-              className="text-title text-ink-strong transition-colors duration-150 ease-out hover:text-ink"
+              className="text-title text-ink-strong transition-colors duration-fast ease-out-drakon hover:text-ink"
             >
               {item.productName}
             </Link>

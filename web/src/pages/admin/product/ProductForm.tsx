@@ -125,11 +125,11 @@ export function RulesPanel({ form, setForm, errors, locked, defaultLimit }: Form
           disabled={locked}
           onClick={() => set({ isLimited: !form.isLimited })}
           className={
-            "relative h-7 w-12 shrink-0 rounded-full border transition-colors duration-150 ease-out after:absolute after:-inset-x-2 after:-inset-y-3 after:content-[''] disabled:opacity-60 " +
+            "relative h-7 w-12 shrink-0 rounded-full border transition-colors duration-fast ease-out-drakon after:absolute after:-inset-x-2 after:-inset-y-3 after:content-[''] disabled:opacity-60 " +
             (form.isLimited ? 'border-ink bg-ink' : 'border-line-strong bg-field')
           }
         >
-          <span aria-hidden="true" className={'absolute top-[3px] size-5 rounded-full transition-[left] duration-150 ease-out ' + (form.isLimited ? 'left-[23px] bg-surface' : 'left-[3px] bg-ink-muted')} />
+          <span aria-hidden="true" className={'absolute top-[3px] size-5 rounded-full transition-[left] duration-fast ease-out-drakon ' + (form.isLimited ? 'left-[23px] bg-surface' : 'left-[3px] bg-ink-muted')} />
         </button>
       </div>
       {errors.isLimited && <p className="text-caption text-danger-text">{errors.isLimited}</p>}

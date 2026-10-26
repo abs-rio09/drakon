@@ -182,7 +182,7 @@ export function Combobox({
       />
       <ChevronDownIcon
         className={
-          'pointer-events-none absolute top-1/2 right-4 -translate-y-1/2 text-ink-muted transition-transform duration-150 ease-out motion-reduce:transition-none ' +
+          'pointer-events-none absolute top-1/2 right-4 -translate-y-1/2 text-ink-muted transition-transform duration-fast ease-out-drakon motion-reduce:transition-none ' +
           (visible ? 'rotate-180' : '')
         }
       />

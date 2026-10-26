@@ -39,7 +39,7 @@ export function VariantPicker({ product, selectedId, onSelect, aside }: VariantP
             <label
               key={v.id}
               className={
-                'relative flex items-center rounded-xl border transition-colors duration-150 ease-out has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-focus ' +
+                'relative flex items-center rounded-xl border transition-colors duration-fast ease-out-drakon has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-focus ' +
                 (rich ? 'min-h-16 w-full gap-4 px-4 py-2 ' : 'h-12 min-w-15 justify-center px-4 ') +
                 (soldOut
                   ? 'cursor-not-allowed border-dashed border-line text-ink-subtle'

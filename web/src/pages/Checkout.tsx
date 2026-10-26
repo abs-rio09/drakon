@@ -410,7 +410,7 @@ function CheckoutView({ form, setForm, quote, items, quoteIsCurrent, refreshQuot
                 focus ring from being cut off by overflow-hidden. */}
             <div
               className={
-                '-mx-1 grid transition-[grid-template-rows,opacity,margin] duration-200 ease-out motion-reduce:transition-none ' +
+                '-mx-1 grid transition-[grid-template-rows,opacity,margin] duration-base ease-out-drakon motion-reduce:transition-none ' +
                 (hasChoice ? '-my-1 grid-rows-[1fr] opacity-100' : '-mt-6 mb-0 grid-rows-[0fr] opacity-0')
               }
               inert={!hasChoice}

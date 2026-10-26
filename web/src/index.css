@@ -107,11 +107,12 @@
   --container-form: 760px;
   --container-text: 560px;
 
-  /* Motion: one reveal on the home hero, images fade in once. Use with
-     motion-safe: so people who ask for reduced motion get none. */
-  --animate-fade-in: fade-in 600ms ease-out both;
-  --animate-hero-in: hero-in 1200ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
-  --animate-rise: rise 800ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  /* Motion (.claude/skills/drakon-motion): calm and short, never over
+     500ms. Classes: duration-fast/base/slow (below), ease-out-drakon for
+     entering, ease-in-drakon for leaving. Movement only with motion-safe:. */
+  --animate-fade-in: fade-in var(--duration-slow) var(--ease-out-drakon) both;
+  --animate-hero-in: hero-in var(--duration-slow) var(--ease-out-drakon) both;
+  --animate-rise: rise var(--duration-slow) var(--ease-out-drakon) both;
 
   @keyframes fade-in {
     from {
@@ -130,6 +131,27 @@
       transform: translateY(12px);
     }
   }
+}
+
+/* Easing and durations, always in the CSS (static) so keyframes and
+   view transitions can use them. Durations have no Tailwind namespace:
+   one utility each. */
+@theme static {
+  --ease-out-drakon: cubic-bezier(0.2, 0.7, 0.2, 1); /* entering */
+  --ease-in-drakon: cubic-bezier(0.4, 0, 1, 1); /* leaving */
+  --duration-fast: 150ms; /* press, hover, colour */
+  --duration-base: 250ms; /* menus, chips, cart pop */
+  --duration-slow: 400ms; /* page change, sheets, image fly, fade-in */
+}
+
+@utility duration-fast {
+  transition-duration: var(--duration-fast);
+}
+@utility duration-base {
+  transition-duration: var(--duration-base);
+}
+@utility duration-slow {
+  transition-duration: var(--duration-slow);
 }
 
 /* A thin diagonal line, used through a sold-out size button */

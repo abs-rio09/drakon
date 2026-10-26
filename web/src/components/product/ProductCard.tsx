@@ -28,7 +28,7 @@ export function ProductCard({ product }: { product: Product }) {
       </div>
       <GalleryLabel
         name={
-          <Link to={href} className="transition-colors duration-150 ease-out after:absolute after:inset-0 after:content-[''] hover:text-ink">
+          <Link to={href} className="transition-colors duration-fast ease-out-drakon after:absolute after:inset-0 after:content-[''] hover:text-ink">
             {product.name}
           </Link>
         }

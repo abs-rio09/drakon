@@ -7,7 +7,7 @@ import { AlertIcon } from '../icons'
 // Shared look of every text field. Inputs and selects are 48px tall;
 // textareas set their own height with textareaClass.
 const fieldBase =
-  'block w-full rounded-xl border border-line-strong bg-field px-4 py-3 text-body text-ink transition-colors duration-150 ease-out placeholder:text-ink-subtle hover:border-ink-subtle aria-invalid:border-danger-text'
+  'block w-full rounded-xl border border-line-strong bg-field px-4 py-3 text-body text-ink transition-colors duration-fast ease-out-drakon placeholder:text-ink-subtle hover:border-ink-subtle aria-invalid:border-danger-text'
 
 export const inputClass = fieldBase + ' min-h-12'
 export const textareaClass = fieldBase + ' resize-y'

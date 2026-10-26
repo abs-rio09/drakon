@@ -88,15 +88,18 @@ Outfit everywhere (`sans`, Google Fonts, 400–700), with Noto Sans Bengali seco
 
 ## Motion
 
+Calm, fast, soft: better animation, not more. Full rules: `.claude/skills/drakon-motion/SKILL.md`; tokens in `web/src/index.css`.
+
 | Moment | Values |
 | --- | --- |
-| Home hero photo, once on load | opacity 0 → 1, scale 1.04 → 1, 1200ms, `cubic-bezier(.2,.7,.2,1)` |
-| Hero headline, label and buttons | opacity and a 12px rise, 800ms, 120ms apart |
-| Any image loading | fade in over 600ms, once |
-| Product photo hover | zoom to 1.03 over 700ms |
-| Colour, border, fill changes | 150ms ease-out |
+| Press, hover, colour, border fills | `duration-fast` 150ms; buttons scale to 0.97 on press |
+| Menus, chips, cart count pop, "Added" check | `duration-base` 250ms |
+| Page change (fade + 8px rise), product photo flying into its page, sheets, image fade-in, home hero reveal, photo hover zoom to 1.03 | `duration-slow` 400ms |
+| Easing | entering `cubic-bezier(.2,.7,.2,1)` (`ease-out-drakon`), leaving `cubic-bezier(.4,0,1,1)` (`ease-in-drakon`) |
+| Lists (shop grid, archive) on first load | first 6 items rise, 40ms apart |
 
-- No floating, spinning, shimmer loops, parallax, counters or cards that lift.
+- Never over 500ms. Only `transform` and `opacity` move (and the glass header's blur). Nothing may shift the layout.
+- No floating, spinning, shimmer or pulse loops, parallax, counters, bounce or cards that lift.
 - Under `prefers-reduced-motion`, drop all movement; fades stay at 150ms or less.
 
 ## States

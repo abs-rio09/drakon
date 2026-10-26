@@ -46,7 +46,7 @@ export function ProductPhoto({
         className={
           'size-full object-cover motion-safe:animate-fade-in ' +
           (zoomOnHover
-            ? 'transition-transform duration-700 ease-[cubic-bezier(0.2,0.7,0.2,1)] motion-safe:group-hover:scale-[1.03] '
+            ? 'transition-transform duration-slow ease-out-drakon motion-safe:group-hover:scale-[1.03] '
             : '') +
           (soldOut ? 'opacity-60 grayscale' : '')
         }

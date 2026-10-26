@@ -105,7 +105,7 @@ export default function AdminLogin() {
                   onClick={() => setShowPassword((s) => !s)}
                   aria-pressed={showPassword}
                   aria-controls="login-password"
-                  className="absolute top-0.5 right-1 h-11 min-w-15 rounded-lg px-3 text-label text-ink-muted transition-colors duration-150 ease-out hover:text-ink-strong"
+                  className="absolute top-0.5 right-1 h-11 min-w-15 rounded-lg px-3 text-label text-ink-muted transition-colors duration-fast ease-out-drakon hover:text-ink-strong"
                 >
                   {showPassword ? 'Hide' : 'Show'}
                 </button>

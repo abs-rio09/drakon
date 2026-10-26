@@ -7,7 +7,7 @@ import type { Product } from '../../lib/types'
 import { CheckIcon, PlusIcon } from '../icons'
 
 const roundButton =
-  'absolute right-3 bottom-3 grid size-11 place-items-center rounded-full border border-line bg-surface-glass text-ink-strong backdrop-blur-xl transition-colors duration-150 ease-out'
+  'absolute right-3 bottom-3 grid size-11 place-items-center rounded-full border border-line bg-surface-glass text-ink-strong backdrop-blur-xl transition-colors duration-fast ease-out-drakon'
 
 // The round "+" on a product photo. A product with one variant goes straight
 // into the cart; a product with sizes or materials opens its page to choose.

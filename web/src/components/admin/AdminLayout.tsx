@@ -59,7 +59,7 @@ function NavLinks({ badges, onNavigate }: { badges: Record<string, ReactNode>; o
             end={item.end}
             onClick={onNavigate}
             className={({ isActive }) =>
-              'flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 text-label transition-colors duration-150 ease-out ' +
+              'flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 text-label transition-colors duration-fast ease-out-drakon ' +
               (isActive ? 'bg-field text-ink-strong' : 'text-ink-muted hover:bg-field hover:text-ink-strong')
             }
           >
@@ -88,7 +88,7 @@ function AccountBox() {
           await logOut()
           navigate('/admin/login', { replace: true })
         }}
-        className="inline-flex min-h-11 items-center gap-2 self-start rounded-xl px-3 text-label text-ink-muted transition-colors duration-150 ease-out hover:text-ink-strong"
+        className="inline-flex min-h-11 items-center gap-2 self-start rounded-xl px-3 text-label text-ink-muted transition-colors duration-fast ease-out-drakon hover:text-ink-strong"
       >
         <LogOutIcon size={16} />
         Log out

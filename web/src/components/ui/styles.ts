@@ -6,7 +6,7 @@
 // does not work reliably: when two Tailwind classes set the same property,
 // the order in the generated CSS wins, not the order in the string.)
 const buttonBase =
-  'inline-flex items-center gap-2 rounded-xl transition-colors duration-150 ease-out disabled:cursor-not-allowed disabled:opacity-40'
+  'inline-flex items-center gap-2 rounded-xl transition-colors duration-fast ease-out-drakon disabled:cursor-not-allowed disabled:opacity-40'
 
 const buttonVariants = {
   // One primary button per screen: the thing the page is for.
@@ -42,7 +42,7 @@ export const secondaryButton = button('secondary')
 
 // Text-only action (Cancel, Back, Remove).
 export const ghostButton =
-  'text-label text-ink-muted underline-offset-4 transition-colors duration-150 ease-out hover:text-ink-strong hover:underline'
+  'text-label text-ink-muted underline-offset-4 transition-colors duration-fast ease-out-drakon hover:text-ink-strong hover:underline'
 
 // Makes a small link (a breadcrumb, an order number, a product name) easy
 // to tap on a phone: an invisible box, exactly 44px tall and at least 44px
@@ -55,7 +55,7 @@ export const tapArea =
 // Underlined text link with a steel underline, for links next to content.
 export const textLink =
   tapArea +
-  ' underline decoration-line-strong underline-offset-[5px] transition-colors duration-150 ease-out hover:text-ink-strong hover:decoration-ink-strong'
+  ' underline decoration-line-strong underline-offset-[5px] transition-colors duration-fast ease-out-drakon hover:text-ink-strong hover:decoration-ink-strong'
 
 // Orange link, only for links inside a sentence.
 export const inlineLink = tapArea + ' text-accent-text underline underline-offset-4 hover:text-ink-strong'

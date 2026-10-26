@@ -6,7 +6,7 @@ import { Link } from 'react-router'
 // have py-1, so it is not cut off).
 const base =
   "relative after:absolute after:inset-x-0 after:top-1/2 after:h-11 after:-translate-y-1/2 after:content-[''] " +
-  'inline-flex min-h-9 shrink-0 items-center rounded-full border px-4 text-caption font-medium transition-colors duration-150 ease-out hover:text-ink-strong'
+  'inline-flex min-h-9 shrink-0 items-center rounded-full border px-4 text-caption font-medium transition-colors duration-fast ease-out-drakon hover:text-ink-strong'
 const on = ' border-ink-strong bg-field text-ink-strong'
 const off = ' border-line text-ink-muted hover:border-ink-subtle'
 

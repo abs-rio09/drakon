@@ -76,7 +76,7 @@ function Hero() {
         <Link
           to={`/product/${product.slug}`}
           aria-label={`${product.name}, ${priceLabel(product)}, ${stockFact(product, settings)}`}
-          className="relative z-10 mx-4 -mt-12 flex flex-col gap-3 self-stretch rounded-2xl border border-line bg-surface-glass p-4 shadow-label backdrop-blur-xl transition-colors duration-150 ease-out hover:border-line-strong motion-safe:animate-rise motion-safe:[animation-delay:480ms] sm:mx-6 md:-mt-14 md:w-64 md:self-end xl:absolute xl:right-[max(32px,calc((100%-1280px)/2+32px))] xl:bottom-6 xl:mx-0 xl:mt-0"
+          className="relative z-10 mx-4 -mt-12 flex flex-col gap-3 self-stretch rounded-2xl border border-line bg-surface-glass p-4 shadow-label backdrop-blur-xl transition-colors duration-fast ease-out-drakon hover:border-line-strong motion-safe:animate-rise motion-safe:[animation-delay:480ms] sm:mx-6 md:-mt-14 md:w-64 md:self-end xl:absolute xl:right-[max(32px,calc((100%-1280px)/2+32px))] xl:bottom-6 xl:mx-0 xl:mt-0"
         >
           <span className="flex flex-col gap-1">
             <span className="text-body font-medium text-ink-strong">{product.name}</span>
@@ -237,7 +237,7 @@ function Collections() {
                       height={1000}
                       loading="lazy"
                       decoding="async"
-                      className="size-full object-cover transition-transform duration-700 ease-[cubic-bezier(0.2,0.7,0.2,1)] motion-safe:animate-fade-in motion-safe:group-hover:scale-[1.03]"
+                      className="size-full object-cover transition-transform duration-slow ease-out-drakon motion-safe:animate-fade-in motion-safe:group-hover:scale-[1.03]"
                     />
                   </span>
                   <span

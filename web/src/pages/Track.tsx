@@ -117,7 +117,7 @@ export default function Track() {
                     setOrder(r.orderNumber)
                     lookUp({ orderNumber: r.orderNumber, token: r.token })
                   }}
-                  className="relative inline-flex min-h-9 items-center gap-2 rounded-full after:absolute after:inset-x-0 after:top-1/2 after:h-11 after:-translate-y-1/2 after:content-[''] border border-line-strong px-4 text-caption text-ink transition-colors duration-150 ease-out hover:border-ink-subtle hover:bg-field"
+                  className="relative inline-flex min-h-9 items-center gap-2 rounded-full after:absolute after:inset-x-0 after:top-1/2 after:h-11 after:-translate-y-1/2 after:content-[''] border border-line-strong px-4 text-caption text-ink transition-colors duration-fast ease-out-drakon hover:border-ink-subtle hover:bg-field"
                 >
                   <span className="font-medium text-ink-strong tabular-nums">{r.orderNumber}</span>
                   <span className="text-ink-subtle">{formatDateTime(r.placedAt)}</span>

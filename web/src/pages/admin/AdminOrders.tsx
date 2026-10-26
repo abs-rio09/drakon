@@ -113,7 +113,7 @@ export default function AdminOrders() {
               aria-pressed={pressed}
               onClick={() => update({ status: t.status })}
               className={
-                'inline-flex min-h-11 shrink-0 items-center gap-2 border-b-2 px-3 text-label whitespace-nowrap transition-colors duration-150 ease-out hover:text-ink-strong ' +
+                'inline-flex min-h-11 shrink-0 items-center gap-2 border-b-2 px-3 text-label whitespace-nowrap transition-colors duration-fast ease-out-drakon hover:text-ink-strong ' +
                 (pressed ? 'border-ink-strong text-ink-strong' : 'border-transparent text-ink-muted')
               }
             >

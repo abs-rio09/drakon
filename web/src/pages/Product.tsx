@@ -91,7 +91,7 @@ function ProductView({ product, related }: { product: ProductType; related: Prod
           <li>
             <Link
               to="/shop"
-              className={tapArea + ' text-ink-muted transition-colors duration-150 ease-out hover:text-ink-strong hover:underline'}
+              className={tapArea + ' text-ink-muted transition-colors duration-fast ease-out-drakon hover:text-ink-strong hover:underline'}
             >
               Shop
             </Link>
@@ -100,7 +100,7 @@ function ProductView({ product, related }: { product: ProductType; related: Prod
             <>
               <li aria-hidden="true">/</li>
               <li>
-                <Link to={`/shop/${category.slug}`} className={tapArea + ' text-ink-muted transition-colors duration-150 ease-out hover:text-ink-strong hover:underline'}>
+                <Link to={`/shop/${category.slug}`} className={tapArea + ' text-ink-muted transition-colors duration-fast ease-out-drakon hover:text-ink-strong hover:underline'}>
                   {category.name}
                 </Link>
               </li>
@@ -142,7 +142,7 @@ function ProductView({ product, related }: { product: ProductType; related: Prod
                   aria-pressed={i === imageIndex}
                   onClick={() => setImageIndex(i)}
                   className={
-                    'aspect-square overflow-hidden rounded-xl border bg-field transition-[border-color,opacity] duration-150 ease-out hover:opacity-100 ' +
+                    'aspect-square overflow-hidden rounded-xl border bg-field transition-[border-color,opacity] duration-fast ease-out-drakon hover:opacity-100 ' +
                     (i === imageIndex ? 'border-ink-strong opacity-100' : 'border-line opacity-60')
                   }
                 >

@@ -48,7 +48,7 @@ export default function Search() {
         </div>
         <button
           type="submit"
-          className="min-h-12 rounded-xl border border-line-strong px-5 text-label text-ink-strong transition-colors duration-150 ease-out hover:bg-field"
+          className="min-h-12 rounded-xl border border-line-strong px-5 text-label text-ink-strong transition-colors duration-fast ease-out-drakon hover:bg-field"
         >
           Search
         </button>

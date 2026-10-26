@@ -58,7 +58,7 @@ export function ChoiceCard({ checked, children }: { checked: boolean; children: 
   return (
     <label
       className={
-        'flex cursor-pointer items-start gap-3 rounded-xl border p-4 transition-colors duration-150 ease-out has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-focus ' +
+        'flex cursor-pointer items-start gap-3 rounded-xl border p-4 transition-colors duration-fast ease-out-drakon has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-focus ' +
         (checked ? 'border-ink-strong bg-field' : 'border-line-strong hover:border-ink-muted')
       }
     >
