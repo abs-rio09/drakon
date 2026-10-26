@@ -14,8 +14,8 @@ const NAV_LINKS = [
 type SiteHeaderProps = {
   // Total quantity in the cart. The bubble only shows when it is above 0.
   cartCount?: number
-  // On the home hero the bar starts transparent over the photo and turns
-  // glass once the page scrolls (NavBar README).
+  // On the home hero the bar starts transparent over the photo (NavBar
+  // README); elsewhere it starts solid midnight. Both turn glass on scroll.
   overPhoto?: boolean
 }
 
@@ -41,14 +41,13 @@ export function SiteHeader({ cartCount = 0, overPhoto = false }: SiteHeaderProps
 
   // Remember whether the page has scrolled, so the bar can turn glass.
   useEffect(() => {
-    if (!overPhoto) return
     function onScroll() {
       setScrolled(window.scrollY > 8)
     }
     onScroll()
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
-  }, [overPhoto])
+  }, [])
 
   // Close the phone menu with the Escape key.
   useEffect(() => {
@@ -63,12 +62,17 @@ export function SiteHeader({ cartCount = 0, overPhoto = false }: SiteHeaderProps
   const cartLabel = cartCount > 0 ? `Cart, ${cartCount} ${cartCount === 1 ? 'item' : 'items'}` : 'Cart, empty'
 
   return (
+    // Glass = semi-transparent midnight + blur. The blur is always set (0px
+    // at the top) so it can fade in; the border is always there
+    // (transparent at the top), so the bar never changes height.
     <header
       className={
-        'sticky top-0 z-30 border-b transition-[background-color,border-color] duration-fast ease-out-drakon ' +
-        (overPhoto && !scrolled && !menuOpen
-          ? 'border-transparent bg-transparent'
-          : 'border-line bg-surface-glass backdrop-blur-xl')
+        'sticky top-0 z-30 border-b transition-[background-color,border-color,backdrop-filter] duration-base ease-out-drakon motion-reduce:duration-fast ' +
+        (scrolled || menuOpen
+          ? 'border-line bg-surface-glass backdrop-blur-xl'
+          : overPhoto
+            ? 'border-transparent bg-transparent backdrop-blur-[0px]'
+            : 'border-transparent bg-surface backdrop-blur-[0px]')
       }
     >
       <div className="relative mx-auto max-w-page px-4 sm:px-6 lg:px-8">
