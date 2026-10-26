@@ -10,6 +10,8 @@ import { container, panel, primaryButton } from '../components/ui/styles'
 import { splitItems, useCartQuote } from '../features/cart/cartItems'
 import { useCart } from '../features/cart/useCart'
 import {
+  areaAfterDistrictChange,
+  areaSuggestions,
   emptyCheckoutForm,
   findDistrict,
   isBdMobile,
@@ -389,7 +391,10 @@ function CheckoutView({ form, setForm, quote, items, quoteIsCurrent, refreshQuot
                 options={districtOptions}
                 // Keep the Dhaka choice: if the buyer switches away and back,
                 // their answer and the charge come back instead of a blank.
-                onChange={(name) => update('district', name)}
+                onChange={(name) => {
+                  update('area', areaAfterDistrictChange(delivery, form, name))
+                  update('district', name)
+                }}
                 onBlur={() => touch('district')}
                 placeholder="Search your district"
                 noMatchText="No district matches"
@@ -455,14 +460,28 @@ function CheckoutView({ form, setForm, quote, items, quoteIsCurrent, refreshQuot
               </div>
             </div>
 
-            <Field id={fieldId('area')} label="Area / Thana" required error={errorFor('area')}>
-              <input
-                {...textProps('area')}
-                type="text"
-                required
-                autoComplete="address-level2"
+            <Field
+              id={fieldId('area')}
+              label="Area / Thana"
+              required
+              hint={district ? undefined : 'Choose your district first'}
+              error={errorFor('area')}
+            >
+              {/* Free text; the list only suggests the chosen district's thanas. */}
+              <Combobox
+                id={fieldId('area')}
+                name="area"
+                listLabel={`Areas in ${district?.name ?? 'your district'}`}
+                value={form.area}
+                options={areaSuggestions(delivery, form).map((n) => ({ value: n, label: n }))}
+                onChange={(text) => update('area', text)}
+                onBlur={() => touch('area')}
+                freeText
+                disabled={!district}
                 placeholder="e.g. Mirpur 10"
-                className={inputClass}
+                required
+                aria-invalid={errorFor('area') ? true : undefined}
+                aria-describedby={describedBy(fieldId('area'), !district, errorFor('area'))}
               />
             </Field>
 

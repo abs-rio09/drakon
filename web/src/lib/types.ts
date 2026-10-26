@@ -72,6 +72,8 @@ export type DeliveryArea = {
   label: string // "Dhaka city", or the district name
   hint: string
   zoneCode: string
+  // Area / Thana names to suggest for this area (only help; any text is fine).
+  suggestions: string[]
 }
 
 export type District = {

@@ -65,3 +65,12 @@ test('exactOption: full name or alias in any case, nothing for part of a name', 
   assert.equal(exactOption(districts, 'Syl'), undefined)
   assert.equal(exactOption(districts, ''), undefined)
 })
+
+test('suggestions: the same rules for one district\'s Area / Thana list', () => {
+  const dhakaCity = ['Mirpur Model', 'Gulshan', 'Uttara East', 'Uttara West', 'Pallabi', 'Shah Ali'].map((n) => ({ value: n, label: n }))
+  const got = (text: string) => filterOptions(dhakaCity, text).map((o) => o.label)
+  assert.deepEqual(got('u'), ['Uttara East', 'Uttara West', 'Gulshan', 'Mirpur Model'])
+  assert.deepEqual(got('MIR'), ['Mirpur Model'])
+  // Free text with no suggestion: an empty list (the box keeps the text).
+  assert.deepEqual(got('Mirpur 10'), [])
+})

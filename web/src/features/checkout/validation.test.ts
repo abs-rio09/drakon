@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import type { DeliveryInfo, PublicSettings } from '../../lib/types.ts'
-import { emptyCheckoutForm, isBdMobile, normalizePhone, selectedArea, validateCheckout, type CheckoutForm } from './validation.ts'
+import { areaAfterDistrictChange, areaSuggestions, emptyCheckoutForm, isBdMobile, normalizePhone, selectedArea, validateCheckout, type CheckoutForm } from './validation.ts'
 
 test('normalizePhone: the ways people type a Bangladesh mobile number', () => {
   for (const typed of ['01712345678', '+880 1712-345678', '+8801712345678', '8801712345678', '880 1712 345678', '0171 234 5678', ' 01712-345678 ', '01712\u00a0345678', '01712345678\n']) {
@@ -35,11 +35,18 @@ const delivery: DeliveryInfo = {
     {
       name: 'Dhaka',
       areas: [
-        { id: 1, label: 'Dhaka city', hint: '', zoneCode: 'INSIDE_DHAKA' },
-        { id: 2, label: 'Outside Dhaka city', hint: '', zoneCode: 'OUTSIDE_DHAKA' },
+        { id: 1, label: 'Dhaka city', hint: '', zoneCode: 'INSIDE_DHAKA', suggestions: ['Gulshan', 'Mirpur Model', 'Motijheel'] },
+        { id: 2, label: 'Outside Dhaka city', hint: '', zoneCode: 'OUTSIDE_DHAKA', suggestions: ['Dhamrai', 'Savar'] },
       ],
     },
-    { name: 'Sylhet', areas: [{ id: 3, label: 'Sylhet', hint: '', zoneCode: 'OUTSIDE_DHAKA' }] },
+    {
+      name: 'Sylhet',
+      areas: [{ id: 3, label: 'Sylhet', hint: '', zoneCode: 'OUTSIDE_DHAKA', suggestions: ['Beanibazar', 'Sylhet Sadar'] }],
+    },
+    {
+      name: 'Bogura',
+      areas: [{ id: 4, label: 'Bogura', hint: '', zoneCode: 'OUTSIDE_DHAKA', suggestions: ['Sherpur', 'Bogura Sadar'] }],
+    },
   ],
 }
 const settings: PublicSettings = {
@@ -95,4 +102,29 @@ test('a gift needs the receiver, with a real phone number', () => {
   const ok = { ...gift, giftName: 'Karim', giftPhone: '8801812345678' }
   assert.deepEqual(validateCheckout(ok, delivery, settings), {})
   assert.ok(validateCheckout({ ...ok, giftNote: 'x'.repeat(11) }, delivery, settings).giftNote)
+})
+
+test('areaSuggestions: only the chosen district, and for Dhaka the chosen card', () => {
+  assert.deepEqual(areaSuggestions(delivery, emptyCheckoutForm), [])
+  assert.deepEqual(areaSuggestions(delivery, { ...good, district: 'Sylhet' }), ['Beanibazar', 'Sylhet Sadar'])
+  const dhaka = { ...good, district: 'Dhaka' }
+  assert.deepEqual(areaSuggestions(delivery, { ...dhaka, districtArea: '1' }), ['Gulshan', 'Mirpur Model', 'Motijheel'])
+  assert.deepEqual(areaSuggestions(delivery, { ...dhaka, districtArea: '2' }), ['Dhamrai', 'Savar'])
+  // No card chosen yet: both lists.
+  assert.deepEqual(areaSuggestions(delivery, dhaka), ['Gulshan', 'Mirpur Model', 'Motijheel', 'Dhamrai', 'Savar'])
+})
+
+test('Area / Thana: free text is valid, the suggestions only help', () => {
+  assert.deepEqual(validateCheckout({ ...good, area: 'Zindabazar' }, delivery, settings), {})
+  assert.equal(validateCheckout({ ...good, area: '  ' }, delivery, settings).area, 'Enter your area or thana, like Mirpur 10.')
+})
+
+test('areaAfterDistrictChange: a new district clears an area that is not one of its own', () => {
+  const inDhaka = { ...good, district: 'Dhaka', districtArea: '1' }
+  assert.equal(areaAfterDistrictChange(delivery, { ...inDhaka, area: 'Gulshan' }, 'Sylhet'), '')
+  assert.equal(areaAfterDistrictChange(delivery, { ...inDhaka, area: 'Mirpur 10' }, 'Sylhet'), '')
+  // Sherpur is also an upazila of Bogura: it stays.
+  assert.equal(areaAfterDistrictChange(delivery, { ...good, district: 'Sylhet', area: 'sherpur' }, 'Bogura'), 'sherpur')
+  // Same district again: free text stays.
+  assert.equal(areaAfterDistrictChange(delivery, { ...inDhaka, area: 'Mirpur 10' }, 'Dhaka'), 'Mirpur 10')
 })

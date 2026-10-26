@@ -78,6 +78,28 @@ export function selectedArea(delivery: DeliveryInfo, form: CheckoutForm): Delive
   return district.areas.find((a) => String(a.id) === form.districtArea)
 }
 
+// Area / Thana names to suggest: the chosen area's list (Dhaka city or
+// outside), or every area of the district while none is chosen yet.
+// No district = nothing to suggest.
+export function areaSuggestions(delivery: DeliveryInfo, form: CheckoutForm): string[] {
+  const district = findDistrict(delivery, form.district)
+  if (!district) return []
+  const area = selectedArea(delivery, form)
+  // ?? []: an older API (deployed before this field) sends no suggestions.
+  const names = area ? (area.suggestions ?? []) : district.areas.flatMap((a) => a.suggestions ?? [])
+  return [...new Set(names)]
+}
+
+// The Area / Thana to keep when the buyer changes the district: it stays
+// only if it is one of the new district's names (any case), else it is
+// cleared. Same district again = nothing changes.
+export function areaAfterDistrictChange(delivery: DeliveryInfo, form: CheckoutForm, newDistrict: string): string {
+  if (newDistrict === form.district) return form.area
+  const typed = form.area.trim().toLowerCase()
+  const names = findDistrict(delivery, newDistrict)?.areas.flatMap((a) => a.suggestions ?? []) ?? []
+  return names.some((n) => n.toLowerCase() === typed) ? form.area : ''
+}
+
 // Returns one message per field that has a problem. No message = field is fine.
 export function validateCheckout(form: CheckoutForm, delivery: DeliveryInfo, settings: PublicSettings): CheckoutErrors {
   const errors: CheckoutErrors = {}
