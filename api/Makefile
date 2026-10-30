@@ -4,7 +4,7 @@
 GOBIN := $(shell go env GOPATH)/bin
 PSQL   = docker compose exec -T db sh -c 'psql -v ON_ERROR_STOP=1 -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"'
 
-.PHONY: db-up migrate migrate-status seed sqlc run test check dev-owner create-owner reset-password reset-dev
+.PHONY: db-up migrate migrate-status seed sqlc run test check dev-owner create-owner reset-password reset-dev smoke
 
 # Start the local PostgreSQL container and wait until it is healthy.
 db-up:
@@ -56,3 +56,10 @@ check:
 	@test -z "$$(gofmt -l .)" || (echo "gofmt needed:"; gofmt -l .; exit 1)
 	go vet ./...
 	go test ./...
+
+# Read-only check of a running site (GET requests only, no login, no orders):
+# make smoke URL=https://drakon.abubakkar.workers.dev API=https://drakon-api-uq0h.onrender.com
+# API= is optional (checks the Render API directly too).
+smoke:
+	@test -n "$(URL)" || (echo "usage: make smoke URL=https://... [API=https://...]"; exit 2)
+	@../scripts/smoke.sh "$(URL)" "$(API)"
