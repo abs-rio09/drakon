@@ -19,6 +19,6 @@
   },
   "vars": {
     // The Go API on Render. Replace with your service address, no trailing slash.
-    "API_ORIGIN": "https://drakon-api.onrender.com"
+    "API_ORIGIN": "https://drakon-api-uq0h.onrender.com"
   }
 }
