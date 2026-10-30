@@ -62,6 +62,11 @@ Open decisions: `docs/open-questions.md` — **do not build anything marked 🟡
 - sqlc: `version: "2"`, `engine: postgresql`, `schema: db/migrations` (goose files; sqlc ignores `-- +goose Down`), `sql_package: "pgx/v5"`. Zero-pad migration names (`00001_catalog.sql`).
 - Hosting (decided 2026-10-15): Cloudflare **Workers Static Assets** (not Pages) with `not_found_handling: "single-page-application"` and `run_worker_first: ["/api/*"]` proxying to Render.
 
+## Live (deployed 2026-10-30)
+- Shop: https://drakon.abubakkar.workers.dev — API: https://drakon-api-uq0h.onrender.com (Render; db on Neon Singapore, direct connection, no `-pooler`).
+- It is the real shop: only read-only checks. Never place orders, create data, log in, run `wrangler deploy` / `wrangler secret`, or change Render/Neon/Cloudflare settings unless Abu Bakkar Siddik asks.
+- Smoke check: `cd api && make smoke URL=https://drakon.abubakkar.workers.dev API=https://drakon-api-uq0h.onrender.com` (`scripts/smoke.sh`, GET only, OK / FAIL per line).
+
 ## Commands (fill in as the project grows)
 - db: `cd api && make db-up` (= `docker compose up -d --wait db`); psql: `docker compose exec db psql -U drakon -d drakon`
 - migrations: `cd api && make migrate` / `make migrate-status` (goose reads the repo-root `.env`)
@@ -76,5 +81,5 @@ Open decisions: `docs/open-questions.md` — **do not build anything marked 🟡
 - admin: `cd api && make dev-owner` (local only; password saved in repo-root `.env` as `DEV_ADMIN_PASSWORD`, never print it), `make create-owner EMAIL=…`, `make reset-password EMAIL=…` (`cmd/admin`, password typed hidden)
 - admin web: http://localhost:5173/admin (never link it from the shop). Every new `/api/admin` route goes into `api/internal/httpapi/admin_routes.go` AND the table in `TestEveryAdminRouteNeedsASession`
 - admin curl: changes need `-H 'Origin: http://localhost:5173'` and a cookie jar (`-c`/`-b`); see `docs/api.md`
-- deploy (not done yet): `docs/deploy.md` (`api/Dockerfile`, `web/wrangler.jsonc`, `web/worker/index.ts`)
+- deploy: `docs/deploy.md` (`api/Dockerfile`, `web/wrangler.jsonc`, `web/worker/index.ts`)
 - Endpoints: `docs/api.md`

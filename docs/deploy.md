@@ -1,6 +1,12 @@
 # Deploying DRAKON (step by step, for later)
 
-Nothing here has been run yet. This is the plan for the day you go live. Everything stays on **free plans**.
+DRAKON went live on 2026-10-30 by following these steps. Everything stays on **free plans**.
+
+- Shop: https://drakon.abubakkar.workers.dev
+- API (Render): https://drakon-api-uq0h.onrender.com
+- Database: Neon, Singapore
+
+The notes marked **Learned on launch day** are things that went wrong the first time.
 
 ```
 Browser ──► Cloudflare Worker (drakon.<you>.workers.dev)
@@ -31,7 +37,10 @@ Before you start: `git push` your work, because Render builds from GitHub.
 3. Create (or use) a database called `drakon`.
 4. On the project dashboard, open **Connect** and copy the connection string. It looks like
    `postgresql://drakon_owner:XXXX@ep-something-123456.ap-southeast-1.aws.neon.tech/drakon?sslmode=require`
-   - Choose the **direct** connection (not "pooled"). With one small server it is simpler and safe with pgx.
+   - Turn **Connection pooling OFF** so you get the **direct** address. The host must **not** contain `-pooler`.
+   - **Learned on launch day:** with the pooled `-pooler` address, goose fails with
+     `prepared statement name is already in use`. The pooler (PgBouncer) mixes up the prepared statements that pgx uses. The direct address fixes it.
+   - Use the same direct address for `DATABASE_URL` on Render too.
    - This string contains the password. **Never** put it in a file in the repo, a commit, a chat or a screenshot.
 
 ## 2. Create the tables on Neon (your PC)
@@ -74,7 +83,7 @@ Close the terminal when you are done (that forgets `$NEON_URL`).
 
 | Field | Value |
 |---|---|
-| Name | `drakon-api` (your address becomes `https://drakon-api.onrender.com`) |
+| Name | `drakon-api` (Render adds a random ending; ours became `https://drakon-api-uq0h.onrender.com`) |
 | Region | **Singapore** (next to Neon) |
 | Branch | `main` |
 | Root Directory | `api` |
@@ -93,7 +102,9 @@ Close the terminal when you are done (that forgets `$NEON_URL`).
 | `PROXY_SECRET` | a long random text: `openssl rand -hex 32` (secret) | proves a request really came through your Worker. The **same** value goes into the Worker in step 5 |
 
    Do **not** set `PORT`: Render sets it, and the server listens on it.
-5. Create the service. The first build takes a few minutes. When it is "Live", open `https://drakon-api.onrender.com/api/health`: you should see `{"database":"ok","status":"ok"}`.
+
+   **Learned on launch day:** the name must be exactly `PROXY_SECRET` (not `DRAKON_PROXY_SECRET` or anything else). With `TRUSTED_PROXY=cloudflare` the server **refuses to start** when `PROXY_SECRET` is missing, so a wrong name shows up as a failed deploy in the Render logs.
+5. Create the service. The first build takes a few minutes. When it is "Live", Render shows your real address at the top of the page (ours: `https://drakon-api-uq0h.onrender.com`). Open `<that address>/api/health`: you should see `{"database":"ok","status":"ok"}`.
 
 The background sweep (auto-cancel after 48 h, auto-archive after 7 days) runs inside this server: when it starts and every 10 minutes while it is awake, and before the admin opens orders. A sleeping server misses nothing: the next request catches up.
 
@@ -101,7 +112,8 @@ The background sweep (auto-cancel after 48 h, auto-archive after 7 days) runs in
 
 1. Sign up at dash.cloudflare.com. Under **Workers & Pages** you get a free subdomain, like `drakon-abu.workers.dev`.
 2. Point the Worker at your Render API: in `web/wrangler.jsonc`, set
-   `"API_ORIGIN": "https://drakon-api.onrender.com"` (your Render address, no slash at the end). Commit this change.
+   `"API_ORIGIN": "https://drakon-api-uq0h.onrender.com"` (your **real** Render address, no slash at the end). Commit this change.
+   **Learned on launch day:** Render added a random ending (`-uq0h`), so the address is not simply `drakon-api.onrender.com`. Copy it from the Render page; if it does not match, every `/api` call through the Worker fails.
 3. On your PC:
    ```zsh
    cd ~/Desktop/projects/Drakon/drakon/web
@@ -110,6 +122,10 @@ The background sweep (auto-cancel after 48 h, auto-archive after 7 days) runs in
    npx wrangler deploy             # uploads dist/ + worker/index.ts; prints your https://drakon.<sub>.workers.dev address
    ```
    (`npx wrangler` downloads the Cloudflare tool the first time. It is Cloudflare's official tool.)
+
+   **Learned on launch day:**
+   - The first `wrangler deploy` asks you to register a `workers.dev` subdomain (ours: `abubakkar`). Say yes and pick a name.
+   - A brand new subdomain can show `ERR_SSL_VERSION_OR_CIPHER_MISMATCH` in the browser for several minutes. The HTTPS certificate is not ready yet. Nothing is broken: wait 5 to 15 minutes and reload.
 4. Go back to Render and set `ALLOWED_ORIGINS` to exactly the address wrangler printed (with `https://`, no slash at the end). Save; Render restarts the API.
 5. Give the Worker the same `PROXY_SECRET` as Render (a Worker secret, never in `wrangler.jsonc`, never in git):
    ```zsh
@@ -119,6 +135,17 @@ The background sweep (auto-cancel after 48 h, auto-archive after 7 days) runs in
 
 ## 6. Check that everything works
 
+First the quick automatic check (only GET requests: it never logs in, never orders, never changes data):
+
+```zsh
+cd ~/Desktop/projects/Drakon/drakon/api
+make smoke URL=https://drakon.abubakkar.workers.dev API=https://drakon-api-uq0h.onrender.com
+```
+
+Every line should say `OK`, and the last line `All checks passed.` It checks the health endpoint (directly and through the Worker), the home page, the public API answers, the security headers, and that `/admin` pages send `noindex` + `no-store`. The first run after a quiet time can take a minute while Render wakes up.
+
+Then by hand:
+
 1. `https://drakon.<sub>.workers.dev/api/health` → `{"database":"ok","status":"ok"}` (this goes through the Worker to Render to Neon).
 2. `https://drakon.<sub>.workers.dev/` → the shop (empty until you add products).
 3. `https://drakon.<sub>.workers.dev/admin/login` → log in with your Owner email and password.
@@ -127,17 +154,24 @@ The background sweep (auto-cancel after 48 h, auto-archive after 7 days) runs in
 
 If login does not stick (you land on the login page again): `ALLOWED_ORIGINS` or the address is not exactly the same (https, no trailing slash). If an admin change answers "This change did not come from the DRAKON admin site", it is the same problem.
 
+## Keeping secrets safe
+
+- **Never paste a secret** (the Neon string, `PROXY_SECRET`, a password) into a chat, an issue, a commit or a screenshot. That includes chats with an AI helper.
+- After typing or showing a secret in a terminal, run `clear` (and close the terminal), so it is not left on screen for the next screenshot.
+- Use `read -s` (step 2) so a secret never lands in your zsh history.
+- If a secret did leak: make a new one (Neon: reset the password; `PROXY_SECRET`: `openssl rand -hex 32`), put it on Render and in the Worker, and redeploy.
+
 ## Environment variables, all in one place
 
 | Variable | Where | Example | Secret? |
 |---|---|---|---|
-| `DATABASE_URL` | Render (and your PC's `.env`) | `postgresql://...neon.tech/drakon?sslmode=require` | **yes** |
+| `DATABASE_URL` | Render (and your PC's `.env`) | `postgresql://...neon.tech/drakon?sslmode=require` (direct, no `-pooler`) | **yes** |
 | `ALLOWED_ORIGINS` | Render | `https://drakon.<sub>.workers.dev` | no |
 | `COOKIE_SECURE` | Render | `true` | no |
 | `TRUSTED_PROXY` | Render | `cloudflare` (empty on your PC) | no |
-| `PROXY_SECRET` | Render **and** the Worker (`npx wrangler secret put PROXY_SECRET`) | `openssl rand -hex 32` | **yes** |
+| `PROXY_SECRET` (exactly this name) | Render **and** the Worker (`npx wrangler secret put PROXY_SECRET`) | `openssl rand -hex 32` | **yes** |
 | `PORT` | set by Render itself | `10000` | no |
-| `API_ORIGIN` | `web/wrangler.jsonc` (`vars`) | `https://drakon-api.onrender.com` | no |
+| `API_ORIGIN` | `web/wrangler.jsonc` (`vars`) | `https://drakon-api-uq0h.onrender.com` | no |
 | `DEV_ADMIN_EMAIL`, `DEV_ADMIN_PASSWORD` | only your PC's `.env` (dev) | made by `make dev-owner` | yes, never on a server |
 
 ## Product photos for now

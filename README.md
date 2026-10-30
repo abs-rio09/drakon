@@ -4,9 +4,25 @@ Premium dark collectible & lifestyle brand — e-commerce website (Bangladesh, �
 
 | Folder | What |
 |---|---|
-| `web/` | Frontend — Vite + React + TypeScript + Tailwind. All customer pages and the admin panel (`/admin`). Reads everything from the Go API. `web/worker/` + `wrangler.jsonc`: the Cloudflare Worker (not deployed yet). |
+| `web/` | Frontend — Vite + React + TypeScript + Tailwind. All customer pages and the admin panel (`/admin`). Reads everything from the Go API. `web/worker/` + `wrangler.jsonc`: the Cloudflare Worker. |
 | `api/` | Backend — Go `net/http` + pgx + sqlc + goose. Catalog, checkout quote, Cash on Delivery orders, tracking, cancel, background sweep, admin login and the admin API. `api/Dockerfile` for Render. |
 | `docs/` | Blueprint, brand vision, open questions, design reference, progress logs, `api.md` (every endpoint), `deploy.md` (going live) |
+
+## Live
+
+| What | Address |
+|---|---|
+| Shop (Cloudflare Worker) | https://drakon.abubakkar.workers.dev |
+| API (Render, database on Neon Singapore) | https://drakon-api-uq0h.onrender.com |
+
+Read-only check of the live site (GET requests only, no login, no orders, prints OK / FAIL per line):
+
+```zsh
+cd ~/Desktop/projects/Drakon/drakon/api
+make smoke URL=https://drakon.abubakkar.workers.dev API=https://drakon-api-uq0h.onrender.com
+```
+
+How it was deployed, and what went wrong the first time: `docs/deploy.md`.
 
 ## Run everything locally
 
@@ -63,4 +79,4 @@ Open the database: `docker compose exec db psql -U drakon -d drakon`
 
 ## Status
 
-Roadmap steps 1–10 are done: frontend, database, Go API, real Cash on Delivery checkout, tracking and cancel, auto-cancel and auto-archive, and the admin panel (login with lockout, orders with the call list, products with the price lock and stock book, categories, settings, delivery zones, blocked phones, returns), per-IP rate limits on login, orders, track and cancel, and the VOID payment status for cancelled orders. The deploy files are ready (`docs/deploy.md`); nothing is deployed. See `docs/blueprint.md` (part 10), `docs/api.md` and `docs/progress/`.
+Roadmap steps 1–10 are done: frontend, database, Go API, real Cash on Delivery checkout, tracking and cancel, auto-cancel and auto-archive, and the admin panel (login with lockout, orders with the call list, products with the price lock and stock book, categories, settings, delivery zones, blocked phones, returns), per-IP rate limits on login, orders, track and cancel, and the VOID payment status for cancelled orders. Deployed on 2026-10-30 (see **Live** above and `docs/deploy.md`). See `docs/blueprint.md` (part 10), `docs/api.md` and `docs/progress/`.
